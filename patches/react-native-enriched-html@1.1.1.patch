@@ -1,0 +1,330 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..f96cac9c0538787daabfa87dfb38df102aa9889e
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,178 @@
++// swift-tools-version: 6.0
++// SwiftPM manifest for react-native-enriched-html 1.1.1, for React Native's
++// SwiftPM autolinking. The package ships only ReactNativeEnrichedHtml.podspec.
++//
++// Sources are the podspec's: "ios/**/*.{h,m,mm,cpp}" and "cpp/**/*.{h,hpp,c,cpp}"
++// minus "cpp/tests/**". That includes ios/generated, the Fabric codegen output the
++// package ships (codegenConfig.includesGeneratedCode), so the app's codegen skips
++// this library and these files are the only copy of its component descriptors.
++//
++// CocoaPods built with a header map and published every header under
++// Headers/Private/ReactNativeEnrichedHtml, so the sources reach each other two
++// ways that SwiftPM has no equivalent for:
++//   - quoted includes of a header in another directory ("StyleHeaders.h" from
++//     ios/utils): every source directory is a header search path below;
++//   - <ReactNativeEnrichedHtml/Props.h> and similar: spm/headers holds one
++//     forwarding header per name the sources use.
++// spm/headers also forwards the two React headers the sources include with
++// quotes ("RCTFabricComponentsPlugins.h", "UIView+React.h").
++//
++// The pod sets HEADER_SEARCH_PATHS to cpp/parser and cpp/GumboParser and gets
++// RCT_NEW_ARCH_ENABLED=1 and C++20 from install_modules_dependencies. The folly
++// defines match the other hand-written manifests here: FOLLY_NO_CONFIG skips
++// folly-config.h, so the values it would set are given directly.
++//
++// The package, product and target are named ReactNativeEnrichedHtml (package.json
++// swiftpmConfig), the podspec's name. Package references are relative to the
++// autolinking symlink at ios/build/generated/autolinking/libs/ReactNativeEnrichedHtml.
++
++import PackageDescription
++
++let headerPaths: [String] = [
++    ".",
++    "spm/headers",
++    "cpp/parser",
++    "cpp/GumboParser",
++    "ios",
++    "ios/config",
++    "ios/enrichedInputTextView",
++    "ios/enrichedTextTextView",
++    "ios/extensions",
++    "ios/generated/ReactCodegen/ReactNativeEnrichedSpec",
++    "ios/htmlParser",
++    "ios/inputAttributesManager",
++    "ios/inputHtmlParser",
++    "ios/interfaces",
++    "ios/internals",
++    "ios/styles",
++    "ios/textHtmlParser",
++    "ios/utils",
++]
++
++let prefixHeader = ["-include", "react-native-spm-prefix.h"]
++
++let package = Package(
++    name: "ReactNativeEnrichedHtml",
++    platforms: [.iOS("17.0")],
++    products: [
++        .library(name: "ReactNativeEnrichedHtml", targets: ["ReactNativeEnrichedHtml"]),
++    ],
++    dependencies: [
++        .package(name: "ReactNative", path: "../../../../xcframeworks"),
++        .package(name: "React-GeneratedCode", path: "../../../ios"),
++    ],
++    targets: [
++        .target(
++            name: "ReactNativeEnrichedHtml",
++            dependencies: [
++                .product(name: "ReactHeaders", package: "ReactNative"),
++                .product(name: "ReactNativeHeaders", package: "ReactNative"),
++                .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"),
++                .product(name: "ReactAppHeaders", package: "React-GeneratedCode"),
++            ],
++            path: ".",
++            sources: [
++                "cpp/parser/GumboNormalizer.c",
++                "cpp/parser/GumboParser.cpp",
++                "ios/config/EnrichedConfig.mm",
++                "ios/enrichedInputTextView/EnrichedInputTextView.mm",
++                "ios/EnrichedTextInputView.mm",
++                "ios/EnrichedTextInputViewManager.mm",
++                "ios/enrichedTextTextView/EnrichedTextTextView.mm",
++                "ios/EnrichedTextView.mm",
++                "ios/EnrichedTextViewManager.mm",
++                "ios/extensions/ColorExtension.mm",
++                "ios/extensions/FontExtension.mm",
++                "ios/extensions/ImageExtension.mm",
++                "ios/extensions/LayoutManagerExtension.mm",
++                "ios/extensions/StringExtension.mm",
++                "ios/generated/ReactCodegen/ReactNativeEnrichedSpec/ComponentDescriptors.cpp",
++                "ios/generated/ReactCodegen/ReactNativeEnrichedSpec/EventEmitters.cpp",
++                "ios/generated/ReactCodegen/ReactNativeEnrichedSpec/Props.cpp",
++                "ios/generated/ReactCodegen/ReactNativeEnrichedSpec/ShadowNodes.cpp",
++                "ios/generated/ReactCodegen/ReactNativeEnrichedSpec/States.cpp",
++                "ios/htmlParser/HtmlParser.mm",
++                "ios/inputAttributesManager/InputAttributesManager.mm",
++                "ios/inputHtmlParser/InputHtmlParser.mm",
++                "ios/interfaces/AlignmentEntry.mm",
++                "ios/interfaces/AttributeEntry.mm",
++                "ios/interfaces/ImageAttachment.mm",
++                "ios/interfaces/ImageData.mm",
++                "ios/interfaces/LinkData.mm",
++                "ios/interfaces/LinkRegexConfig.mm",
++                "ios/interfaces/MediaAttachment.mm",
++                "ios/interfaces/MentionParams.mm",
++                "ios/interfaces/MentionStyleProps.mm",
++                "ios/interfaces/StyleBase.mm",
++                "ios/interfaces/StylePair.mm",
++                "ios/interfaces/TextDecorationLineEnum.mm",
++                "ios/internals/EnrichedTextInputViewShadowNode.mm",
++                "ios/internals/EnrichedTextInputViewState.cpp",
++                "ios/internals/EnrichedTextViewShadowNode.mm",
++                "ios/internals/EnrichedTextViewState.cpp",
++                "ios/styles/AlignmentStyle.mm",
++                "ios/styles/BlockQuoteStyle.mm",
++                "ios/styles/BoldStyle.mm",
++                "ios/styles/CheckboxListStyle.mm",
++                "ios/styles/CodeBlockStyle.mm",
++                "ios/styles/EnrichedTextStyles.mm",
++                "ios/styles/H1Style.mm",
++                "ios/styles/H2Style.mm",
++                "ios/styles/H3Style.mm",
++                "ios/styles/H4Style.mm",
++                "ios/styles/H5Style.mm",
++                "ios/styles/H6Style.mm",
++                "ios/styles/HeadingStyleBase.mm",
++                "ios/styles/ImageStyle.mm",
++                "ios/styles/InlineCodeStyle.mm",
++                "ios/styles/ItalicStyle.mm",
++                "ios/styles/LinkStyle.mm",
++                "ios/styles/MentionStyle.mm",
++                "ios/styles/OrderedListStyle.mm",
++                "ios/styles/StrikethroughStyle.mm",
++                "ios/styles/UnderlineStyle.mm",
++                "ios/styles/UnorderedListStyle.mm",
++                "ios/textHtmlParser/TextHtmlParser.mm",
++                "ios/utils/AlignmentUtils.mm",
++                "ios/utils/AttachmentLayoutUtils.mm",
++                "ios/utils/CheckboxHitTestUtils.mm",
++                "ios/utils/DotReplacementUtils.mm",
++                "ios/utils/EnrichedTextTouchHandler.mm",
++                "ios/utils/KeyboardUtils.mm",
++                "ios/utils/OccurenceUtils.mm",
++                "ios/utils/ParagraphAttributesUtils.mm",
++                "ios/utils/RangeUtils.mm",
++                "ios/utils/ShortcutsUtils.mm",
++                "ios/utils/StyleUtils.mm",
++                "ios/utils/TextBlockTapGestureRecognizer.mm",
++                "ios/utils/TextInsertionUtils.mm",
++                "ios/utils/TextListsUtils.mm",
++                "ios/utils/WeakBox.m",
++                "ios/utils/WordsUtils.mm",
++                "ios/utils/ZeroWidthSpaceUtils.mm",
++            ],
++            publicHeadersPath: "spm/public",
++            cSettings: headerPaths.map { .headerSearchPath($0) } + [.unsafeFlags(prefixHeader)],
++            cxxSettings: headerPaths.map { .headerSearchPath($0) } + [
++                .define("RCT_NEW_ARCH_ENABLED", to: "1"),
++                .define("FOLLY_NO_CONFIG"),
++                .define("FOLLY_CFG_NO_COROUTINES", to: "1"),
++                .define("FOLLY_MOBILE", to: "1"),
++                .define("FOLLY_USE_LIBCPP", to: "1"),
++                .define("DEBUG", .when(configuration: .debug)),
++                .define("NDEBUG", .when(configuration: .release)),
++                .unsafeFlags(prefixHeader + ["-Wno-comma", "-Wno-shorten-64-to-32"]),
++            ],
++            linkerSettings: [
++                .linkedFramework("UIKit"),
++                .linkedFramework("Foundation"),
++                .linkedFramework("CoreGraphics"),
++                // Imported by the sources and auto-linked through clang modules
++                // under CocoaPods; named here so the link does not depend on that.
++                .linkedFramework("CoreText"),
++                .linkedFramework("UniformTypeIdentifiers"),
++            ]
++        ),
++    ],
++    cxxLanguageStandard: .cxx20
++)
+diff --git a/package.json b/package.json
+index 3d770e67476c58e4ffc752e3c83f53e4b5bb86d8..a08439226ef601d0a85a46fe5c6e152b07ac0f5e 100644
+--- a/package.json
++++ b/package.json
+@@ -30,6 +30,9 @@
+     "cpp",
+     "*.podspec",
+     "react-native.config.js",
++    "Package.swift",
++    "react-native-spm-prefix.h",
++    "spm",
+     "!ios/build",
+     "!android/build",
+     "!android/gradle",
+@@ -261,5 +264,8 @@
+     "languages": "kotlin-objc",
+     "type": "fabric-view",
+     "version": "0.49.8"
++  },
++  "swiftpmConfig": {
++    "name": "ReactNativeEnrichedHtml"
+   }
+ }
+diff --git a/react-native-spm-prefix.h b/react-native-spm-prefix.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..af5cea0557f2f4aa957419f0fc3f250fd55dbaf5
+--- /dev/null
++++ b/react-native-spm-prefix.h
+@@ -0,0 +1,10 @@
++// AUTO-SCAFFOLDED by react-native spm scaffold — mirrors CocoaPods' default
++// prefix header so ObjC sources that rely on an implicit Foundation/UIKit
++// import compile under SPM (which has no prefix-header mechanism). Safe to
++// delete + regenerate via `npx react-native spm scaffold`.
++#ifdef __OBJC__
++#import <Foundation/Foundation.h>
++#if __has_include(<UIKit/UIKit.h>)
++#import <UIKit/UIKit.h>
++#endif
++#endif
+diff --git a/spm/headers/RCTFabricComponentsPlugins.h b/spm/headers/RCTFabricComponentsPlugins.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..2a3f014b59b0e9eaf8697504374d0265b47703e2
+--- /dev/null
++++ b/spm/headers/RCTFabricComponentsPlugins.h
+@@ -0,0 +1,3 @@
++// The Fabric views import this React header with quotes, which CocoaPods
++// resolved through header maps. SwiftPM has none, so forward it.
++#import <React/RCTFabricComponentsPlugins.h>
+diff --git a/spm/headers/ReactNativeEnrichedHtml/EnrichedTextComponentDescriptor.h b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextComponentDescriptor.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..6918063d2427b242cad535559eee8620237f57c9
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextComponentDescriptor.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/EnrichedTextComponentDescriptor.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/internals/EnrichedTextComponentDescriptor.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewComponentDescriptor.h b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewComponentDescriptor.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..d7d77773bd6bb3d7d949cc452d8f3f4885a95484
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewComponentDescriptor.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/EnrichedTextInputViewComponentDescriptor.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/internals/EnrichedTextInputViewComponentDescriptor.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewShadowNode.h b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewShadowNode.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..5b917631a1208696c4bf46dde72b56b71452d752
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewShadowNode.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/EnrichedTextInputViewShadowNode.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/internals/EnrichedTextInputViewShadowNode.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewState.h b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewState.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..f081b1b69c248720b39bfedc463fab497c7f647b
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextInputViewState.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/EnrichedTextInputViewState.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/internals/EnrichedTextInputViewState.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/EnrichedTextViewShadowNode.h b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextViewShadowNode.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..4f51503ff76321dca66a9f3cef994c3d5f264e79
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextViewShadowNode.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/EnrichedTextViewShadowNode.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/internals/EnrichedTextViewShadowNode.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/EnrichedTextViewState.h b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextViewState.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..0b39347fe47f378076df7367de02bc7784c49a7e
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/EnrichedTextViewState.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/EnrichedTextViewState.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/internals/EnrichedTextViewState.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/EventEmitters.h b/spm/headers/ReactNativeEnrichedHtml/EventEmitters.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..4417c7222183eb93d90b0250dd815be1e0631a7f
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/EventEmitters.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/EventEmitters.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/generated/ReactCodegen/ReactNativeEnrichedSpec/EventEmitters.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/Props.h b/spm/headers/ReactNativeEnrichedHtml/Props.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..55c79206a5bcac44239d7f1b2f635f6d54d081c6
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/Props.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/Props.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/generated/ReactCodegen/ReactNativeEnrichedSpec/Props.h"
+diff --git a/spm/headers/ReactNativeEnrichedHtml/RCTComponentViewHelpers.h b/spm/headers/ReactNativeEnrichedHtml/RCTComponentViewHelpers.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..46c69f335dad7b31f43b7a648555fb05f1f87306
+--- /dev/null
++++ b/spm/headers/ReactNativeEnrichedHtml/RCTComponentViewHelpers.h
+@@ -0,0 +1,3 @@
++// Forwards <ReactNativeEnrichedHtml/RCTComponentViewHelpers.h>, which CocoaPods served from
++// Headers/Private/ReactNativeEnrichedHtml. SwiftPM has no such directory.
++#include "../../../ios/generated/ReactCodegen/ReactNativeEnrichedSpec/RCTComponentViewHelpers.h"
+diff --git a/spm/headers/UIView+React.h b/spm/headers/UIView+React.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..ac77ddca6697fce247c956ace0d7156abba9b096
+--- /dev/null
++++ b/spm/headers/UIView+React.h
+@@ -0,0 +1,3 @@
++// The sources import this React header with quotes, which CocoaPods
++// resolved through header maps. SwiftPM has none, so forward it.
++#import <React/UIView+React.h>
+diff --git a/spm/public/ReactNativeEnrichedHtml.h b/spm/public/ReactNativeEnrichedHtml.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..d48f55c89da082e48240e5356f1e0f61f7e83415
+--- /dev/null
++++ b/spm/public/ReactNativeEnrichedHtml.h
+@@ -0,0 +1,2 @@
++// Umbrella placeholder for the target. Nothing imports it: React Native finds
++// the component views by class name at runtime.

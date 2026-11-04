@@ -100,7 +100,9 @@ import { I18nManager, Platform, useColorScheme, useWindowDimensions, type ColorV
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navChrome, semantic } from '@acme/theme';
 import {
+  Dial,
   PaneEdgesContext,
+  RoleScope,
   foldLayoutsFromRegions,
   resolveAdaptiveNavigationPlacement,
   useReducedMotion,
@@ -113,7 +115,17 @@ import {
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
 import { Menu as MenuIcon, X as XIcon } from '@acme/ui/icons';
-import { getAuthMode, RoleSwitcher } from '@acme/app';
+import { getAuthMode, RoleSwitcher, shellForRole, useAppSession } from '@acme/app';
+// The module path, not the package root: ViroPlatform is Platform constants
+// plus one NativeModules lookup, so phones don't pull the renderer in.
+import {
+  isPico,
+  isQuest,
+  isVisionOS,
+} from '@reactvision/react-viro/dist/components/Utilities/ViroPlatform';
+import { spatialRailBuild } from '../src/spatial/spatialRailBuild';
+import { RAIL_WINDOW_DP, railWindow, railWindowHeightDp } from '../src/spatial/railWindow';
+import { useHostedSpatialWindow } from '../src/spatial/useHostedSpatialWindow';
 
 // `--spacing-nav-rail`, read from the token so the rail's JS width and its
 // class stay one number. `px-2` on the bottom bar, in points.
@@ -188,6 +200,8 @@ export function useShellNavigationPlacement(): AdaptiveNavigationPlacement {
     folds,
     hardwareEdge,
     isRTL: I18nManager.isRTL,
+    // Constants, not functions (see xr-eligibility.native.ts).
+    spatial: isQuest || isPico || isVisionOS,
   });
 }
 
@@ -261,7 +275,52 @@ interface ShellTabBarProps extends BottomTabBarProps {
   raisedTargetClass?: string;
 }
 
-export function ShellTabBar({
+/**
+ * Places the shell's navigation. On a quest build the rail asks for its own
+ * Horizon window outside the main window's physical left edge (Harlem Might's
+ * spatial rail); on a pico build, for the strip left of the main panel in
+ * the main window itself (`PicoMainFrame`), at the same size and gap. While
+ * that window is pending or dropped, and on every other build, the in-window
+ * rail or bottom bar draws as before. Once the rail window shows, the main
+ * window reserves nothing for it.
+ *
+ * The window's content renders from the root `SpatialWindowHost`, outside this
+ * navigator and outside the shell's `RoleScope`/`Dial`. So the drawer action
+ * is bound here, where the navigator is, and the door and dial are re-applied
+ * around the window's content from the same session value the shell guards
+ * on (see `ShellHeader` for why that is safe).
+ */
+export function ShellTabBar(props: ShellTabBarProps) {
+  const { state, items, hasOverflowDrawer = false } = props;
+  /*
+    The tabs navigation — the drawer's child. `openDrawer` dispatched here is
+    not an action a tab router handles, so it bubbles to the Drawer ancestor,
+    which is exactly where the shell's overflow drawer lives.
+  */
+  const navigation = useNavigation();
+  const openMenu = () => navigation.dispatch(DrawerActions.openDrawer());
+  const { activeContext } = useAppSession();
+  const role = shellForRole(activeContext.kind) ?? 'learner';
+  // Destinations that will actually draw, plus the menu slot: the window is
+  // sized to exactly what it hosts.
+  const slots =
+    items.filter((item) => state.routes.some((route) => route.name === item.name)).length +
+    (hasOverflowDrawer ? 1 : 0);
+
+  const windowPlacement = useHostedSpatialWindow(
+    spatialRailBuild ? railWindow(slots) : null,
+    <RoleScope role={role} className="flex-1">
+      {/* Hot for the learner shell only, matching the shell layouts. */}
+      <Dial temperature={role === 'learner' ? 'hot' : 'cool'} className="flex-1">
+        <ShellTabBarView {...props} layout="window" onOpenMenu={openMenu} />
+      </Dial>
+    </RoleScope>,
+  );
+  if (windowPlacement === 'spatial') return null;
+  return <ShellTabBarView {...props} layout="inline" onOpenMenu={openMenu} />;
+}
+
+function ShellTabBarView({
   state,
   descriptors,
   emitter,
@@ -273,7 +332,13 @@ export function ShellTabBar({
   targetClass,
   raisedTargetClass,
   hasOverflowDrawer = false,
-}: ShellTabBarProps) {
+  layout,
+  onOpenMenu,
+}: ShellTabBarProps & {
+  /** `window`: the whole of its own Horizon window, a fixed-size collapsed rail. */
+  layout: 'inline' | 'window';
+  onOpenMenu: () => void;
+}) {
   const insets = useSafeAreaInsets();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   /*
@@ -284,9 +349,13 @@ export function ShellTabBar({
     then layered on top so a wide tabletop or compact-height landscape window
     correctly stays on bottom navigation.
   */
-  const rail = placement.rail;
-  const railExpanded = placement.expanded;
-  const column = placement.hardwareWidth;
+  const xr = layout === 'window';
+  const rail = xr || placement.rail;
+  const railExpanded = !xr && placement.expanded;
+  const column = xr ? 0 : placement.hardwareWidth;
+  // One fixed slot per item in the rail window; its height is computed from
+  // the same number (src/spatial/railWindow.ts).
+  const slotStyle = xr ? { height: RAIL_WINDOW_DP.item } : undefined;
   const railEdge = placement.position === 'left' ? 'left' : 'right';
   const minTarget = targetClass ?? 'min-h-target-adult';
   const raisedTarget = raisedTargetClass ?? '';
@@ -304,12 +373,6 @@ export function ShellTabBar({
     not get buzzed for navigating.
   */
   const reducedMotion = useReducedMotion();
-  /*
-    The tabs navigation — the drawer's child. `openDrawer` dispatched here is
-    not an action a tab router handles, so it bubbles to the Drawer ancestor,
-    which is exactly where the shell's overflow drawer lives.
-  */
-  const navigation = useNavigation();
 
   const rendered = items.map((item) => {
     const index = state.routes.findIndex((route) => route.name === item.name);
@@ -392,11 +455,14 @@ export function ShellTabBar({
             The bar's own `pt-nav-raise` is the other half — see the container.
             A rail has no top edge to break, so it keeps neither.
           */
+          style={slotStyle}
           className={
             rail
               ? railExpanded
                 ? 'w-full px-inset active:opacity-80'
-                : 'items-center active:opacity-80'
+                : xr
+                  ? 'items-center justify-center active:opacity-80'
+                  : 'items-center active:opacity-80'
               : 'flex-1 self-start -mt-nav-raise items-center active:opacity-80'
           }
         >
@@ -404,7 +470,7 @@ export function ShellTabBar({
             className={
               railExpanded
                 ? 'w-full flex-row items-center gap-element py-stack'
-                : rail
+                : rail && !xr
                   ? 'items-center gap-0.5 py-stack'
                   : 'items-center gap-0.5'
             }
@@ -440,7 +506,8 @@ export function ShellTabBar({
                 the one control on the bar that is an ACTION rather than a
                 destination.
               */
-              className={`w-nav-raised h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
+              style={xr ? { borderRadius: RAIL_WINDOW_DP.cornerRadius, borderCurve: 'continuous' } : undefined}
+              className={`w-nav-raised h-nav-raised ${raisedTarget} items-center justify-center ${xr ? '' : 'rounded-md'} border-2 border-on-surface-footer bg-nav-cta shadow-card`}
             >
               <item.Icon size={30} className="text-on-nav-cta" />
             </View>
@@ -525,7 +592,10 @@ export function ShellTabBar({
           target, and a View that steals the touch from the Pressable wrapping it
           is a dead tab.
         */
-        className={rail ? 'active:opacity-70' : 'flex-1 active:opacity-70'}
+        style={slotStyle}
+        className={
+          xr ? 'justify-center active:opacity-70' : rail ? 'active:opacity-70' : 'flex-1 active:opacity-70'
+        }
       >
         {/*
           The cell keeps the AGE BAND's target as its min-height and nothing
@@ -559,9 +629,13 @@ export function ShellTabBar({
             against Material's 32, and the width comes from `px-inset-tight`
             rather than Material's fixed 64, which would leave 16 a side inside a
             96 rail and overhang a three-tab K–2 bottom bar.
+
+            In the spatial rail window the indicator is a circle and the raised
+            slab takes the rail's own corner radius: selection reads rounded on
+            every headset, matching the rounded rail around it.
           */}
           <View
-            className={`aspect-square h-nav-indicator items-center justify-center rounded-control ${
+            className={`aspect-square h-nav-indicator items-center justify-center ${xr ? 'rounded-full' : 'rounded-control'} ${
               focused ? 'bg-nav-selected' : 'hover:bg-surface-sunken'
             }`}
           >
@@ -599,6 +673,51 @@ export function ShellTabBar({
     TalkBack order, selection semantics and predictive-back behavior stay with
     the navigator rather than a second native navigation owner.
   */
+  /*
+    THE RAIL WINDOW. The collapsed rail is the window's whole content: no
+    insets (a floating window has no cutouts), no edge rule (there is no
+    content beside it to divide from), and never Material's renderer, whose
+    column stacks from the top and sizes itself. Items sit in fixed slots.
+    The window is exactly `railWindow()`'s size on Quest and PICO alike, and
+    the rail draws its own rounded corners from the same spec, so the shape
+    matches where the OS does not round the window (PICO OS 5).
+  */
+  if (xr) {
+    return (
+      <View
+        role="tablist"
+        aria-label="Main navigation"
+        style={{
+          width: RAIL_WINDOW_DP.width,
+          minHeight: railWindowHeightDp(
+            rendered.filter((item) => item !== null).length + (hasOverflowDrawer ? 1 : 0),
+          ),
+          paddingVertical: RAIL_WINDOW_DP.padding,
+          borderRadius: RAIL_WINDOW_DP.cornerRadius,
+          borderCurve: 'continuous',
+          overflow: 'hidden',
+        }}
+        className="flex-1 flex-col items-stretch justify-center bg-surface-footer"
+      >
+        {rendered}
+        {hasOverflowDrawer ? (
+          <Pressable
+            role="button"
+            aria-label="Open menu"
+            onPress={() => {
+              if (!reducedMotion) haptics.selection();
+              onOpenMenu();
+            }}
+            style={slotStyle}
+            className="w-full items-center justify-center active:opacity-70"
+          >
+            <MenuIcon size={24} className="text-on-surface-footer" />
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
+
   if (Platform.OS === 'android' && rail) {
     /*
       The Material renderer ships its own theme colours (white card, platform
@@ -812,7 +931,7 @@ export function ShellTabBar({
               aria-label="Open menu"
               onPress={() => {
                 if (!reducedMotion) haptics.selection();
-                navigation.dispatch(DrawerActions.openDrawer());
+                onOpenMenu();
               }}
               className={`${minTarget} w-full items-center justify-center active:opacity-70`}
             >
@@ -916,7 +1035,7 @@ export function ShellTabBar({
             aria-label="Open menu"
             onPress={() => {
               if (!reducedMotion) haptics.selection();
-              navigation.dispatch(DrawerActions.openDrawer());
+              onOpenMenu();
             }}
             style={{ marginTop: 'auto', marginBottom: insets.bottom }}
             className={`${minTarget} w-full items-center justify-center active:opacity-70`}
