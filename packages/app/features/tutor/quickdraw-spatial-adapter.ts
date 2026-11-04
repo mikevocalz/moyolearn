@@ -1,16 +1,16 @@
 'use client';
 // The adapter `@viro-external/ui`'s QuickDrawSpatialSurface mounts against.
 //
-// THE `renderer: "esiku"` BRAND ON A TRANSPORT THAT IS NOT ESIKU-COMPILED YET.
-// What the contract's brand asserts is the rendering SHAPE — QuickDraw owns the
-// document and the adapter owns an external GPU render target a Viro material
-// reads — and that is true here: `MoyoBoardTexture` re-parents the live editor
-// view into `AndroidViewTexture`, the external target Kotlin fills
-// `moyoBoardLive`'s diffuse channel from. The eskiuc-compiled math backend in
-// `render-passes/native/eskiu` is a migration target for the scalar helpers it
-// names; when it lands, this adapter's transport is already the boundary it
-// binds behind. No WebView, canvas, screenshot or video fallback is introduced
-// by this file — the surface is a live external render target, nothing else.
+// IDENTITY: THE WEBVIEW BOARD, SAID PLAINLY. The board is QuickDraw's HTML
+// page in `react-native-webview`; `MoyoBoardTexture` re-parents that live view
+// into `AndroidViewTexture`, the external target Kotlin fills `moyoBoardLive`'s
+// diffuse channel from. `WEBVIEW_QUICKDRAW_IDENTITY` names exactly that: host
+// `webview`, backend `webview-canvas2d`, texture owner
+// `viro-android-view-texture`. It replaces the deprecated `renderer: "esiku"`,
+// which claimed an ESIKU host this adapter never had; viro-external ui now
+// resolves the identity at mount and throws a RangeError when `renderer:
+// "esiku"` sits next to a non-ESIKU identity
+// (viro-external packages/ui/doc/QuickDrawSpatialSurface.md).
 //
 // POINTER COORDINATES ARRIVE NORMALISED. The surface that owns the world
 // transform converts a world hit to `(u, v)` once; this adapter multiplies by
@@ -25,6 +25,7 @@
 //      packages/ui/whiteboard.types.ts · packages/ui/xr/material-names.ts
 // SOT-KEYWORDS: quickdraw spatial adapter external render target dispatch pointer muse stylus
 
+import { WEBVIEW_QUICKDRAW_IDENTITY } from '@viro-external/xr-contract';
 import type {
   NativeQuickDrawSpatialAdapter,
   QuickDrawPointerPhase,
@@ -80,9 +81,9 @@ const SURFACE_PHASE: Record<
  * no live surface exists. `dispatchSurface` is the one seam every spatial
  * pointer — controller ray, stylus, board quad — crosses.
  */
-export interface MoyoQuickDrawAdapter extends NativeQuickDrawSpatialAdapter {
+export type MoyoQuickDrawAdapter = NativeQuickDrawSpatialAdapter & {
   dispatchSurface(sample: XrSurfaceInput): void;
-}
+};
 
 export function createMoyoQuickDrawAdapter(
   engine: () => WhiteboardHandle | null,
@@ -98,7 +99,7 @@ export function createMoyoQuickDrawAdapter(
   };
 
   return {
-    renderer: 'esiku',
+    identity: WEBVIEW_QUICKDRAW_IDENTITY,
 
     mount: (): QuickDrawSpatialSurfaceHandle => ({
       materialName: XR_MATERIAL.boardLive,
