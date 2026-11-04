@@ -4,17 +4,17 @@
 <!-- Why: reviewable end-to-end operations slice built on canonical Moyo services. -->
 <!-- SOT-KEYWORDS: moyo business crm import roadmap test gates -->
 
-**Status:** Planning/review draft only. Existing behavior unchanged; no migration, payment, provider write or runtime feature is implemented here.
+**Status:** Implementation contract (merged 2026-11-04). Existing behavior unchanged; no migration, payment, provider write or runtime feature is implemented here.
 **Implementation blocked by:** MB-05. Architecture: [MB-01 PR #101](https://github.com/mikevocalz/moyolearn/pull/101).
 
 ## Source-of-truth files to inspect and extend
 
-- `packages/app/features/ops/ops.service.ts` — inspect currently installed interfaces and tests before editing
-- `packages/app/features/ops/families-content.tsx` — inspect currently installed interfaces and tests before editing
-- `packages/app/features/ops/leads-content.tsx` — inspect currently installed interfaces and tests before editing
-- `apps/web/lib/leads.repository.ts` — inspect currently installed interfaces and tests before editing
-- `packages/payload/src/collections/Families.ts` — inspect currently installed interfaces and tests before editing
-- `packages/payload/src/collections/Leads.ts` — inspect currently installed interfaces and tests before editing
+- `packages/app/features/ops/ops.service.ts`: inspect currently installed interfaces and tests before editing
+- `packages/app/features/ops/families-content.tsx`: inspect currently installed interfaces and tests before editing
+- `packages/app/features/ops/leads-content.tsx`: inspect currently installed interfaces and tests before editing
+- `apps/web/lib/leads.repository.ts`: inspect currently installed interfaces and tests before editing
+- `packages/payload/src/collections/Families.ts`: inspect currently installed interfaces and tests before editing
+- `packages/payload/src/collections/Leads.ts`: inspect currently installed interfaces and tests before editing
 
 ## User-visible tracer bullet
 
@@ -48,4 +48,4 @@
 
 **Rollback:** Reject or disable import before commit; audit/reverse incorrect committed business records via reviewed domain corrections, never arbitrary mass delete.
 
-**Evidence now:** GitHub repo inspection and documentation commit only. Runtime code, schema migrations, CI, real Postgres, browser, simulator, physical device, provider sandbox, and production validations were not run. Keep draft until complete behavior, test results and required security/financial reviews appear. Do not merge this document as a substitute for implementation.
+**Evidence now:** GitHub repo inspection and documentation commit only. Runtime code, schema migrations, CI, real Postgres, browser, simulator, physical device, provider sandbox, and production validations were not run. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented. The required security/financial reviews are part of that implementation PR.
