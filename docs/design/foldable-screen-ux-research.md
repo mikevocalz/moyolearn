@@ -1,4 +1,4 @@
-# Moyo Learn — foldable UI/UX research and screen implementation plan
+# Moyo Learn: foldable UI/UX research and screen implementation plan
 
 Status: research-backed engineering specification; no runtime changes or device validation claimed.
 
@@ -27,7 +27,7 @@ Native ordinary phone: existing bottom tabs. Native foldable even folded-cover, 
 - Accessibility specialist: large text, screen readers, switch/keyboard navigation, RTL
 - Test/performance engineer: boundary matrices, physical-device evidence, no remounts/duplicate sessions
 
-These are review roles, not assertions that people have been assigned.
+These are review roles; nobody has been assigned to them.
 
 ## Screen-by-screen UX direction
 
@@ -53,11 +53,11 @@ Use `pnpm ui:sweep`, lint, typecheck, targeted adaptive tests, iOS/Android nativ
 
 ## Suggested implementation PR sequence
 
-A. **Research/design audit** (this PR): screen inventory, design roles, acceptance matrix, references.
+A. **Research/design audit** (this contract): screen inventory, design roles, acceptance matrix, references.
 B. **Adapter and contract tests**: inspect arrangement library and Expo compatibility, implement optional wrapper only if justified; unit test geometry and navigation policy.
 C. **Student learning surfaces**: home, Tutor Room, whiteboard, OCR and live sessions.
 D. **Parent and tutor surfaces**: dashboards, marketplace, scheduling, roster and detail.
 E. **Business/teacher/admin surfaces**: calendar, CRM, campaigns, tables and Inspector.
 F. **Native verification**: iPhone Duo and Android book/tabletop/cover, multi-window, physical device evidence and regression closure.
 
-Do not merge or mark implementation complete until tests and screenshots exist. Preserve the existing product design and role-specific security boundaries.
+Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented. Preserve the existing product design and role-specific security boundaries.
