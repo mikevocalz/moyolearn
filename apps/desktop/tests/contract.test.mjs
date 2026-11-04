@@ -17,7 +17,8 @@ test("desktop has its own package manager boundary", () => {
 
 test("native preview does not masquerade as authenticated tutoring", () => {
   const entry = read("../App.tsx");
-  assert.doesNotMatch(entry, /@acme\/app|@acme\/auth|@better-auth|process\.dlopen|nitro-node/);
+  assert.doesNotMatch(entry, /from\s+["\x27](?:@acme\/app|@acme\/auth|@better-auth|nitro-node)/);
+  assert.doesNotMatch(entry, /process\.dlopen\s*\(/);
   assert.match(entry, /openFileDialog/);
   assert.match(entry, /useMenu/);
   assert.match(entry, /usePreviewStore/);

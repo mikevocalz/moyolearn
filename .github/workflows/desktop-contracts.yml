@@ -1,0 +1,35 @@
+name: Legend Spark desktop contracts
+
+on:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/desktop-contracts.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/desktop/**"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/desktop-contracts.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    name: isolated workspace / preview source
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.19.0"
+      # No pnpm install: Spark's native build needs macOS + Xcode and a
+      # separately validated preview package graph. This job proves only
+      # the source contract and must not be treated as native acceptance.
+      - name: Validate desktop workspace and non-production gates
+        run: node --test apps/desktop/tests/contract.test.mjs
+      - name: Parse Metro configuration
+        run: node --check apps/desktop/metro.config.js
