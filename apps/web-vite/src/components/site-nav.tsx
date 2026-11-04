@@ -93,9 +93,9 @@ const useNavStore = create<NavState>()((set) => ({
 
 const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult px-inset-roomy py-inset';
 /** The one filled object in the bar. */
-const CTA = `site-nav-cta ${CONTROL} rounded-moyo-card bg-moyo-primary text-moyo-on-primary text-site-body shadow-moyo-1 transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
-/** The secondary action in the bar — plain type, so the CTA is the only filled object. */
-const LOGIN = `site-nav-login ${CONTROL} text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50`;
+const CTA = `site-nav-cta ${CONTROL} rounded-moyo-card border-2 border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body shadow-moyo-1 transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
+/** The secondary action: same radius and press shadow as the CTA, outlined on paper so the CTA stays the only filled object. */
+const LOGIN = `site-nav-login ${CONTROL} rounded-moyo-card border-2 border-moyo-outline bg-moyo-paper shadow-moyo-1 text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);

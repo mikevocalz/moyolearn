@@ -23,6 +23,9 @@ export function useAutoGrow(value: string, floor: number): AutoGrowProps {
     const field = ref.current;
     if (!field) return;
 
+    // A textarea defaults to rows=2, so an empty field measured two lines tall
+    // and its placeholder rode above the centred keys beside it.
+    field.rows = 1;
     field.style.height = 'auto';
 
     /*

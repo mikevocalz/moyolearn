@@ -46,5 +46,14 @@
       <meta-data android:name="pvr.app.type" android:value="vr"/>
     </activity>
     <uses-native-library android:name="libopenxr_loader.so" android:required="false"/>
+    <activity android:name="com.moyolearn.spatialpanels.SpatialPanelActivity" android:exported="false" android:theme="@style/AppTheme" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode|smallestScreenSize|density" android:resizeableActivity="true" android:excludeFromRecents="true" android:taskAffinity="com.moyolearn.app.panel">
+      <layout android:defaultWidth="80dp" android:defaultHeight="472dp"/>
+      <meta-data android:name="pico.spatial.windowcontainer.id" android:value="SpatialPanel"/>
+      <meta-data android:name="pico.spatial.windowcontainer.defaultsize" android:value="80x472"/>
+      <meta-data android:name="pico.spatial.WindowContainer.size" android:value="80x472"/>
+      <meta-data android:name="pico.spatial.windowcontainer.defaultsize.unit" android:value="meters|dp"/>
+      <meta-data android:name="pico.spatial.windowcontainer.resizetype" android:value="0"/>
+      <meta-data android:name="pico.spatial.windowcontainer.captionbar" android:value="0"/>
+    </activity>
   </application>
 </manifest>

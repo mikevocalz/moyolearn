@@ -28,7 +28,7 @@
 // SOT-KEYWORDS: whiteboard learning canvas drawing board controls responsive pane compact expanded age band
 
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
-import { ActivityIndicator, type LayoutChangeEvent } from 'react-native';
+import { ActivityIndicator, Platform, type LayoutChangeEvent } from 'react-native';
 import { targets } from '@acme/theme';
 import { Button } from './Button';
 import { LearningCanvas } from './LearningCanvas';
@@ -200,6 +200,9 @@ const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
  * use. The same trade the swatch strip makes, for the same reason, stated in
  * the same place.
  */
+/** Web draws hitSlop as layout, not as an invisible touch band. */
+const WEB = Platform.OS === 'web';
+
 const TARGET_FOLDED: Record<NonNullable<WhiteboardProps['size']>, string> = {
   sm: 'min-h-target-adult px-2',
   md: 'min-h-target-adult px-2',
@@ -550,7 +553,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           grouped by it.
         */
         className={`flex-row items-center justify-between rounded-control border-2 border-strong bg-surface-raised ${
-          compact ? 'p-inset-hair' : 'flex-wrap gap-element px-inset-tight py-inset-field'
+          compact ? 'flex-nowrap p-inset-hair' : 'flex-nowrap gap-element px-inset-tight py-inset-field'
         }`}
       >
         {/*
@@ -573,7 +576,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         <View
           role="radiogroup"
           aria-label="Drawing tool"
-          className="flex-row items-center overflow-hidden rounded-control border-2 border-strong bg-surface"
+          className="shrink-0 flex-row items-center overflow-hidden rounded-control border-2 border-strong bg-surface"
         >
         {TOOLS.map(({ id, label, Icon }) => (
           <Pressable
@@ -582,7 +585,9 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             aria-label={label}
             role="radio"
             aria-checked={tool === id}
-            hitSlop={keySlop}
+            /* Native only: on web the slop widens the drawn box, so neighbours
+               overlapped and the selected fill spilled under the next key. */
+            hitSlop={WEB ? undefined : keySlop}
             /*
               SELECTED IS INVERTED INK, NOT THE ACCENT. It was `bg-highlighter`,
               which put a teal tile next to the yellow ask — two accents in one
@@ -592,7 +597,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               thing you press to make something happen. A pressed key is the
               page's own ink turned inside out.
             */
-            className={`${key} ${FOCUS} items-center justify-center ${
+            className={`${key} ${FOCUS} shrink-0 items-center justify-center ${
               tool === id ? 'bg-text' : ''
             }`}
           >
@@ -709,7 +714,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
                 language, and the shadow is also the thing the margin above
                 exists for.
               */
-              hitSlop={keySlop}
+              hitSlop={WEB ? undefined : keySlop}
               className={`${key} ${FOCUS} mr-inset-hair items-center justify-center rounded-control border-2 ${
                 !hasMarks || asking
                   ? 'border-border bg-surface-sunken shadow-none'

@@ -647,7 +647,7 @@ export function Composer({
         */}
         <View
           onLayout={measureRow}
-          className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised pl-inset-tight pr-0 py-inset-field ${
+          className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${
             disabled ? 'opacity-60' : ''
           }`}
         >
