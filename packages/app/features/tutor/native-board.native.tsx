@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react';
-import { useStore } from 'zustand';
-import { createStore, type StoreApi } from 'zustand/vanilla';
+import { useEffect, useMemo, type ReactElement, type ReactNode } from 'react';
+import { useInstanceStore, useStore } from '@acme/ui';
 import { createNativeBoardSceneBridge, type SceneResult } from '@nitro-forge/board/skia';
 import { createInkOutlineEncoder } from '@nitro-forge/board';
 import { ViroMaterials, ViroQuad } from '@reactvision/react-viro';
@@ -44,11 +43,9 @@ export interface NativeBoardPaperProps {
 export function NativeBoardPaper({ doc, width, height, position, fallback }: NativeBoardPaperProps): ReactElement {
   const source = useMemo(() => createForgeBoardSource(doc), [doc]);
   const encoder = useMemo(() => createInkOutlineEncoder(getInkOutline), []);
-  const sceneRef = useRef<StoreApi<{ scene: SceneResult; failed: boolean }> | null>(null);
-  if (sceneRef.current === null) sceneRef.current = createStore<{ scene: SceneResult; failed: boolean }>(() => ({
+  const sceneState = useInstanceStore<{ scene: SceneResult; failed: boolean }>(() => ({
     scene: { kind: 'unsupported', reasons: ['Preparing board'] }, failed: false,
   }));
-  const sceneState = sceneRef.current;
   const scene = useStore(sceneState, (state) => state.scene);
   const failed = useStore(sceneState, (state) => state.failed);
   useEffect(() => {

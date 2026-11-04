@@ -35,7 +35,9 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       one behind a ref so the engine never holds a stale closure.
     */
     const historyCommands = useRef(history);
-    historyCommands.current = history;
+    useEffect(() => {
+      historyCommands.current = history;
+    }, [history]);
     const shortcutStop = useRef<(() => void) | null>(null);
     useEffect(() => () => shortcutStop.current?.(), []);
     const historyListener = useRef(onHistory);

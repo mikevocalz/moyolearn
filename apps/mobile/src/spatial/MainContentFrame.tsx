@@ -1,8 +1,7 @@
-import { useRef, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { usePathname } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import { useStore } from 'zustand';
-import { createStore, type StoreApi } from 'zustand/vanilla';
+import { useInstanceStore, useStore } from '@acme/ui';
 import { semantic } from '@acme/theme';
 import { View } from '@acme/ui/primitives';
 import { metaWindows } from './metaWindows';
@@ -12,9 +11,7 @@ import { fitMainContent } from './main-content-geometry';
 export function MainContentFrame({ children, overlay = false }: { children: ReactNode; overlay?: boolean }) {
   const pathname = usePathname();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-  const stateRef = useRef<StoreApi<{ width: number; height: number }> | null>(null);
-  if (!stateRef.current) stateRef.current = createStore(() => ({ width: 0, height: 0 }));
-  const state = stateRef.current;
+  const state = useInstanceStore(() => ({ width: 0, height: 0 }));
   const bounds = useStore(state, (s) => s);
   // The immersive renderer owns its full native surface; this is the flat app's middle panel.
   const immersive = pathname.endsWith('/tutor-xr') || [

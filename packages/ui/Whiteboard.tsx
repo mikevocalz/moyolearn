@@ -36,8 +36,7 @@ import { Text } from './Text';
 import { AnimatePresence, MotionView, useReducedMotion } from './motion';
 import { Sparkles, Trash2, Undo2 } from './icons';
 import { ForgeBoardIcon, type ForgeBoardIconName } from './ForgeBoardIcon';
-import { useStore } from 'zustand';
-import { createStore, type StoreApi } from 'zustand/vanilla';
+import { useInstanceStore, useStore } from './use-instance-store';
 import { View, Pressable } from './primitives';
 import { WhiteboardBoard } from './whiteboard-board';
 import type {
@@ -272,22 +271,15 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   ref,
 ) {
   const board = useRef<WhiteboardHandle>(null);
-  const state = useRef<StoreApi<WhiteboardState> | null>(null);
-  if (state.current === null) state.current = createStore<WhiteboardState>(() => ({
+  const state = useInstanceStore<WhiteboardState>(() => ({
     tool: 'draw', ink: 'black', pickingInk: false, hasMarks: false, emptyNotice: false, rowWidth: null,
   }));
-  const tool = useStore(state.current, (s) => s.tool);
-  const ink = useStore(state.current, (s) => s.ink);
-  const pickingInk = useStore(state.current, (s) => s.pickingInk);
-  const hasMarks = useStore(state.current, (s) => s.hasMarks);
-  const emptyNotice = useStore(state.current, (s) => s.emptyNotice);
-  const rowWidth = useStore(state.current, (s) => s.rowWidth);
-  const setTool = (tool: WhiteboardTool) => state.current?.setState({ tool });
-  const setInk = (ink: WhiteboardInk) => state.current?.setState({ ink });
-  const setPickingInk = (pickingInk: boolean) => state.current?.setState({ pickingInk });
-  const setHasMarks = (hasMarks: boolean) => state.current?.setState({ hasMarks });
-  const setEmptyNotice = (emptyNotice: boolean) => state.current?.setState({ emptyNotice });
-  const setRowWidth = (rowWidth: number) => state.current?.setState({ rowWidth });
+  const tool = useStore(state, (s) => s.tool);
+  const ink = useStore(state, (s) => s.ink);
+  const pickingInk = useStore(state, (s) => s.pickingInk);
+  const hasMarks = useStore(state, (s) => s.hasMarks);
+  const emptyNotice = useStore(state, (s) => s.emptyNotice);
+  const rowWidth = useStore(state, (s) => s.rowWidth);
   /*
     Whether the learner has made a mark, and it is the only thing gating the
     ask. NOT derived from a snapshot count: the native fork's handle is an async
@@ -307,11 +299,11 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     loadSnapshot: (next) => board.current?.loadSnapshot(next),
     getSnapshot: async () => (await board.current?.getSnapshot()) ?? null,
     setTool: (next) => {
-      setTool(next);
+      state.setState({ tool: next });
       board.current?.setTool(next);
     },
     setInk: (next) => {
-      setInk(next);
+      state.setState({ ink: next });
       board.current?.setInk(next);
     },
     undo: () => history ? history.undo() : board.current?.undo(),
@@ -340,8 +332,8 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   }));
 
   const measureRow = useCallback((event: LayoutChangeEvent) => {
-    setRowWidth(event.nativeEvent.layout.width);
-  }, []);
+    state.setState({ rowWidth: event.nativeEvent.layout.width });
+  }, [state]);
 
   const target = TARGET_DP[size];
   /*
@@ -361,9 +353,9 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   const compact = rowWidth !== null && rowWidth < fullRowDp;
 
   const chooseTool = useCallback((next: WhiteboardTool) => {
-    setTool(next);
+    state.setState({ tool: next });
     board.current?.setTool(next);
-  }, []);
+  }, [state]);
 
   /*
     Choosing a colour also picks the pen back up. A child who has just erased
@@ -374,19 +366,19 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   */
   const chooseInk = useCallback(
     (next: WhiteboardInk) => {
-      setInk(next);
+      state.setState({ ink: next });
       board.current?.setInk(next);
-      setPickingInk(false);
+      state.setState({ pickingInk: false });
       if (tool === 'eraser') chooseTool('draw');
     },
-    [tool, chooseTool],
+    [state, tool, chooseTool],
   );
 
   const undo = useCallback(() => {
-    setEmptyNotice(false);
+    state.setState({ emptyNotice: false });
     if (history) history.undo();
     else board.current?.undo();
-  }, [history]);
+  }, [state, history]);
 
   /*
     Clear runs without a confirm, and that is the undo working, not a corner
@@ -395,15 +387,15 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     scratch paper is friction that teaches them not to use the paper.
   */
   const clear = useCallback(() => {
-    setEmptyNotice(false);
+    state.setState({ emptyNotice: false });
     board.current?.clear();
-  }, []);
+  }, [state]);
 
   const handleAsk = useCallback(async () => {
     const png = (await board.current?.exportPng()) ?? null;
-    setEmptyNotice(png === null);
+    state.setState({ emptyNotice: png === null });
     onAsk?.(png);
-  }, [onAsk]);
+  }, [state, onAsk]);
 
   /*
     `hasMarks` turns on for the LEARNER's hand only. A restored board and a
@@ -415,12 +407,12 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   const handleChange = useCallback(
     (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
       if (source === 'user') {
-        setHasMarks(true);
-        setEmptyNotice(false);
+        state.setState({ hasMarks: true });
+        state.setState({ emptyNotice: false });
       }
       onChange?.(diff, source);
     },
-    [onChange],
+    [state, onChange],
   );
 
   /*
@@ -660,7 +652,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           list that says "Red" is still a list about colour rather than colour.
         */}
         <Pressable
-          onPress={() => state.current?.setState((s) => ({ pickingInk: !s.pickingInk }))}
+          onPress={() => state.setState((s) => ({ pickingInk: !s.pickingInk }))}
           aria-label={`Pen color: ${currentInk.label}`}
           aria-expanded={pickingInk}
           className={`${key} ${FOCUS} items-center justify-center rounded-control ${
