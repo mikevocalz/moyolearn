@@ -187,3 +187,19 @@ test('Android compact-height landscape stays on bottom navigation at wide width'
   assert.equal(placement.kind, 'bottom-medium');
   assert.equal(placement.position, 'bottom');
 });
+
+test('headset builds put the rail on the left at every size, even on Android', () => {
+  for (const sizeClass of ['compact', 'medium', 'expanded'] as const) {
+    const placement = resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass,
+      heightDp: 400,
+      widthDp: 390,
+      folds: [tabletop],
+      isRTL: true,
+      spatial: true,
+    });
+    assert.equal(placement.position, 'left');
+    assert.equal(placement.rail, true);
+  }
+});
