@@ -1,0 +1,8 @@
+{
+  "extends": "@acme/config/typescript/react-library.json",
+  // node:test drives the suite, so node's types are declared, not inherited
+  // from a sibling's transitive @types.
+  "compilerOptions": { "types": ["node"] },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

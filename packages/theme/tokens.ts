@@ -825,6 +825,33 @@ export const motion = {
     emphasized: 'cubic-bezier(0.3, 0, 0, 1)',
     exit: 'cubic-bezier(0.4, 0, 1, 1)',
   },
+  /**
+   * Curve names for choreographed motion (`@acme/motion`). These are Kinetrell
+   * `EaseName` strings, not CSS: Kinetrell compiles the same name to a GSAP ease
+   * on the web and a Reanimated `Easing` on native, so one name gives one shape
+   * on every surface. build-css.mjs does not emit them; the cubic-beziers above
+   * remain the CSS-transition curves.
+   */
+  curve: {
+    entrance: 'cubic.out',
+    travel: 'cubic.inOut',
+    exit: 'cubic.in',
+  },
+  /**
+   * The one named spring. Values are the kit's existing `ScaleIn` spring
+   * (packages/ui/motion.tsx), so the Reanimated and Legend Motion paths settle
+   * the same way. `css` is the same feel as a CSS `linear()` curve (web-designer-pro
+   * motion.md §1) for surfaces with no spring solver; it lives in a custom
+   * property because some toolchains drop `linear()` inside a shorthand.
+   */
+  spring: {
+    settle: {
+      damping: 18,
+      stiffness: 260,
+      mass: 1,
+      css: 'linear(0, 0.42 9%, 0.84 21%, 1.02 33%, 1.05 41%, 1.01 55%, 0.99 70%, 1)',
+    },
+  },
 } as const;
 
 // ---- UI type ramp (doc 08 §3.1) ---------------------------------------------
