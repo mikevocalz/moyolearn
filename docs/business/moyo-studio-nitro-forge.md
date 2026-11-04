@@ -1,4 +1,4 @@
-# Moyo Studio: native-first editor suite with Nitro-Forge
+# Moyo Studio: native-first editor suite with NitroForge
 
 SOT: This decision records the editor architecture for Moyo Business, alongside docs/business/creative-studio.md and docs/business/photocraft-admission.md.
 SOT-KEYWORDS: business studio photocraft artcraft nitro-forge wordcraft gridcraft deckcraft editor native wasm rust
@@ -10,11 +10,11 @@ SOT-KEYWORDS: business studio photocraft artcraft nitro-forge wordcraft gridcraf
 
 Moyo Business will offer its own branded office and creative editors inside the EXISTING shared cross-platform app, rather than a third-party office editor UI. The React Native / Expo and Next.js hosts render shared feature screens from packages/app/features using the established semantic @acme/ui components. Preserve Expo Router/Solito route ownership, the existing business role shell and the foldable/tablet navigation contracts. Do not build independent web and native editors, duplicate routing, ship an egui WebView, or introduce raw HTML feature controls.
 
-The first-party product is **Moyo Studio**, one consistent workspace containing multiple domain editors. It is not a single monolithic rendering or document engine. It can edit Moyo-owned documents and explicitly authorized imported third-party files. Google/Microsoft Connected Apps are file sources and synchronization targets; they do not grant a right to embed their proprietary editors.
+The first-party product is **Moyo Studio**, one consistent workspace containing multiple domain editors, each backed by its own engine. It can edit Moyo-owned documents and explicitly authorized imported third-party files. Google/Microsoft Connected Apps are file sources and synchronization targets; they do not grant a right to embed their proprietary editors.
 
 ## Reusable engine boundary
 
-The previously discussed **Nitro-Forge** components are maintained and released from a **separate independent repository, outside the Moyo monorepo**. Moyo depends on their published, versioned artifacts as any other application would. NitroForge owns the reusable engines, Rust/JS bindings, cross-platform tests and release metadata. Moyo owns only Moyo-specific UI, tenancy, storage and permissions. The independent repository is now [mikevocalz/nitro-forge](https://github.com/mikevocalz/nitro-forge). It already has the seven **Ignition** engines Prism, Cadence, Splice, Folio, Pitch, Tally and Quill; preserve these public APIs rather than replacing/renaming them as an unreviewed ArtCraft drop-in. Work to target Skia v3 Graphite/Expo 58 and a shared Studio UI is in [draft NitroForge PR #1](https://github.com/mikevocalz/nitro-forge/pull/1). The source and native bindings are not yet validated.
+The **NitroForge** components are maintained and released from a **separate independent repository, outside the Moyo monorepo**. Moyo depends on their published, versioned artifacts as any other application would. NitroForge owns the reusable engines, Rust/JS bindings, cross-platform tests and release metadata. Moyo owns only Moyo-specific UI, tenancy, storage and permissions. The independent repository is now [mikevocalz/nitro-forge](https://github.com/mikevocalz/nitro-forge). It already has the seven **Ignition** engines Prism, Cadence, Splice, Folio, Pitch, Tally and Quill; preserve these public APIs rather than replacing/renaming them as an unreviewed ArtCraft drop-in. Work to target Skia v3 Graphite/Expo 58 and a shared Studio UI is in [draft NitroForge PR #1](https://github.com/mikevocalz/nitro-forge/pull/1). The source and native bindings are not yet validated.
 
 | Standalone package (proposed) | Candidate engine(s) | Moyo surface |
 | --- | --- | --- |

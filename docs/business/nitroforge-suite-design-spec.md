@@ -1,17 +1,17 @@
-# NitroForge Studio — Shared Suite Experience & Design System (proposed)
+# NitroForge Studio: Shared Suite Experience & Design System (proposed)
 
 SOT: `docs/business/moyo-studio-nitro-forge.md` owns the Moyo ↔ independent NitroForge architecture; this document owns the proposed reusable suite UI contract until moved to NitroForge's own repository.
 SOT-KEYWORDS: nitroforge design system affinity mobbin suite docking snap rails adaptive responsive tailwind expo ui meta jetpack
 
-**Status: researched architecture/design specification only — not a shipped editor.**
+**Status: researched architecture/design specification only; not a shipped editor.**
 **Research date:** 2026-11-02
 **Scope:** NitroForge is a standalone engine/UI SDK. The same UI implementations, not lookalike copies, are consumed by Moyo and may be used by NYC-MON, DVNT, Pa'Casa, Harlem Might and other apps.
 
 ## Intent and creative direction
 
-**One product family, multiple disciplines.** Every NitroForge surface must look and behave like one suite while adapting controls to what the document actually contains: photo, vector, layout, text, spreadsheets, slides, PDF, video, audio. A recognizable and shareable workspace model is stronger than a separate full-screen application for every engine.
+**One product family, multiple disciplines.** Every NitroForge surface must look and behave like one suite while adapting controls to what the document contains: photo, vector, layout, text, spreadsheets, slides, PDF, video, audio. A recognizable and shareable workspace model is stronger than a separate full-screen application for every engine.
 
-The 2025+ **unified Affinity** app is a strong *interaction/organization reference*, not a visual asset library or an interface to clone. Affinity publicly documents a studio switcher, context toolbar, customizable tools and panels, saved/transferable custom studios, non-destructive edits and object snapping. NitroForge must develop its own original trademarks, iconography, visual grammar, colors and brand composition. Avoid replicating Affinity's exact UI or trade dress.
+The 2025+ **unified Affinity** app is an *interaction/organization reference* only. Affinity publicly documents a studio switcher, context toolbar, customizable tools and panels, saved/transferable custom studios, non-destructive edits and object snapping. NitroForge must develop its own original trademarks, iconography, visual grammar, colors and brand composition. Avoid replicating Affinity's exact UI or trade dress.
 
 Supporting visual references surfaced via **Mobbin screen search** on 2026-11-02 (links for human design review; do not redistribute screenshots or infer exact pixel measurements from thumbnails):
 
@@ -29,9 +29,9 @@ Affinity authoritative sources:
 - https://www.affinity.studio/blog/affinity-essentials-lesson-8-custom-studios
 - https://www.canva.com/newsroom/news/all-new-affinity/
 
-## 1. NitroForge visual grammar — original product identity
+## 1. NitroForge visual grammar: original product identity
 
-**Neutral workstation, high-quality content preview.** The content is the hero, not the chrome. Provide a carefully tuned neutral graphite dark theme *and* an equally usable light theme. Use a single configurable product accent for active tool/selection/focus; never paint the entire shell with an app's brand colors. When embedded in Moyo, use Moyo's semantic tokens without replacing the structural anatomy. Avoid arbitrary glowing edges, heavy gradients, noisy permanent tooltips, inconsistent icon weights and rows of equally loud buttons.
+**Neutral workstation, high-quality content preview.** Provide a carefully tuned neutral graphite dark theme *and* an equally usable light theme. Use a single configurable product accent for active tool/selection/focus; never paint the entire shell with an app's brand colors. When embedded in Moyo, use Moyo's semantic tokens without replacing the structural anatomy. Avoid arbitrary glowing edges, heavy gradients, noisy permanent tooltips, inconsistent icon weights and rows of equally loud buttons.
 
 Design choices:
 - Clear typographic hierarchy: document name and save state, selected tool/context, property labels, technical metadata; accessibility and density options.
