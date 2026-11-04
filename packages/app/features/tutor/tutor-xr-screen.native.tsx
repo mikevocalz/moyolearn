@@ -43,6 +43,9 @@ import {
 } from '@acme/ui';
 import { View as UiView } from '@acme/ui/primitives';
 import { MusePenInput, QuickDrawSpatialSurface } from '@viro-external/ui';
+import { useForgePenConnection } from './forge-pen-connection.native';
+import { useForgeBoardExport } from './forge-board-export-ui.native';
+import type { MuseVerificationFrame } from './forge-pen-verification';
 import {
   BoardPointer,
   BoardTextureHost,
@@ -104,7 +107,7 @@ import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 import { useXrVoice } from './xr-voice.native.ts';
 import { createMoyoQuickDrawAdapter } from './quickdraw-spatial-adapter.ts';
-import { NativeBoardPaper, mirrorToNativeBoard, useNativeBoardEnabled } from './native-board.native.tsx';
+import { NativeBoardPaper, useNativeBoardEnabled } from './native-board.native.tsx';
 
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
@@ -136,6 +139,10 @@ const active: {
   engine: WhiteboardHandle | null;
   session: BoardSession | null;
   onExit: () => void;
+  onSavePng: () => void;
+  onConnectPen: () => void;
+  onDisconnectPen: () => void;
+  onMuseFrame: (frame: MuseVerificationFrame) => void;
   onAsk: (png: string | null, spoken?: string) => void;
   /**
    * THE LAST CALIBRATION VERDICT, and it is here rather than in the store
@@ -184,6 +191,10 @@ const active: {
   engine: null,
   session: null,
   onExit: () => undefined,
+  onSavePng: () => undefined,
+  onConnectPen: () => undefined,
+  onDisconnectPen: () => undefined,
+  onMuseFrame: () => undefined,
   onAsk: () => undefined,
   inkAligned: true,
   head: null,
@@ -404,7 +415,7 @@ function BoardScene() {
   }, []);
   const phase = useXrSession((s) => s.phase);
   const placement = useXrSession((s) => s.placement);
-  /* Round 2 device validation: off unless asked for AND native-panels is linked. */
+  /* Forge preview is opt-in and requires the linked native backend. */
   const nativeBoard = useNativeBoardEnabled();
   const workspaceHead = useMemo(
     () => workspaceHeadOf(placement, BOARD_PLACE.distanceM, BOARD_PLACE.dropM),
@@ -693,7 +704,6 @@ function BoardScene() {
       strokeSource.current = null;
       const cancel = { phase: 'cancel' as const, u: sample.u, v: sample.v, source: sample.source };
       quickdrawAdapter.dispatchSurface(cancel);
-      mirrorToNativeBoard(cancel);
       return;
     }
     if (sample.phase === 'begin') {
@@ -708,9 +718,6 @@ function BoardScene() {
       drawing.current = false;
     }
     quickdrawAdapter.dispatchSurface(sample);
-    /* Round 2 `nativeBoard`: the same sample, to the native paper's document.
-       A no-op while that board has never mounted (`native-board.native.tsx`). */
-    mirrorToNativeBoard(sample);
   };
 
   /*
@@ -753,8 +760,8 @@ function BoardScene() {
       }
     },
     onPalette(open) { if (canEdit) useXrSession.getState().setPaletteOpen(open); },
-    onUndo() { if (canEdit && history.canUndo) { setConfirmClear(false); active.engine?.undo(); } },
-    onRedo() { if (canEdit && history.canRedo) { setConfirmClear(false); active.engine?.redo(); } },
+    onUndo() { if (canEdit && history.canUndo) { setConfirmClear(false); session?.doc.undo(); } },
+    onRedo() { if (canEdit && history.canRedo) { setConfirmClear(false); session?.doc.redo(); } },
     onClear() {
       if (!canEdit || !history.hasMarks) return;
       if (confirmClear) active.engine?.clear();
@@ -796,6 +803,7 @@ function BoardScene() {
       <MusePenInput
         enabled={canEdit}
         onSample={(frame) => {
+          active.onMuseFrame(frame);
           const input =
             stylus.current ??
             (stylus.current = new SpatialStylusBoardInput(new BoardPointer()));
@@ -862,8 +870,9 @@ function BoardScene() {
             content={<>
               <ViroQuad width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
                 materials={[XR_MATERIAL.paper]} ignoreEventHandling />
-              {boardTextureBound ? (nativeBoard ? (
+              {boardTextureBound ? (nativeBoard && session && foreground ? (
                 <NativeBoardPaper
+                  doc={session.doc}
                   width={CONTENT_RECT_PANEL.width}
                   height={CONTENT_RECT_PANEL.height}
                   position={[0, 0, boardLayer.raster]}
@@ -894,6 +903,9 @@ function BoardScene() {
           controlRows={[
             { id: 'exit', text: 'Back to lesson', onPress: () => active.onExit() },
             { id: 'recenter', text: 'Recenter workspace', onPress: () => { void placeFromHead(); } },
+            { id: 'save-png', text: 'Save PNG to device', disabled: !canEdit || !history.hasMarks, onPress: () => active.onSavePng() },
+            { id: 'connect-pen', text: 'Connect pen', onPress: () => active.onConnectPen() },
+            ...(!VISIONOS ? [{ id: 'disconnect-pen', text: 'Disconnect pen', onPress: () => active.onDisconnectPen() }] : []),
             {
               id: 'ask',
               face: 'ask',
@@ -1000,6 +1012,18 @@ function BoardScene() {
 const INITIAL_SCENE = { scene: BoardScene };
 
 export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoardPanel, loadQuestionPanel }: TutorXrScreenProps) {
+  const penConnection = useForgePenConnection(VISIONOS);
+  const boardExport = useForgeBoardExport();
+  useEffect(() => {
+    active.onSavePng = () => { void boardExport.save(active.engine); };
+    return () => { active.onSavePng = () => undefined; };
+  }, [boardExport.save]);
+  useEffect(() => {
+    active.onConnectPen = penConnection.open;
+    active.onDisconnectPen = penConnection.disconnect;
+    active.onMuseFrame = penConnection.verifyMuse;
+    return () => { active.onConnectPen = () => undefined; active.onDisconnectPen = () => undefined; active.onMuseFrame = () => undefined; };
+  }, [penConnection.open, penConnection.disconnect, penConnection.verifyMuse]);
   const sessionId = useTutorStore((s) => s.sessionId);
   const phase = useXrSession((s) => s.phase);
   const advance = useXrSession((s) => s.advance);
@@ -1157,6 +1181,10 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
     document mutates in place and must never become React state.
   */
   useEffect(() => session.doc.onRecords(() => bumpRevision()), [bumpRevision, session]);
+  useEffect(() => session.doc.onHistory((history) => {
+    const state = useXrSession.getState();
+    state.setBoardHistory({ ...history, hasMarks: state.boardHistory.hasMarks });
+  }), [session]);
 
   /*
     STEP ONE: WHY THIS BINARY ON THIS DEVICE COULD NOT OPEN A BOARD IN SPACE.
@@ -1416,15 +1444,14 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
   );
 
   /*
-    The engine's own undo/redo availability, into the session store for the
-    Rive chrome's disabled keys — pushed off `listenHistory`, so batch ends
-    that emit no diff still land. See `boardHistory` on the store.
+    The engine reports the visible mark count. History belongs to Yjs so
+    restoring a renderer cannot replace the learner's undo/redo availability.
   */
   const handleHistory = useCallback((history: WhiteboardHistory) => {
     useXrSession
       .getState()
-      .setBoardHistory({ canUndo: history.canUndo, canRedo: history.canRedo, hasMarks: history.marks > 0 });
-  }, []);
+      .setBoardHistory({ canUndo: session.doc.canUndo(), canRedo: session.doc.canRedo(), hasMarks: history.marks > 0 });
+  }, [session]);
 
   /*
     WHAT IS ON SCREEN IS THE PHASE, AND THE RENDERER IS NOT ALWAYS PART OF IT.
@@ -1592,12 +1619,15 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
       >
         <WhiteboardBoard
           ref={engine}
+          history={session.doc}
           onChange={handleChange}
           onReady={handleReady}
           onCalibration={handleCalibration}
           onHistory={handleHistory}
         />
       </BoardTextureHost>
+      {penConnection.dialog}
+      {boardExport.feedback}
     </View>
   );
 }

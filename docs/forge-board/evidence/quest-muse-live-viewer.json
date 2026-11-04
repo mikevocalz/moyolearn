@@ -1,0 +1,199 @@
+{
+  "scope": "Physical Moyo DEV diagnostic viewer supplied by actual temporary test-only HID reader via host bridge; no production pen input provider or board input",
+  "testOnly": true,
+  "productionHidAccess": false,
+  "boardInputEmitted": false,
+  "firstRun": {
+    "userConfirmedVisibleValuesChanged": true,
+    "sourceCapture": {
+      "completed": true,
+      "samples": 100,
+      "allStatus0Length65": true,
+      "actualPollingWindowMs": 24850,
+      "observedTipRawValues": [
+        0,
+        1,
+        18,
+        100
+      ],
+      "observedOvalRawValues": [
+        0,
+        3,
+        4,
+        5
+      ],
+      "observedRoundHeldValues": [
+        false
+      ]
+    },
+    "moyoStateDuringCapture": {
+      "lastSequence": 70,
+      "lastWallTimeMs": 1793716792835,
+      "missingSequences": 0,
+      "phase": "live",
+      "reason": "Measured external test telemetry",
+      "samples": 71,
+      "values": {
+        "oval": 0,
+        "ovalForce": 0,
+        "roundHeld": false,
+        "tip": 0,
+        "tipForce": 0
+      }
+    },
+    "bridgeAcceptedSamples": 97,
+    "bridgeGapCount": 0,
+    "bridgeFinishedReason": "error",
+    "observedFinalUi": {
+      "phase": "unavailable",
+      "reason": "Expired; last values are historical",
+      "samples": 97,
+      "tipRaw": 18,
+      "tipForceRaw": 18
+    },
+    "limitation": "Initial host session deadline incorrectly included setup time; only97 samples were delivered. Source collector completion100 does not imply Moyo delivery100.",
+    "sourceSha256": "0947f9ef57ed69e98aeab33ff51d4208021d97cae08672173b0bfafaa5fbfca7",
+    "bridgeReceiptSha256": "ebc9cc66a1d07b388c6ac21604d925eb052b11c2956af20e4b6c3528e950b08b",
+    "duringStateSha256": "42704c054e29b8466f1eb051e31c9908bb29c14619245684b3af8a4485dd5186",
+    "restoredAccessibilitySha256": "a3bd60427a00f09b23c8d2c78f633e20cf32fc83d6df6ed2f35b56f483016738",
+    "canonicalRawVerification": {
+      "evidenceId": "ev_e1b8692b66b5cd114343ea08bdc858a0034748504e7f687993eba9bd5ec21ebc",
+      "rawTerminalJSONDeepEqual": true,
+      "canonicalJSONSHA256": "a682a220f8d5d5bf47cca02ced97f01397882b2081bb7d224519417fe4bf4f52",
+      "deviceFileSHA256": "0947f9ef57ed69e98aeab33ff51d4208021d97cae08672173b0bfafaa5fbfca7",
+      "samples": 100,
+      "allStatus0Length65": true,
+      "lastSourceSampleIndex": 99,
+      "lastSourcePrefix": "6464000005",
+      "lastSourceMapping": {
+        "tipRaw": 100,
+        "tipForceRaw": 100,
+        "ovalRaw": 0,
+        "ovalForceRaw": 0,
+        "roundPressed": false
+      }
+    },
+    "canonicalVerificationReceiptSha256": "97542f988a691c9fa1b943e400b9d47e7e502aa0442a4200dd98c345303911f2"
+  },
+  "finalRun": {
+    "hostDeadlineBasis": "Actual collector polling start plus40 seconds; arm time used only as a freshness boundary",
+    "sourceCapture": {
+      "completed": true,
+      "samples": 100,
+      "allStatus0Length65": true,
+      "actualPollingWindowMs": 24851,
+      "observedTipRawValues": [
+        0
+      ],
+      "observedOvalRawValues": [
+        0
+      ],
+      "observedRoundHeldValues": [
+        false
+      ]
+    },
+    "bridgeAcceptedSamples": 100,
+    "bridgeGapCount": 0,
+    "finishAcknowledgement": true,
+    "acknowledgedViewerState": {
+      "lastSequence": 99,
+      "missingSequences": 0,
+      "phase": "completed",
+      "samples": 100,
+      "values": {
+        "oval": 0,
+        "ovalForce": 0,
+        "roundHeld": false,
+        "tip": 0,
+        "tipForce": 0
+      }
+    },
+    "observedFinalUi": "Captured / historical100/100; last measured released values were all zero",
+    "sourceSha256": "6ef767c5c1eed3644de8b7c5e93f17d0735554b948f9ebef899cdf322dfae3c5",
+    "bridgeReceiptSha256": "ecaa54ed9d8a99b76c54c68ac75388eea294225b771b8ba287550a869745254d",
+    "restoredAccessibilitySha256": "c92d9aef22dd90ee9eba227f38bb2da0375ad65d048f0d21f0382d8347ceb9ca",
+    "reaEvidenceId": "ev_7948dc28bdff0cecce6937963edfb198ffd17067a0b1ec107a1a2af4da236029",
+    "reaReceiptSha256": "2ecdab8eea96927704ee1936e63c6ced653a515c7d64e330c2b82d0023e58717",
+    "independentCanonicalRawComparison": "passed; complete raw terminal JSON equals the device JSON, and final viewer acknowledgement matches source sample99",
+    "canonicalRawVerification": {
+      "evidenceId": "ev_7948dc28bdff0cecce6937963edfb198ffd17067a0b1ec107a1a2af4da236029",
+      "rawTerminalJSONDeepEqual": true,
+      "canonicalJSONSHA256": "68e61e547158bcf30020b25342c6bbf187375ef05752e4f11032ffab8651f2fa",
+      "deviceFileSHA256": "6ef767c5c1eed3644de8b7c5e93f17d0735554b948f9ebef899cdf322dfae3c5",
+      "samples": 100,
+      "allStatus0Length65": true,
+      "lastSourceSampleIndex": 99,
+      "lastSourcePrefix": "0000000005",
+      "lastSourceMapping": {
+        "tipRaw": 0,
+        "tipForceRaw": 0,
+        "ovalRaw": 0,
+        "ovalForceRaw": 0,
+        "roundPressed": false
+      },
+      "finalViewerACK": {
+        "lastSequence": 99,
+        "samples": 100,
+        "missingSequences": 0,
+        "phase": "completed",
+        "valuesExactlyMatchSourceLastSample": true
+      },
+      "finalBridgeJournalSHA256": "ecaa54ed9d8a99b76c54c68ac75388eea294225b771b8ba287550a869745254d",
+      "limitations": "Test-only collector role and developer bridge; no ordinary production access, ink or tracked pose established"
+    },
+    "canonicalVerificationReceiptSha256": "97542f988a691c9fa1b943e400b9d47e7e502aa0442a4200dd98c345303911f2"
+  },
+  "inspectionPauseTimingAudit": {
+    "measurement": "Local receipt modification times approximate service-pause plus restoration-observation duration; not exact service lifecycle timestamps",
+    "requestedMaximumSeconds": 60,
+    "runs": [
+      {
+        "run": "descriptor",
+        "receiptToRestoredAXSeconds": 13.798
+      },
+      {
+        "run": "baseline",
+        "receiptToRestoredAXSeconds": 39.167
+      },
+      {
+        "run": "tip",
+        "receiptToRestoredAXSeconds": 52.964
+      },
+      {
+        "run": "round",
+        "receiptToRestoredAXSeconds": 49.154
+      },
+      {
+        "run": "oval",
+        "receiptToRestoredAXSeconds": 67.775
+      },
+      {
+        "run": "viewer-first",
+        "receiptToRestoredAXSeconds": 83.773
+      },
+      {
+        "run": "viewer-final",
+        "receiptToRestoredAXSeconds": 85.493
+      }
+    ],
+    "approximateOverruns": [
+      {
+        "run": "oval",
+        "receiptToRestoredAXSeconds": 67.775
+      },
+      {
+        "run": "viewer-first",
+        "receiptToRestoredAXSeconds": 83.773
+      },
+      {
+        "run": "viewer-final",
+        "receiptToRestoredAXSeconds": 85.493
+      }
+    ],
+    "exactServiceLifecycleDurationsProven": false,
+    "sourceSha256": "3411eece1b5d3219c48b1767f7e05b0df05f822c6fdf680d6789c85298803797",
+    "correctiveWork": "Automatic scoped restoration implemented for completion/error/cancel/watchdog. A subsequent hands-off physical normal-completion run acknowledged android-devtools restoration in33876.572875ms, under60000ms; seequest-automatic-inspection-restore.json."
+  },
+  "interpretation": "The first run visibly demonstrated measured changing controls in Moyo but had partial delivery. The final released baseline proved complete100-sample viewer delivery and completion. Neither provides production HID permission, calibrated force, pose, or drawing integration.",
+  "privacy": "Known mapped control aggregates and viewer state only; unknown vendor payloads, raw IMU samples, addresses, session nonces, process IDs and private paths omitted"
+}

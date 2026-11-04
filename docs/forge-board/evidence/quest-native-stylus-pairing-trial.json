@@ -1,0 +1,116 @@
+{
+  "scope": "User-operated normal Quest Settings > Devices > Stylus pairing discriminator",
+  "privacy": "Raw AX is not included: it can contain profile names and unrelated personal UI. Only selected public UI states and source digests retained.",
+  "userConfirmed": {
+    "initialStylusSettingsOnlyPairStylus": true,
+    "museGreenBlinkingBesideQuest": true
+  },
+  "observations": [
+    {
+      "phase": "settings-ui",
+      "sourceSha256": "70972e0dacb005d836f4496dfcd410c443f5cfa448d18f3e069fc7b504b183d3",
+      "publicUiIndicators": {
+        "pairStylus": true,
+        "pairingFailed": false,
+        "tryAgain": false,
+        "cancel": false
+      }
+    },
+    {
+      "phase": "green-scan",
+      "sourceSha256": "70972e0dacb005d836f4496dfcd410c443f5cfa448d18f3e069fc7b504b183d3",
+      "publicUiIndicators": {
+        "pairStylus": true,
+        "pairingFailed": false,
+        "tryAgain": false,
+        "cancel": false
+      }
+    },
+    {
+      "phase": "green-scan-after",
+      "sourceSha256": "70972e0dacb005d836f4496dfcd410c443f5cfa448d18f3e069fc7b504b183d3",
+      "publicUiIndicators": {
+        "pairStylus": true,
+        "pairingFailed": false,
+        "tryAgain": false,
+        "cancel": false
+      }
+    },
+    {
+      "phase": "green-scan-wait",
+      "sourceSha256": "565467467c807d29a71095f9b641784c59db32156b2e2ddb49d70e944ee1dd37",
+      "publicUiIndicators": {
+        "pairStylus": false,
+        "pairingFailed": false,
+        "tryAgain": false,
+        "cancel": false
+      }
+    },
+    {
+      "phase": "rescan-before",
+      "sourceSha256": "0e430f3855245d9cc1ca2911e6c8226d03808198521c3ba4eb25db20c3432386",
+      "publicUiIndicators": {
+        "pairStylus": true,
+        "pairingFailed": true,
+        "tryAgain": true,
+        "cancel": true
+      }
+    },
+    {
+      "phase": "rescan-start",
+      "sourceSha256": "70972e0dacb005d836f4496dfcd410c443f5cfa448d18f3e069fc7b504b183d3",
+      "publicUiIndicators": {
+        "pairStylus": true,
+        "pairingFailed": false,
+        "tryAgain": false,
+        "cancel": false
+      }
+    },
+    {
+      "phase": "rescan-wait",
+      "sourceSha256": "ef7f2fe842a00d68ed2c25d7167133cfc501aaae322642f7cc575d78ff21004a",
+      "publicUiIndicators": {
+        "pairingFailed": false,
+        "tryAgain": false,
+        "cancel": false
+      }
+    },
+    {
+      "phase": "rescan-result",
+      "sourceSha256": "0e430f3855245d9cc1ca2911e6c8226d03808198521c3ba4eb25db20c3432386",
+      "publicUiIndicators": {
+        "pairingFailed": true,
+        "tryAgain": true,
+        "cancel": true
+      }
+    }
+  ],
+  "firstAttempt": {
+    "headerRemainedAfter20SecondAwait": true,
+    "subsequentUiExplicitlyReported": "Stylus pairing failed"
+  },
+  "retry": {
+    "tryAgainTappedByRoot": true,
+    "freshMuseGreenBlinkingConfirmed": true,
+    "headerHiddenAwaitMs": 19138,
+    "result": "Stylus pairing failed",
+    "failureUiControls": [
+      "Cancel",
+      "Try again"
+    ],
+    "rootClosedFlowWithCancel": true,
+    "rootReturnedToMoyo": true
+  },
+  "conclusions": {
+    "nativeMusePoseEstablished": false,
+    "nativeMuseTrackedModelEstablished": false,
+    "globalHardwareIncompatibilityProven": false,
+    "normalQuestStylusPairingSucceeded": false,
+    "scope": "Two user-confirmed blinking Muse trials reached explicit Quest native Stylus pairing failure; this does not prove universal hardware incompatibility."
+  },
+  "excludedAlternatives": [
+    "No hand-assisted pose substitution",
+    "No decorative model presented as tracked",
+    "No firmware or pairing configuration changed by evidence builder"
+  ]
+}

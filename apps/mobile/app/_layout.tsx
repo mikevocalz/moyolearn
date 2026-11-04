@@ -31,6 +31,7 @@ import { MoyoSplash } from "../components/splash/MoyoSplash";
 import { metaWindows } from "../src/spatial/metaWindows";
 import { SpatialWindowHost } from "../src/spatial/SpatialWindowHost";
 import { PicoMainFrame } from "../src/spatial/panelWindows";
+import { MainContentFrame } from "../src/spatial/MainContentFrame";
 import "../global.css";
 
 
@@ -163,6 +164,7 @@ export default function RootLayout() {
                 three real destinations opt in below and get the same
                 `ShellHeader` every shell route gets.
               */}
+              <MainContentFrame>
               <Stack
                 screenOptions={{
                   headerShown: false,
@@ -185,6 +187,7 @@ export default function RootLayout() {
                     barless is how it stayed the one surface with no way out. */}
                 <Stack.Screen name="onboarding/dev" options={{ headerShown: true }} />
               </Stack>
+              </MainContentFrame>
               <SpatialWindowHost />
               </metaWindows.SceneProvider>
             </SessionProvider>
@@ -197,6 +200,7 @@ export default function RootLayout() {
               Visibility is global Zustand state, so this is also where it
               belongs architecturally.
             */}
+            <MainContentFrame overlay>
             <BookingSheet />
             <AttachSheet />
             <AudioRecorderSheet />
@@ -220,6 +224,7 @@ export default function RootLayout() {
                 toast raised by something restoring during boot. It unmounts
                 itself and costs nothing for the rest of the session. */}
             <MoyoSplash />
+            </MainContentFrame>
           </AppQueryProvider>
         </BottomSheetModalProvider>
         </PicoMainFrame>

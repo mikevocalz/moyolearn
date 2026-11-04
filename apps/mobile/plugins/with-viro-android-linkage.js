@@ -71,6 +71,8 @@
  *               settings.gradle projectDir monorepo hoisted node-linker pico
  *               config-plugin prebuild react_viro viro_renderer
  */
+const { mergeQuestImmersiveActivity } = require('./quest-immersive-activity');
+const { updateRendererPin, rendererPath, rendererSha256 } = require('./renderer-pin');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -256,7 +258,9 @@ function withViroDebugVariants(config) {
  * `VRLauncher` by explicit intent, which needs no filter. On a PICO 4 Ultra the
  * OpenXR session still reaches FOCUSED with no filter at all (see
  * docs/validation/2026-10-device-pass.md), so this strips every filter on it
- * rather than moving the categories elsewhere. app.config.ts lists this plugin
+ * rather than moving the categories elsewhere in the shared manifest. Quest
+ * independently receives a private VR identifier in its flavor overlay.
+ * app.config.ts lists this plugin
  * before `@expo-pico/core` and Viro, so it runs after both (ADR-118, plugin
  * order). Idempotent; prebuild runs more than once.
  */
@@ -323,6 +327,9 @@ function withHeadtrackingOnHeadsetsOnly(config) {
         ...features.filter(entry => entry.$?.['android:name'] !== HEADTRACKING),
         { $: { 'android:name': HEADTRACKING, 'android:required': 'true', 'android:version': '1' } },
       ];
+      // PICO keeps its shared no-launcher-filter behavior. Quest independently
+      // identifies its private immersive activity without changing the panel.
+      mergeQuestImmersiveActivity(questManifest, modConfig.android?.package);
       await AndroidConfig.Manifest.writeAndroidManifestAsync(manifestPath, questManifest);
       return modConfig;
     },
@@ -347,13 +354,14 @@ project(":expo") {
 }
 `;
 const PRECISION_RENDERER = `
-// Moyo: pin the source-verified precision drawing renderer: virocore 9d6ab4e
+// Moyo: pin the source-verified precision drawing renderer:0ea780701 atop82ad61e74
+// KHR simple-controller bindings; no Muse pressure/pose protocol.
 // (branch fix/moyo-right-eye-depth-clear) = 034d3b9 + 5926ef52 (depth writes
 // on before each eye's depth clear) + panel sharpness fixes:
 // 65227bc mipmapped, anisotropic sampling of external surfaces (Rive, views);
 // 8ff603b 1.3x eye buffers, LOW foveation; 872a2a2 premultiplied eye-buffer
 // alpha over passthrough; 9d6ab4e sRGB decode curve for OES/YCbCr.
-ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-73c6a92.aar')
+ext.moyoViroRendererAar = rootProject.file('${rendererPath}')
 if (!moyoViroRendererAar.isFile()) {
     throw new GradleException('Pinned Moyo controller renderer is missing')
 }
@@ -363,7 +371,7 @@ moyoViroRendererAar.withInputStream { stream ->
     int count
     while ((count = stream.read(buffer)) != -1) rendererDigest.update(buffer, 0, count)
 }
-if (rendererDigest.digest().encodeHex().toString() != '0042247de15da8a93baf3035b1e16b849398886a1d8c5abe5e55c536d50cfe23') {
+if (rendererDigest.digest().encodeHex().toString() != '${rendererSha256}') {
     throw new GradleException('Pinned Moyo controller renderer checksum mismatch')
 }
 `;
@@ -384,6 +392,7 @@ function withExpoDeviceFlavors(config) {
       if (!mod.modResults.contents.includes(anchor)) throw new Error('Expo root plugin anchor missing');
       mod.modResults.contents = mod.modResults.contents.replace(anchor, PRECISION_RENDERER + '\n' + anchor);
     }
+    mod.modResults.contents = updateRendererPin(mod.modResults.contents);
     return mod;
   });
 }

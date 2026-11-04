@@ -1,0 +1,37 @@
+apply plugin: "com.android.library"
+apply plugin: "org.jetbrains.kotlin.android"
+apply from: "../nitrogen/generated/android/NitroForgeBluetoothV1+autolinking.gradle"
+
+def hostValue(name, fallback) {
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : fallback
+}
+def architectures = rootProject.findProperty("reactNativeArchitectures")?.split(",") ?: ["arm64-v8a", "x86_64", "armeabi-v7a", "x86"]
+android {
+  namespace "com.margelo.nitro.forgebluetooth"
+  compileSdkVersion hostValue("compileSdkVersion", 36)
+  ndkVersion hostValue("ndkVersion", "28.2.13676358")
+  defaultConfig {
+    minSdkVersion Math.max(hostValue("minSdkVersion", 26).toInteger(), 26)
+    targetSdkVersion hostValue("targetSdkVersion", 36)
+    externalNativeBuild { cmake {
+      arguments "-DANDROID_STL=c++_shared", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+      abiFilters (*architectures)
+    } }
+  }
+  externalNativeBuild { cmake { path "CMakeLists.txt" } }
+  buildFeatures { prefab true; buildConfig true }
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+  packagingOptions {
+    excludes += ["**/libc++_shared.so", "**/libNitroModules.so", "**/libfbjni.so", "**/libjsi.so", "**/libreactnative.so"]
+  }
+}
+repositories { google(); mavenCentral() }
+dependencies {
+  implementation "com.facebook.react:react-android"
+  implementation project(":react-native-nitro-modules")
+  testImplementation "junit:junit:4.13.2"
+  testImplementation "org.json:json:20250517"
+}

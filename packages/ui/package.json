@@ -30,7 +30,7 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'audio/**/*.test.ts' 'adaptive-navigation.test.ts' 'adaptive-panes/*.test.ts' 'xr/*.test.ts' 'stage-board/*.test.ts'"
+    "test": "node --test 'audio/**/*.test.ts' 'adaptive-navigation.test.ts' 'whiteboard-history.test.ts' 'adaptive-panes/*.test.ts' 'xr/*.test.ts' 'stage-board/*.test.ts'"
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
@@ -71,7 +71,8 @@
     "tailwind-merge": "catalog:",
     "tailwind-variants": "catalog:",
     "uniwind": "catalog:",
-    "zustand": "catalog:"
+    "zustand": "catalog:",
+    "@nitro-forge/icons": "0.1.0-moyo.1"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

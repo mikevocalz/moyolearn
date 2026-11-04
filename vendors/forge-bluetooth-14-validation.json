@@ -1,0 +1,17 @@
+{
+  "artifact": "nitro-forge-bluetooth-v1-0.1.0-moyo.14.tgz",
+  "sha256": "b29878f5b2cf102c5fa747327918b19664c2c28edc0337fc6a763b0044bc4d6f",
+  "sourceRepository": "mikevocalz/nitro-forge",
+  "sourceCommit": "c213f1ca3f1d604a27ccf922362f0de3e4605831",
+  "nitrogen": "1.0.0-alpha.nightly.100.g107f6fc66597",
+  "runtime": "1.0.0-alpha.nightly.100.g107f6fc66597",
+  "apkSha256": "de7b3f3e31d4f4da862e268d2a1ce6e48fad53594ca027916f622366c0688f05",
+  "validation": {
+    "nativeJvmTests": 21,
+    "adapterIntegrityTests": 5,
+    "boundedBuildSeconds": 19,
+    "installedByMainAgent": true,
+    "hardwareObservation": "Actual association-callback completion and subsequent GATT link observed by main agent; pen tip/pressure not verified"
+  },
+  "sourceRetention": "Immutable archive contains exact reviewed native source, tests and generated bindings; subsequent current-source templates may advance."
+}

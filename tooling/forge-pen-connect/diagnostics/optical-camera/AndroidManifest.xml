@@ -1,0 +1,14 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.moyolearn.museopticalprobe">
+ <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="34"/>
+ <uses-permission android:name="android.permission.CAMERA"/>
+ <uses-permission android:name="horizonos.permission.HEADSET_CAMERA"/>
+ <uses-feature android:name="android.hardware.camera" android:required="false"/>
+ <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="false"/>
+ <application android:label="Muse optical observability" android:debuggable="true" android:allowBackup="false" android:extractNativeLibs="true" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+  <meta-data android:name="com.oculus.supportedDevices" android:value="quest3|quest3s"/>
+  <activity android:name=".OpticalCameraActivity" android:exported="true" android:screenOrientation="unspecified">
+   <layout android:defaultWidth="1024dp" android:defaultHeight="640dp"/>
+   <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+  </activity>
+ </application>
+</manifest>

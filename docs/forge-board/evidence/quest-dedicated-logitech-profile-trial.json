@@ -1,0 +1,259 @@
+{
+  "scope": "Actual installed dedicated Logitech OpenXR profile diagnostic; not a product pose driver success",
+  "apkSha256": "56908ab8b8f317c84c5649717f0a3f5eb2c21bdef48d20cb640887eabec415b3",
+  "rendererCommit": "0ea78070138a3357858af5d702e8fdbb095d0e6a",
+  "runtimeExtension": {
+    "name": "XR_LOGITECH_mx_ink_stylus_interaction",
+    "version": 1,
+    "enumerationSucceeded": true
+  },
+  "bindingSuggestionResult": 0,
+  "nativeObservations": [
+    {
+      "time": "10:47:43.056",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:43.056",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:45.600",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:45.600",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:48.100",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:48.100",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:50.600",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:50.600",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:53.100",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:53.100",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:55.600",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:55.600",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:58.100",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:47:58.100",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:00.600",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:00.601",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:03.100",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:03.101",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:05.600",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:05.600",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:08.101",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:08.101",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:10.601",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:10.601",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:13.101",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:13.101",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:15.601",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:15.601",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:18.101",
+      "hand": 0,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    },
+    {
+      "time": "10:48:18.101",
+      "hand": 1,
+      "profileResult": 0,
+      "dedicatedProfile": 0
+    }
+  ],
+  "nativeObservationCountPerHand": 15,
+  "observedProfiles": [
+    "/interaction_profiles/khr/simple_controller",
+    "/interaction_profiles/oculus/touch_controller"
+  ],
+  "touchPositiveControl": {
+    "userConfirmed": true,
+    "events": [
+      {
+        "kind": "controller-click-state",
+        "wallTimeMs": 1793720891357,
+        "clickState": 1,
+        "source": 1
+      },
+      {
+        "kind": "target-click-state",
+        "wallTimeMs": 1793720891359,
+        "clickState": 1,
+        "source": 1
+      },
+      {
+        "kind": "controller-click-state",
+        "wallTimeMs": 1793720892134,
+        "clickState": 2,
+        "source": 1
+      },
+      {
+        "kind": "target-click-state",
+        "wallTimeMs": 1793720892135,
+        "clickState": 2,
+        "source": 1
+      },
+      {
+        "kind": "controller-click-state",
+        "wallTimeMs": 1793720892139,
+        "clickState": 3,
+        "source": 1
+      },
+      {
+        "kind": "controller-click",
+        "wallTimeMs": 1793720892140,
+        "source": 1
+      },
+      {
+        "kind": "target-click-state",
+        "wallTimeMs": 1793720892140,
+        "clickState": 3,
+        "source": 1
+      },
+      {
+        "kind": "target-click",
+        "wallTimeMs": 1793720892141,
+        "source": 1
+      }
+    ]
+  },
+  "museTrial": {
+    "userConfirmedHoldReleaseSeconds": 2,
+    "dedicatedProfileSelected": false,
+    "nativeMusePoseEstablished": false,
+    "trackedMuseModelEstablished": false,
+    "limitation": "Generic and Touch profiles are not Muse identity evidence. Dedicated profile was never selected in this bounded native log window; no active/tracked Muse pose or force measurement was produced."
+  },
+  "remainingDiscriminator": "Quest native Settings > Devices > Stylus registration inspection; not yet tested by this receipt",
+  "rawEvidenceSha256": "5a66d755d8a9c737508866da95373c3534ac62c2db619825d2f914351c1a59b1",
+  "privacy": "No headset serial, Bluetooth address, association IDs, or unrelated device identifiers retained."
+}
