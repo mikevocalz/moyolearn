@@ -38,15 +38,15 @@
 - [ ] Existing education tenants keep routes, billing identities, CRM and schedule intact with no migrations by name guessing.
 - [ ] Smoke tests cover two tenant profiles, stale cross-host callback, redirect, membership switching, and offline/read-only mode.
 - [ ] Release canary/dashboard has reconciled metrics, monitoring, operations runbooks and a tested disable/rollback path.
-- [ ] Native phone, foldable cover/book/tabletop RTL, tablet and web accessibility evidence captured; unsupported hardware listed honestly.
-- [ ] No production deployment, DNS, provider send or schema expansion occurs merely by opening this draft.
+- [ ] Native phone, foldable cover/book/tabletop RTL, tablet and web accessibility evidence captured; unsupported hardware listed by device name.
+- [ ] No production deployment, DNS, provider send or schema expansion occurs by merging this contract.
 
 ## Review and release plan
 
-**Independent reviewer roster:** Product/GT​​M lead, principal systems architect, native/web release and accessibility QA, security/fintech approval reviewers.
+**Independent reviewer roster:** Product/GTM lead, principal systems architect, native/web release and accessibility QA, security/fintech approval reviewers.
 
 **Skills:** Read root AGENTS.md/CONTRIBUTING.md and the actual installed target files before runtime changes. Load relevant expo/skills, mattpocock/skills (PR/module design), coreyhaines31/marketingskills, pbakaus/impeccable, petergyang/no-ai-slop and the pinned mikevocalz-foldable-layouts skill for adaptive work. Honor the current catalog and existing @acme/ui/motion/route adapters.
 
 **Rollback:** Reverse feature flags/marketing site routes; preserve business records and provide authorized export; do not erase history.
 
-**Actual evidence for this planning PR:** reviewed GitHub source and existing specs; created branch/document/draft PR. No compile, lint, native build, database test, provider sandbox, real device, account connection or deployed changes were executed. Keep PR in draft until a complete tested implementation is added. Document unsupported devices separately. Do not auto-merge, rename subscriptions, send communication or execute transfers based on this contract.
+**Actual evidence for this contract:** reviewed GitHub source and existing specs; created branch/document/draft PR. No compile, lint, native build, database test, provider sandbox, real device, account connection or deployed changes were executed. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented. Document unsupported devices separately. Do not auto-merge, rename subscriptions, send communication or execute transfers based on this contract.
