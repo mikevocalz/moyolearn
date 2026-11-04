@@ -1,0 +1,7 @@
+{
+  "name": "spatial-window-owners",
+  "version": "1.0.0",
+  "description": "Gives a promoted Meta spatial window the host activity's view-tree owners so Compose views inside it can attach.",
+  "private": true,
+  "platforms": ["android"]
+}
