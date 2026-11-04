@@ -29,6 +29,7 @@ import {
   Text,
 } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
+import { Platform } from 'react-native';
 import { View } from '@acme/ui/primitives';
 import { ReportBody } from './report-blocks.tsx';
 import { useGuardianReport, useTeacherShare } from './use-reports.ts';
@@ -110,6 +111,48 @@ export function SessionReportScreen({ sessionId }: { sessionId: string }) {
         publishedAt={report.publishedAt}
         cropSrc={cropSrc}
       />
+
+      {Platform.OS === 'web' ? (
+        <Card className="gap-group">
+          <Heading level={2} size="title">Print or save your report</Heading>
+          <Text variant="body" tone="muted">
+            Keep a printable record of the session, or make a follow-up practice
+            sheet from questions that needed help. Your browser can save either
+            as a PDF. The practice sheet reuses the actual questions; it is not
+            a newly graded assessment.
+          </Text>
+          <View className="flex-row flex-wrap gap-element">
+            <Button
+              title="Print report / Save PDF"
+              variant="outline"
+              size="sm"
+              onPress={() => {
+                if (typeof window !== 'undefined') {
+                  window.open(
+                    `${API_URL}/api/guardian/reports/${encodeURIComponent(sessionId)}/print?mode=report`,
+                    '_blank',
+                    'noopener,noreferrer',
+                  );
+                }
+              }}
+            />
+            <Button
+              title="Print follow-up worksheet"
+              variant="outline"
+              size="sm"
+              onPress={() => {
+                if (typeof window !== 'undefined') {
+                  window.open(
+                    `${API_URL}/api/guardian/reports/${encodeURIComponent(sessionId)}/print?mode=practice`,
+                    '_blank',
+                    'noopener,noreferrer',
+                  );
+                }
+              }}
+            />
+          </View>
+        </Card>
+      ) : null}
 
       {/* §3 — guardian-initiated teacher share. Below the report: consent is a
           decision about the content, made after reading it. */}

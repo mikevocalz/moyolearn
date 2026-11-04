@@ -14,6 +14,7 @@ export type CaptureStep =
   | 'capture'
   | 'review-pages'
   | 'read-verify'
+  | 'review-questions'
   | 'add-context'
   | 'upload-process'
   | 'success';

@@ -22,8 +22,14 @@ import type { ReactNode } from 'react';
  *                            arbitration: paper rays draw, toolbar rays fall
  *                            through to the chrome, grip rays drag. One owner
  *                            per pointer is BoardPointer's own contract.
- *   grip ViroQuad            the same amber parent-drag bar the Rive probe
- *                            carries — `dragTransform="parent"`.
+ *   grip ViroQuad            the amber bar. Report-only (`dragTransform=
+ *                            "none"`); `useCarrierDrag` writes the carrier
+ *                            natively per report and commits on release, so
+ *                            a drag re-renders nothing until the hand lets go.
+ *
+ * THE BOARD MOVES ALONE. Its offset is its own (the kit hook's state), so a
+ * grip here never touches a neighbour, and the input plane re-anchors from the
+ * committed carrier on the release render.
  *
  * While `grabbed` the surface is disabled (which cancels an in-flight stroke
  * via its own cleanup) and the chrome's input is off — a panel in the hand
@@ -33,7 +39,7 @@ import type { ReactNode } from 'react';
  *      packages/ui/xr/XrBoardSurface.native.tsx · ./board-chrome-bind.ts
  * SOT-KEYWORDS: xr rive board chrome panel composition carrier content rect input arbitration live texture grip drag
  */
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { ViroMaterials, ViroNode, ViroQuad, ViroRivePanel, ViroText } from '@reactvision/react-viro';
 import { worldMatrix, type RivePanel, type RiveCanvasOptions } from 'nitro-canvas-in-Vision';
 import {
@@ -43,12 +49,16 @@ import {
   PANEL_WIDTH_M,
   XrBoardLive,
   XrBoardSurface,
+  ZERO_OFFSET,
+  addOffset,
   artboardCenter,
   contentAnchorWorld,
+  useCarrierDrag,
   type XrSurfaceInput,
   type XrVector3,
 } from '@acme/ui/xr';
 import { bindBoardChrome, type BoardChromeHandlers, type BoardChromePresentation } from './board-chrome-bind';
+import { NativeRiveChrome, chromeBindings, useNativeRiveEnabled } from './native-rive-chrome';
 
 /** The grip bar — same affordance as the Rive probe's, same amber. */
 const GRIP_W = 0.65;
@@ -63,9 +73,12 @@ export interface RiveBoardPanelProps {
   chromeBytes: ArrayBuffer;
   /** The centre slot's world pose at placement time. */
   slot: { position: readonly [number, number, number]; yaw: number };
-  /** The carrier's persisted drag pose — `null` is identity at the slot. */
+  /** A persisted carrier pose the drag starts from — `null` is identity at
+      the slot. The panel's own drag offset is added to it until the caller
+      persists the released pose back here. */
   carrier: { position: readonly [number, number, number]; rotation: readonly [number, number, number] } | null;
-  /** True while the grip is held — gates BOTH input paths off. */
+  /** The caller's own "held" flag, OR-ed with the panel's — gates BOTH input
+      paths off. */
   grabbed: boolean;
   /** The live texture is bound — unbound, the window shows the navy tile. */
   bound: boolean;
@@ -77,7 +90,8 @@ export interface RiveBoardPanelProps {
   content?: ReactNode;
   termination?: { source: number; cancel: boolean; revision: number };
   resetKey?: number;
-  /** Persisted carrier pose on release — same contract as the probe grip. */
+  /** The carrier pose a drag landed at (`carrier` + the drag), once per
+      release that moved. */
   onCarrierRelease(pose: { position: [number, number, number]; rotation: [number, number, number] }): void;
   onGrab(grabbed: boolean): void;
   /** One surface sample → the engine (`injectPointer`). */
@@ -90,6 +104,8 @@ export interface RiveBoardPanelProps {
   gripWorld: { position: XrVector3; yawDeg: number };
   /** The chrome runtime failed — the host decides the fallback (tray etc.). */
   onChromeError?(message: string): void;
+  /** The Rive runtime is up and bound. */
+  onReady?(): void;
 }
 
 export function RiveBoardPanel({
@@ -111,8 +127,10 @@ export function RiveBoardPanel({
   presentation,
   gripWorld,
   onChromeError,
+  onReady,
 }: RiveBoardPanelProps) {
-  const carrierNode = useRef<ViroNode>(null);
+  /* Round 2 device validation: off unless asked for AND native-panels is linked. */
+  const nativeRive = useNativeRiveEnabled();
   const runtime = useRef<RivePanel | null>(null);
   const binding = useRef<ReturnType<typeof bindBoardChrome> | null>(null);
   const owner = useRef<number | null>(null);
@@ -121,13 +139,35 @@ export function RiveBoardPanel({
      established pattern here (`XrBoardSurface.emit`). */
   const dispatch = useRef(handlers);
   const presented = useRef(presentation);
-  dispatch.current = handlers;
-  presented.current = presentation;
+  /* Synced after commit, before the passive effects below read them. */
+  useLayoutEffect(() => {
+    dispatch.current = handlers;
+    presented.current = presentation;
+  });
 
+  const base = carrier?.position ?? ZERO_OFFSET;
+  const rotation = carrier?.rotation ?? ZERO_OFFSET;
+  const carrierDrag = useCarrierDrag({
+    base,
+    /* A new slot (recenter), a newly persisted carrier or a reset drops the
+       panel's own offset — each is a new place to be moved from. */
+    resetKey: `${resetKey}|${slot.position.join(',')}|${slot.yaw}|${base.join(',')}`,
+    enabled: movable,
+    onCommit: (offset) => {
+      const landed = addOffset(base, offset);
+      onCarrierRelease({ position: [landed[0], landed[1], landed[2]], rotation: [rotation[0], rotation[1], rotation[2]] });
+    },
+    onGrab: (next) => {
+      runtime.current?.setBoolean('grabbed', next);
+      if (mounted.current) onGrab(next);
+    },
+  });
+  const held = grabbed || carrierDrag.grabbed;
+  const [cx, cy, cz] = carrierDrag.position;
   const carrierPose = useMemo(() => ({
-    position: carrier?.position ?? ([0, 0, 0] as const),
-    rotation: carrier?.rotation ?? ([0, 0, 0] as const),
-  }), [carrier]);
+    position: [cx, cy, cz] as const,
+    rotation,
+  }), [cx, cy, cz, rotation]);
 
   /*
     The chrome's own input maps world rays to artboard hits off this matrix —
@@ -159,18 +199,12 @@ export function RiveBoardPanel({
     [chromeBytes],
   );
 
-  const finishGrab = async () => {
+  /* Ends the grab from any terminal event; a disconnected controller cannot
+     leave the panel permanently grabbed. */
+  const finishGrab = () => {
     if (owner.current === null) return;
     owner.current = null;
-    runtime.current?.setBoolean('grabbed', false);
-    try {
-      const next = await carrierNode.current?.getTransformAsync();
-      if (mounted.current && next) onCarrierRelease({ position: next.position, rotation: next.rotation });
-    } catch {
-      // A disconnected controller cannot leave the panel permanently grabbed.
-    } finally {
-      if (mounted.current) onGrab(false);
-    }
+    carrierDrag.release();
   };
 
   useEffect(() => {
@@ -193,7 +227,7 @@ export function RiveBoardPanel({
 
   /* resetKey (tracking loss / controller reconnect) releases any grab —
      identical latch to the Rive probe's. */
-  useEffect(() => { void finishGrab(); }, [resetKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { finishGrab(); }, [resetKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Push application state into the view model whenever it moves. The
     panel's `opacity` prop is the one place the face's translucency is set —
@@ -205,7 +239,11 @@ export function RiveBoardPanel({
 
   return (
     <>
-      <ViroNode ref={carrierNode} position={[...carrierPose.position]} rotation={[...carrierPose.rotation]}>
+      <ViroNode
+        ref={(node: ViroNode | null) => carrierDrag.bindNode(node)}
+        position={carrierDrag.position}
+        rotation={[rotation[0], rotation[1], rotation[2]]}
+      >
         <ViroNode position={[slot.position[0], slot.position[1], slot.position[2]]} rotation={[0, slot.yaw, 0]}>
           {/* Full-size opaque backing — the face reads solid whatever
               `uiOpacity` or a translucent fill decides. 1 mm behind so it
@@ -217,6 +255,19 @@ export function RiveBoardPanel({
             materials={['xrBoardBacking']}
             ignoreEventHandling
           />
+          {nativeRive ? (
+            /* Round 2 `nativeRive`: ViroCore's Rive producer. Draws the chrome
+               from `bindings`; its toolbar takes no input (native-rive-chrome.tsx). */
+            <NativeRiveChrome
+              source={source}
+              width={PANEL_WIDTH_M}
+              height={PANEL_HEIGHT_M}
+              position={[0, 0, 0]}
+              resolution={{ width: 2496, height: 1560 }}
+              bindings={chromeBindings(present(presentation))}
+              onError={(error) => onChromeError?.(`Board controls unavailable: ${error.message}`)}
+            />
+          ) : (
           <ViroRivePanel
             source={source}
             width={PANEL_WIDTH_M}
@@ -225,23 +276,25 @@ export function RiveBoardPanel({
             /* 2× the artboard — micro-labels stay crisp at arm's length in
                the headset; the quad is 1.2 m wide and text lives at fs9. */
             resolution={{ width: 2496, height: 1560 }}
-            input={{ panelWorld, enabled: enabled && !grabbed, resetKey }}
+            input={{ panelWorld, enabled: enabled && !held, resetKey }}
             onError={(error) => onChromeError?.(`Board controls unavailable: ${error.message}`)}
             onRuntimeReady={(rt) => {
+              onReady?.();
               runtime.current = rt;
               binding.current?.dispose();
               binding.current = bindBoardChrome(rt, {
-                onTool: (t) => dispatch.current.onTool(t),
-                onInk: (i) => dispatch.current.onInk(i),
-                onPalette: (o) => dispatch.current.onPalette(o),
-                onUndo: () => dispatch.current.onUndo(),
-                onRedo: () => dispatch.current.onRedo(),
-                onClear: () => dispatch.current.onClear(),
-                onAsk: () => dispatch.current.onAsk(),
+                onTool: (t) => { if (__DEV__) console.log('[xr-board] onTool', t); dispatch.current.onTool(t); },
+                onInk: (i) => { if (__DEV__) console.log('[xr-board] onInk', i); dispatch.current.onInk(i); },
+                onPalette: (o) => { if (__DEV__) console.log('[xr-board] onPalette', o); dispatch.current.onPalette(o); },
+                onUndo: () => { if (__DEV__) console.log('[xr-board] onUndo'); dispatch.current.onUndo(); },
+                onRedo: () => { if (__DEV__) console.log('[xr-board] onRedo'); dispatch.current.onRedo(); },
+                onClear: () => { if (__DEV__) console.log('[xr-board] onClear'); dispatch.current.onClear(); },
+                onAsk: () => { if (__DEV__) console.log('[xr-board] onAsk'); dispatch.current.onAsk(); },
               });
               binding.current.push(present(presented.current));
             }}
           />
+          )}
           {/*
             The live board texture — `XrBoardLive`, the same quad the media
             panel binds — sits at `boardLayer.raster` (0.5 mm) off this node,
@@ -273,25 +326,24 @@ export function RiveBoardPanel({
           materials={['xrBoardGrip']}
           highAccuracyEvents
           dragType="FixedDistanceOrigin"
-          dragTransform="parent"
-          onDrag={() => {}}
+          dragTransform="none"
+          onDrag={(position: number[]) => { if (owner.current !== null) carrierDrag.drag(position); }}
           onClickState={(state: number, _position: number[], sourceId: number) => {
             /* Any terminal event from the owner ends the grab — not just
                CLICK_UP. If the up is lost (cancel, capture stolen mid-drag)
                and `grabbed` never clears, every `enabled: !grabbed` gate in
                the scene stays shut and the whole board goes silent. */
             if (state === 1) {
-              if (owner.current !== null || grabbed) return;
+              if (owner.current !== null || held) return;
               owner.current = sourceId;
-              onGrab(true);
-              runtime.current?.setBoolean('grabbed', true);
+              carrierDrag.grab();
             } else if (owner.current !== null && (state === 2 || state === 3) && sourceId === owner.current) {
-              void finishGrab();
+              finishGrab();
             }
           }}
         />
         <ViroText
-          text={grabbed ? 'Moving board' : 'Hold to move'}
+          text={held ? 'Moving board' : 'Hold to move'}
           /* VROTextFormatter's Center places the BASELINE on the node, not the
              optical middle — the label reads high in the pill by ~cap/2. Dropping
              the Y by that amount centres the glyphs, not their line box. */
@@ -314,8 +366,8 @@ export function RiveBoardPanel({
       {/*
         THE INPUT PLANE IS A SIBLING, WORLD-ANCHORED. It is invisible, so it
         does not need to ride the carrier; it needs the anchor recomputed when
-        the carrier lands — which `contentAnchor` does from the persisted
-        pose. While grabbed it is unmounted entirely (`enabled`), which is also
+        the carrier lands — which `contentAnchor` does from the committed
+        pose on the release render. While grabbed it is unmounted entirely (`enabled`), which is also
         the stroke-cancel path: a panel in motion cannot carry a stroke.
       */}
       <XrBoardSurface
@@ -323,7 +375,7 @@ export function RiveBoardPanel({
         headYawDeg={0}
         anchor={{ position: contentAnchor.position, yawDeg: contentAnchor.yawDeg }}
         area={{ width: CONTENT_RECT_PANEL.width, height: CONTENT_RECT_PANEL.height }}
-        enabled={enabled && !grabbed}
+        enabled={enabled && !held}
         termination={termination}
         onSurfaceInput={onSurfaceInput}
       />

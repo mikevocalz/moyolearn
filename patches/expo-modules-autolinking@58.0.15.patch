@@ -1,0 +1,63 @@
+diff --git a/build/commands/generateModulesProviderCommand.js b/build/commands/generateModulesProviderCommand.js
+--- a/build/commands/generateModulesProviderCommand.js
++++ b/build/commands/generateModulesProviderCommand.js
+@@ -67,7 +67,8 @@
+     return (0, _autolinkingOptions.registerAutolinkingArguments)(cli.command('generate-modules-provider [searchPaths...]')).option('-t, --target <path>', 'Path to the target file, where the package list should be written to.').option('--target-name <name>', 'Name of the user target the package list is generated for. Used to match against the inline modules targets.').option('--entitlement <path>', 'Path to the Apple code signing entitlements file.').option('-p, --packages <packages...>', 'Names of the packages to include in the generated modules provider.').addOption(new (_commander()).Option('--target-platform <platform>', 'The concrete Apple platform the target builds for. Decides which conditionally compiled module classes are linked; without it every scanned class is linked.').choices([
+         'ios',
+         'macos',
+-        'tvos'
++        'tvos',
++        'visionos'
+     ])).option('--app-root <path>', 'Path to the app root directory.').option('--podfile-properties-file-path <path>', 'Path to the Podfile properties file.').action(async (searchPaths, commandArguments)=>{
+         const platform = commandArguments.platform ?? 'apple';
+         const autolinkingOptionsLoader = (0, _autolinkingOptions.createAutolinkingOptionsLoader)({
+diff --git a/build/platforms/apple/moduleScanner.js b/build/platforms/apple/moduleScanner.js
+--- a/build/platforms/apple/moduleScanner.js
++++ b/build/platforms/apple/moduleScanner.js
+@@ -58,7 +58,8 @@
+  */ const SCANNER_PLATFORM_NAMES = {
+     ios: 'iOS',
+     macos: 'macOS',
+-    tvos: 'tvOS'
++    tvos: 'tvOS',
++    visionos: 'visionOS'
+ };
+ function loadModulesScanner(resolutionBasePath) {
+     try {
+diff --git a/scripts/ios/autolinking_manager.rb b/scripts/ios/autolinking_manager.rb
+--- a/scripts/ios/autolinking_manager.rb
++++ b/scripts/ios/autolinking_manager.rb
+@@ -293,8 +293,8 @@
+         raise "Undefined platform for target #{@target_definition.name}, make sure to call `platform` method globally or inside the target"
+       end
+ 
+-      # The declared platform must be iOS, macOS or tvOS, others are not supported.
+-      unless ['iOS', 'macOS', 'tvOS'].include?(platform_name)
++      # visionOS uses the same Apple module discovery path; podspec support remains authoritative.
++      unless ['iOS', 'macOS', 'tvOS', 'visionOS'].include?(platform_name)
+         raise "Target #{@target_definition.name} is dedicated to #{platform_name} platform, which is not supported by Expo Modules"
+       end
+     end
+diff --git a/src/commands/generateModulesProviderCommand.ts b/src/commands/generateModulesProviderCommand.ts
+--- a/src/commands/generateModulesProviderCommand.ts
++++ b/src/commands/generateModulesProviderCommand.ts
+@@ -79,7 +79,7 @@
+       new Option(
+         '--target-platform <platform>',
+         'The concrete Apple platform the target builds for. Decides which conditionally compiled module classes are linked; without it every scanned class is linked.'
+-      ).choices(['ios', 'macos', 'tvos'])
++      ).choices(['ios', 'macos', 'tvos', 'visionos'])
+     )
+     .option('--app-root <path>', 'Path to the app root directory.')
+     .option('--podfile-properties-file-path <path>', 'Path to the Podfile properties file.')
+diff --git a/src/platforms/apple/moduleScanner.ts b/src/platforms/apple/moduleScanner.ts
+--- a/src/platforms/apple/moduleScanner.ts
++++ b/src/platforms/apple/moduleScanner.ts
+@@ -12,6 +12,7 @@
+   ios: 'iOS',
+   macos: 'macOS',
+   tvos: 'tvOS',
++  visionos: 'visionOS',
+ };
+ 
+ interface ScannedModule {
