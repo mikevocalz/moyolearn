@@ -38,7 +38,7 @@
 - Forged referenceId/role and nonbilling membership cannot change plan, while owner and finance can.
 - Learner UI never displays Moyo Business pricing; revoked org entitlement denies write while allowing permitted read/export.
 - Trial end reminder, cancellation and renewal copy match actual provider configuration, including annual/monthly choices if available.
-- No live Price IDs, products or subscriptions are created in this PR.
+- No live Price IDs, products or subscriptions are created by merging this contract.
 
 ## Merge, rollback and review
 
@@ -48,4 +48,4 @@ Display copy and feature-registration mapping can be disabled while legacy `ops-
 
 **Required source/skills:** Root AGENTS.md/CONTRIBUTING.md; mattpocock/skills: pr, codebase-design; expo/skills (when changing Expo UI); pbakaus/impeccable; petergyang/no-ai-slop; pinned mikevocalz-foldable-layouts for adaptive work. Read domain-specialist source/skills before implementation; versions and external design tools must be verified against the installed lockfile. Existing `@acme/ui`, semantic web elements, Solito/Expo routes and Zustand/refs take precedence over building replacements.
 
-**Evidence at draft creation:** GitHub source/spec inspection and PR creation only. No typecheck, lint, test, build, browser, simulator, hardware or live external-provider validation was performed. Update this section with exact commands/results and device matrix when implementation lands. Do not merge a documentation contract as though it were a functional feature.
+**Evidence at draft creation:** GitHub source/spec inspection and PR creation only. No typecheck, lint, test, build, browser, simulator, hardware or live external-provider validation was performed. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented. The implementation PR updates this section with exact commands/results and device matrix.
