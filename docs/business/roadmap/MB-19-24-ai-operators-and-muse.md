@@ -1,9 +1,9 @@
-# Moyo Business — AI Operators & Meta Muse Connector (MB-19–MB-24)
+# Moyo Business: AI Operators & Meta Muse Connector (MB-19–MB-24)
 
 **Decision date:** 2026-10-16  
-**Status:** Planned/documentation only — no runtime integration, authentication, provider approval, or live writes are included in this change.  
+**Status:** Planned/documentation only; no runtime integration, authentication, provider approval, or live writes are included in this change.  
 **Owner:** Moyo Business, within the existing Moyo Learn monorepo  
-**Relationship:** Extension of the October 15 Moyo Business product/engineering blueprint and draft MB-01–MB-18 roadmap. This is not a replacement for those slices.
+**Relationship:** Extends the October 15 Moyo Business product/engineering blueprint and the MB-01–MB-18 roadmap contracts; those slices stay in force.
 
 ## Product decision
 
@@ -56,12 +56,12 @@ Native Moyo Business Assistant          Optional Meta Muse
 
 | Slice | Ownership & dependencies | Acceptance bar |
 |---|---|---|
-| **MB-19 — Native Business Assistant: read/draft** | Existing shell, ops, schedule and verified reports; after MB-05/06/07/16 | owner/finance/staff/location authorization; real data provenance/freshness; no state-changing tools; responsive/accessible Inspector |
-| **MB-20 — Agent tool gateway and approvals** | Reuse server business operations; after MB-05/07/10/12/19 | typed read/prepare/commit registry; tenant and location grant enforcement; one-use approvals; audit, replay/revoke/adversarial tests |
-| **MB-21 — Optional Meta Muse read-only pilot** | Integrations Hub; after MB-14/16/20 | OAuth/read-only option, safe summaries, revoke/expiry/reconnect, sandbox fixtures, threat model and provider-review pack; don't imply Meta approval |
-| **MB-22 — Approved scheduling/comms/invoice actions** | After MB-07/10/12/20/21 | action preview, Moyo owner consent, time/version/conflict recheck, idempotent confirmed receipts; no implicit email/charge |
-| **MB-23 — Multi-location intelligence + marketing drafts** | After MB-16/18/19/22 | permissioned location comparisons, small-cell suppression, grounded recommendations, campaign draft only until send approvals are verified |
-| **MB-24 — Public tutor discovery + booking** | After MB-07/08/10/20/21; independent product/legal gate | public safe catalog, verified free slots, terms/price, guardian/payer flow, actual booking, statuses/changes/cancel and financial receipt |
+| **MB-19: Native Business Assistant: read/draft** | Existing shell, ops, schedule and verified reports; after MB-05/06/07/16 | owner/finance/staff/location authorization; real data provenance/freshness; no state-changing tools; responsive/accessible Inspector |
+| **MB-20: Agent tool gateway and approvals** | Reuse server business operations; after MB-05/07/10/12/19 | typed read/prepare/commit registry; tenant and location grant enforcement; one-use approvals; audit, replay/revoke/adversarial tests |
+| **MB-21: Optional Meta Muse read-only pilot** | Integrations Hub; after MB-14/16/20 | OAuth/read-only option, safe summaries, revoke/expiry/reconnect, sandbox fixtures, threat model and provider-review pack; don't imply Meta approval |
+| **MB-22: Approved scheduling/comms/invoice actions** | After MB-07/10/12/20/21 | action preview, Moyo owner consent, time/version/conflict recheck, idempotent confirmed receipts; no implicit email/charge |
+| **MB-23: Multi-location intelligence + marketing drafts** | After MB-16/18/19/22 | permissioned location comparisons, small-cell suppression, grounded recommendations, campaign draft only until send approvals are verified |
+| **MB-24: Public tutor discovery + booking** | After MB-07/08/10/20/21; independent product/legal gate | public safe catalog, verified free slots, terms/price, guardian/payer flow, actual booking, statuses/changes/cancel and financial receipt |
 
 ### Delivery and launch gates
 
@@ -76,11 +76,11 @@ Native Moyo Business Assistant          Optional Meta Muse
 
 **Subagent work packets for implementation PRs:**
 
-- Repo cartographer — list canonical files, handler boundaries, existing org/location predicates, real report sources and misleading demo data.
-- Identity/security red team — token impersonation, revoked grants, forged org IDs, role demotion, prompt injection, cross-tenant leakage and action replay matrix.
-- Scheduling/finance correctness reviewer — proposed vs committed state, overlapping bookings, retries, invoice issuance/payment reconciliation, conflict timestamps.
-- Adaptive product designer — Mobbin-backed native assistant/Integrations Hub/proposal-approval screen contracts, responsive/foldable a11y and copy; **research not yet executed by this docs-only PR**.
-- Independent QA and documentation reviewer — no unverified provider support claims, exact acceptance/test status, rollout and rollback, anti-slop pass.
+- Repo cartographer: list canonical files, handler boundaries, existing org/location predicates, real report sources and misleading demo data.
+- Identity/security red team: token impersonation, revoked grants, forged org IDs, role demotion, prompt injection, cross-tenant leakage and action replay matrix.
+- Scheduling/finance correctness reviewer: proposed vs committed state, overlapping bookings, retries, invoice issuance/payment reconciliation, conflict timestamps.
+- Adaptive product designer: Mobbin-backed native assistant/Integrations Hub/proposal-approval screen contracts, responsive/foldable a11y and copy; **research not yet executed by this docs-only PR**.
+- Independent QA and documentation reviewer: no unverified provider support claims, exact acceptance/test status, rollout and rollback, anti-slop pass.
 
 **Skills:** load the root `AGENTS.md`, current `CONTRIBUTING.md`, pinned `mikevocalz-foldable-layouts` skill on adaptive UI work, and the relevant repo-required Expo, TypeScript, device, product-marketing, Impeccable and no-AI-slop skills before implementation/review. Evidence in each future PR must say which skills/subagents **actually ran**, not just list them.
 
@@ -88,17 +88,17 @@ Native Moyo Business Assistant          Optional Meta Muse
 
 ## Existing Moyo dependencies
 
-- [MB-01 architecture draft #101](https://github.com/mikevocalz/moyolearn/pull/101), [MB-05 privacy draft #105](https://github.com/mikevocalz/moyolearn/pull/105), [MB-07 schedule draft #108](https://github.com/mikevocalz/moyolearn/pull/108).
-- [MB-10 billing draft #111](https://github.com/mikevocalz/moyolearn/pull/111), [MB-12 communications draft #114](https://github.com/mikevocalz/moyolearn/pull/114), [MB-14 calendar draft #116](https://github.com/mikevocalz/moyolearn/pull/116), [MB-16 reporting draft #118](https://github.com/mikevocalz/moyolearn/pull/118), [MB-18 launch draft #120](https://github.com/mikevocalz/moyolearn/pull/120).
+- [MB-01 architecture contract #101](https://github.com/mikevocalz/moyolearn/pull/101), [MB-05 privacy contract #105](https://github.com/mikevocalz/moyolearn/pull/105), [MB-07 schedule contract #108](https://github.com/mikevocalz/moyolearn/pull/108).
+- [MB-10 billing contract #111](https://github.com/mikevocalz/moyolearn/pull/111), [MB-12 communications contract #114](https://github.com/mikevocalz/moyolearn/pull/114), [MB-14 calendar contract #116](https://github.com/mikevocalz/moyolearn/pull/116), [MB-16 reporting contract #118](https://github.com/mikevocalz/moyolearn/pull/118), [MB-18 launch contract #120](https://github.com/mikevocalz/moyolearn/pull/120).
 - [Repo operating instructions](https://github.com/mikevocalz/moyolearn/blob/main/AGENTS.md); [existing Payload CRM boundary](https://github.com/mikevocalz/moyolearn/blob/main/docs/business/noto-payload-crm-integration.md).
 
 ## Provider references and explicit uncertainty
 
-- [Meta — Muse for Small Business](https://muse.ai/business)
-- [Muse Connector Platform — submit and review](https://muse.ai/platform)
-- [Muse connector guidelines — read/write/sensitive-write, OAuth and completion](https://platform.muse.ai/docs)
+- [Meta: Muse for Small Business](https://muse.ai/business)
+- [Muse Connector Platform: submit and review](https://muse.ai/platform)
+- [Muse connector guidelines: read/write/sensitive-write, OAuth and completion](https://platform.muse.ai/docs)
 - [Muse Connector Terms (2026)](https://platform.muse.ai/terms)
 
 Provider specs, prices, review requirements and feature availability may change. Confirm the live developer onboarding and legal terms before implementing or promising access.
 
-**Documentation change only:** no OAuth client registration, API keys, Meta submission, user data sync, runtime tests, deployment or merger performed.
+**Documentation change only:** no OAuth client registration, API keys, Meta submission, user data sync, runtime tests or deployment performed. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented.
