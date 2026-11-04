@@ -1,5 +1,7 @@
 // Run only on synthetic checked-in fixtures. Never take learner text from stdin,
 // argv, files or environment. This script is an explicit, manual evaluation tool.
+// SOT: docs/design/single-qwen-evaluation.md
+// SOT-KEYWORDS: qwen synthetic evaluation runner manual dashscope fixtures
 import 'server-only';
 import { runSyntheticQwenEvaluation, type QwenFixtureId } from './qwen-candidate.ts';
 

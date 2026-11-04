@@ -1,6 +1,8 @@
 // Preview-only fallback eligibility. The production gateway does not import it.
 // These fields are necessary but NOT sufficient authorization: production must
 // read trusted provider approvals and signed subject x age-band evaluation rows.
+// SOT: docs/design/single-qwen-evaluation.md
+// SOT-KEYWORDS: qwen fallback eligibility fail closed refusal safety block provider approval review
 export type TutorFallbackCause =
   | 'provider-unavailable'
   | 'provider-timeout'

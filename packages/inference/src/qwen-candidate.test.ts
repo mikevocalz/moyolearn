@@ -1,4 +1,6 @@
+// SOT-KEYWORDS: qwen candidate fallback fail closed synthetic evaluation test gateway isolation
 import assert from 'node:assert/strict';
+import { readdirSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { qwenFallbackEligibleForReview, type FallbackReadiness } from './fallback-policy.ts';
 import { QWEN_CANDIDATE, runSyntheticQwenEvaluation } from './qwen-candidate.ts';
@@ -57,4 +59,16 @@ test('fallback requires every approval and is never used after refusal or safety
     'safetyPlaneAvailable', 'guardianPermissionConfirmed', 'learnerBudgetAvailable'] as const) {
     assert.equal(qwenFallbackEligibleForReview({ ...ready, [field]: false }), false, field);
   }
+});
+
+// The fail-closed property this PR depends on: until the child-data agreement
+// and per-cell evaluations exist, nothing on the live path can reach Qwen.
+// Only the manual runner and this test may import the evaluation lane.
+test('no live inference module imports the Qwen adapter or the fallback preview', () => {
+  const dir = new URL('./', import.meta.url);
+  const allowed = new Set(['qwen-candidate.ts', 'qwen-eval-runner.ts', 'qwen-candidate.test.ts', 'fallback-policy.ts']);
+  const offenders = readdirSync(dir)
+    .filter((file) => file.endsWith('.ts') && !allowed.has(file))
+    .filter((file) => /qwen-candidate|fallback-policy|qwen-eval-runner/.test(readFileSync(new URL(file, dir), 'utf8')));
+  assert.deepEqual(offenders, []);
 });

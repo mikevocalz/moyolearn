@@ -1,6 +1,8 @@
 // Evaluation-only Qwen candidate. This is not a learner provider or an active fallback.
 // All transmitted prompts are checked-in synthetic fixtures; there is no caller-supplied text.
 // Which model may teach a child remains a reviewed, server-owned decision.
+// SOT: docs/design/single-qwen-evaluation.md · packages/inference/src/fallback-policy.ts
+// SOT-KEYWORDS: qwen candidate synthetic evaluation dashscope fallback fail closed provider approval
 import 'server-only';
 import { scrubOutbound } from './pseudonymize.ts';
 
