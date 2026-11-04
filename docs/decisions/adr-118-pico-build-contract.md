@@ -50,15 +50,25 @@ them. What it needs is:
 
 `withPicoOpenXrLoader` writes all four (including §1's meta-data).
 
-### 4. The immersive categories on `.VRActivity`, and nowhere else
+### 4. No intent-filter on `.VRActivity`, and no immersive category on `MainActivity`
 
-`com.pico.intent.category.VR`, the pre-migration `com.picovr.intent.category.VR`,
-and Khronos `org.khronos.openxr.intent.category.IMMERSIVE_HMD`, added by
-`plugins/with-viro-android-linkage.js`.
+Revised 2026-10-26. This section used to require `com.pico.intent.category.VR`,
+`com.picovr.intent.category.VR` and Khronos
+`org.khronos.openxr.intent.category.IMMERSIVE_HMD` on `.VRActivity`. They sat in
+an intent-filter with action MAIN, so PICO's Library listed `.VRActivity` as a
+second MoyoLearn tile.
 
-**They must not reach `MainActivity`.** An app whose launcher activity is
-immersive starts in XR, and this one never may — a learner opens a tutoring app,
-reads a problem, and enters the board when they choose to.
+Measured on a PICO 4 Ultra (OS 5.15.7): with no filter at all, `VRActivity`
+starts by explicit intent from Viro's `VRLauncher`, PICO classifies it as
+immersive from its scoped `pvr.app.type=vr` (§ below), and its OpenXR session
+reaches `XR_SESSION_STATE_FOCUSED` and submits frames. A control with the old
+filter behaved the same. `plugins/with-viro-android-linkage.js` now strips every
+filter from `.VRActivity`, and only `MainActivity` answers MAIN. Evidence:
+viro-external `docs/validation/2026-10-device-pass.md`, "Round 1 rebuild".
+
+**No immersive category may reach `MainActivity` either.** An app whose
+launcher activity is immersive starts in XR, and this one never may — a learner
+opens a tutoring app, reads a problem, and enters the board when they choose to.
 
 ### `pvr.app.type` is SCOPED, which is the whole mechanism
 
@@ -114,7 +124,7 @@ assert 'org.khronos.openxr.runtime_broker' in m
 main_activity = re.search(r'<activity android:name="\.MainActivity".*?</activity>', m, re.S).group(0)
 assert 'IMMERSIVE_HMD' not in main_activity   # the launcher stays 2D
 vr = re.search(r'<activity android:name="\.VRActivity".*?</activity>', m, re.S).group(0)
-assert 'com.pico.intent.category.VR' in vr
+assert '<intent-filter' not in vr   # one Library tile: only MainActivity answers MAIN
 print('manifest ok')
 PY
 find android -name libopenxr_loader.so    # must exist, from the overlay
