@@ -16,8 +16,7 @@
     "build": "spark build --platform macos",
     "package": "spark package",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/*.test.mjs",
-    "postinstall": "node node_modules/@legendapp/spark/init-template.cjs"
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@legendapp/spark": "0.0.2",
