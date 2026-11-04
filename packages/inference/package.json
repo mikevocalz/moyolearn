@@ -11,7 +11,8 @@
   "scripts": {
     "lint": "eslint",
     "test": "node --experimental-strip-types --conditions=react-server --test src/*.test.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:qwen:synthetic": "node --experimental-strip-types --conditions=react-server src/qwen-eval-runner.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "catalog:",
