@@ -1,4 +1,4 @@
-# MB-01: Moyo Business product split — architecture decision
+# MB-01: Moyo Business product split: architecture decision
 
 <!-- What: source-of-truth and implementation gates for splitting Moyo Learn and Moyo Business product experiences. -->
 <!-- Why: Moyo Business must be independently sellable without a duplicate tenant, CRM, schedule, CMS or education database. -->
@@ -9,7 +9,7 @@
 
 ## Decision
 
-Moyo Learn serves students, parents and educators. Moyo Business serves tutoring operators first, then learning centers, schools, districts, and later service businesses. Both products can be licensed independently; one authenticated organization can use both. Separate customer-facing branding and navigation, not backends. The first launch retains `apps/web/app/(business)`, the existing Solito/Expo screen host, Better Auth, Payload 4, Supabase Postgres and `packages/jobs`.
+Moyo Learn serves students, parents and educators. Moyo Business serves tutoring operators first, then learning centers, schools, districts, and later service businesses. Both products can be licensed independently; one authenticated organization can use both. Separate customer-facing branding and navigation; both products share one backend. The first launch retains `apps/web/app/(business)`, the existing Solito/Expo screen host, Better Auth, Payload 4, Supabase Postgres and `packages/jobs`.
 
 An independent `apps/business` deployment, a second CRM, an independent `Tenants` collection, a second scheduling engine and a new permissions framework are out of scope. A future public `business.moyolearn.com` must be reserved in slug/hostname policy before release; it cannot silently become an organization tenant.
 
@@ -60,7 +60,7 @@ An independent `apps/business` deployment, a second CRM, an independent `Tenants
 - MB-06 CRM; MB-07 booking; MB-08 programs/resources; MB-09 agreement/attendance/credits; MB-10 invoicing/Stripe; MB-11 payouts.
 - MB-12 communications; MB-13 native PhotoCraft; MB-14 calendar; MB-15 accounting/webhooks; MB-16 analytics; MB-17 institutions; MB-18 service-business/launch.
 
-Individual MB PRs must remain draft until their **implementation**, test evidence and dependency gates are complete. A document-only planning PR is not a shipped feature.
+Individual MB contracts merge as documents; each implementation PR stays draft until its implementation, test evidence and dependency gates are complete. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented.
 
 ## Existing work to extend
 
@@ -71,7 +71,7 @@ Individual MB PRs must remain draft until their **implementation**, test evidenc
 - [#98](https://github.com/mikevocalz/moyolearn/pull/98): business lifecycle **documentation only**.
 - [#99](https://github.com/mikevocalz/moyolearn/pull/99): foldable design **open draft**; coordinate rather than replace.
 
-## Implementation evidence required before merge
+## Implementation evidence required before an implementation PR merges
 
 - Source audit verifies canonical locations, installed versions, existing migrations and latest branches.
 - Security tests prove cross-tenant IDs, mismatched family/lead pointers, role revocation and learning-data wall fail closed.
