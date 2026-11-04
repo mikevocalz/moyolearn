@@ -51,6 +51,8 @@ Both Graphite/Dawn packages were published from react-native-skia `00a480f3`, wh
 
 WebGPU 0.19.2 → 0.21.0 leaves the public surface the app uses unchanged: `Canvas`, `GPUDeviceProvider`, `useMainDevice` and the `CanvasRef`/`NativeCanvas`/`RNCanvasContext` types are the same in the declarations. The rest of the change is internal: codegen types now come from `react-native`'s `CodegenTypes`, there is a Dawn blob (pipeline) cache, background submissions are suspended on Metal, and device-loss and error events reach worklet runtimes on their next awaited operation. The Android Gradle file now honours a root `ndkPath`/`ndkVersion`. No app code changes. Terminal native builds of the published head remain required.
 
+WebGPU 0.21.0 → 0.21.1 (published 2026-11-04) changes two files in the tarball. `package.json` drops dev-only tooling, and the dependency on `react-native-webgpu-dawn@157.1.0` is unchanged. The podspec's `s.platforms` adds tvOS and removes visionOS, because Dawn ships no `xros` slice. This app already keeps the pod off visionOS (`apps/mobile/react-native.config.js`, with `hearts-gpu.visionos.tsx` as the stub), so the visionOS build input does not change. No tracked `Podfile.lock` lists the pod. No JS, C++ or Gradle source changed.
+
 
 Workflow pin provenance (verified 2026-10-11): [checkout v4 security backport](https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262), [setup-node v4.4.0](https://github.com/actions/setup-node/releases/tag/v4.4.0), and [upload-artifact v4.6.2](https://github.com/actions/upload-artifact/releases/tag/v4.6.2). Regression coverage rejects mutable refs and proves a failing candidate check prevents the publication shell from invoking authentication, commit or push.
 

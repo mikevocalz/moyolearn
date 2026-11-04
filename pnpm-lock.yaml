@@ -298,8 +298,8 @@ catalogs:
       specifier: 0.21.2
       version: 0.21.2
     react-native-webgpu:
-      specifier: 0.21.0
-      version: 0.21.0
+      specifier: 0.21.1
+      version: 0.21.1
     react-native-webview:
       specifier: 14.0.1
       version: 14.0.1
@@ -756,7 +756,7 @@ importers:
         version: 0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-native-webgpu:
         specifier: 'catalog:'
-        version: 0.21.0(675f005f5c7bd37d86a9ed8acf738b1e)
+        version: 0.21.1(675f005f5c7bd37d86a9ed8acf738b1e)
       react-native-webview:
         specifier: 'catalog:'
         version: 14.0.1(patch_hash=d5f40c2a43072b00490f4d2491850816ba34c1748b3989270322eb01443bd800)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -10823,8 +10823,8 @@ packages:
   react-native-webgpu-dawn@157.1.0:
     resolution: {integrity: sha512-T197EGYxTBuw5Qb1yihnOX6+tNsSNem3ymJ+RZVOQbkHn9I2PnKwg3HA+l3eAEGep552kotkNDBAnM5x4oo8QA==}
 
-  react-native-webgpu@0.21.0:
-    resolution: {integrity: sha512-7UfVyIWTmf1EIyxfzX4wocpf7RWpHb7UL3IRFxoFpPn9375kbcwPjS2e8gUe7LNvCDCkOFgVVhbyLr+MZlFS5g==}
+  react-native-webgpu@0.21.1:
+    resolution: {integrity: sha512-H6Xv8QCbHmMc1E0r13fhKAZylYP3iq69vcT75/I4DmEBAOPHGUoNLfeUvMNZopiTQrMhy7D0SKM/xRVNmzukBw==}
     peerDependencies:
       react: 19.3.0
       react-native: 0.88.0
@@ -15729,7 +15729,9 @@ snapshots:
       metro-runtime: 0.87.1
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -19351,7 +19353,7 @@ snapshots:
       eslint: 9.39.5(jiti@2.7.0)
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0))
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-react: 7.37.5(eslint@9.39.5(jiti@2.7.0))
       eslint-plugin-react-hooks: 7.0.1(eslint@9.39.5(jiti@2.7.0))
@@ -19384,7 +19386,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0))
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -19434,7 +19436,7 @@ snapshots:
       - supports-color
       - typescript
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)))(eslint@9.39.5(jiti@2.7.0)):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.48.0(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0)):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -22818,7 +22820,7 @@ snapshots:
 
   react-native-webgpu-dawn@157.1.0: {}
 
-  react-native-webgpu@0.21.0(675f005f5c7bd37d86a9ed8acf738b1e):
+  react-native-webgpu@0.21.1(675f005f5c7bd37d86a9ed8acf738b1e):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
