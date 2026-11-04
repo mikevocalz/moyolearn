@@ -1,0 +1,87 @@
+# Moyo Learn desktop (Legend Spark 0.0.2) checks.
+# apps/desktop has its own npm lockfile and is excluded from the root pnpm
+# workspace (docs/desktop/adr/0001-spark-isolated-workspace.md), so the macOS job
+# installs inside apps/desktop only and never runs the root pnpm install.
+# SOT-KEYWORDS: desktop ci spark macos workflow isolation
+name: Desktop
+
+on:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "packages/theme/tokens.ts"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - ".nvmrc"
+      - "docs/desktop/**"
+      - ".github/workflows/desktop.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/desktop/**"
+      - "packages/theme/tokens.ts"
+      - "pnpm-workspace.yaml"
+      - "pnpm-lock.yaml"
+      - ".nvmrc"
+      - ".github/workflows/desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS (npm ci, typecheck, doctor, analyze, build)
+    # GitHub-hosted Apple Silicon. Spark 0.0.2 publishes macOS arm64 only.
+    runs-on: macos-15
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Spark needs Node >= 24.19.0; 24.12.0 breaks the Expo Desktop config import.
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - name: Toolchain
+        run: |
+          node --version
+          xcodebuild -version
+          pod --version
+      # npm ci runs the postinstall (init-template.cjs), which Spark needs to
+      # prepare its patched native inputs. Do not pass --ignore-scripts.
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run doctor
+      - run: npm run analyze
+      - name: Standalone macOS build
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee "$RUNNER_TEMP/spark-build.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-macos-diagnostics
+          path: |
+            ${{ runner.temp }}/spark-build.log
+            apps/desktop/.spark/logs/
+            apps/desktop/.spark/selection-report.json
+          if-no-files-found: ignore
+
+  root-isolation:
+    name: Root workspace excludes apps/desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node apps/desktop/scripts/check-root-isolation.mjs

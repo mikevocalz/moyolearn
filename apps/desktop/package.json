@@ -1,0 +1,135 @@
+{
+  "name": "moyo-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "spark dev",
+    "macos": "spark dev",
+    "dev": "spark dev",
+    "build": "spark build",
+    "package": "spark package",
+    "doctor": "spark doctor",
+    "postinstall": "node node_modules/@legendapp/spark/init-template.cjs",
+    "typecheck": "tsc --noEmit",
+    "analyze": "spark analyze"
+  },
+  "dependencies": {
+    "@legendapp/spark": "0.0.2",
+    "@react-native-community/cli": "20.1.3",
+    "@react-native-runtimes/core": "file:./spark-packages/react-native-runtimes-core-3a04e0455ac44b0bc11cfa315943ad84509c445111a2b3974ca85c8ed489827c.tgz",
+    "@types/react": "19.2.18",
+    "expo": "55.0.32",
+    "expo-desktop": "1.0.6",
+    "expo-desktop-config-plugins": "1.3.2",
+    "expo-desktop-metro-config": "55.83.3",
+    "expo-desktop-prebuild-config": "1.1.3",
+    "expo-desktop-template-bare-minimum": "55.83.10",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-macos": "0.83.0",
+    "react-native-nitro-modules": "file:./spark-packages/react-native-nitro-modules-5df8774796c48ed54d238f3fada01b64d710b14077983c37f639607eb805e066.tgz",
+    "typescript": "5.9.3",
+    "zustand": "5.0.16"
+  },
+  "expo": {
+    "install": {
+      "exclude": [
+        "react",
+        "react-dom",
+        "react-native"
+      ]
+    },
+    "autolinking": {
+      "exclude": [
+        "react-native-windows",
+        "@legendapp/spark-audio",
+        "@legendapp/spark-clipboard",
+        "@legendapp/spark-codex",
+        "@legendapp/spark-desktop-shortcuts",
+        "@legendapp/spark-desktop-windows",
+        "@legendapp/spark-drag-drop",
+        "@legendapp/spark-file-system",
+        "@legendapp/spark-global-shortcuts",
+        "@legendapp/spark-notifications",
+        "@legendapp/spark-processes",
+        "@legendapp/spark-secure-storage",
+        "@legendapp/spark-system",
+        "@legendapp/spark-tray",
+        "@legendapp/spark-updates",
+        "@react-native-runtimes/core"
+      ]
+    }
+  },
+  "allowScripts": {
+    "@legendapp/spark": true,
+    "react-native-enriched-markdown": true,
+    "fsevents": true
+  },
+  "trustedDependencies": [
+    "@legendapp/spark",
+    "react-native-enriched-markdown",
+    "fsevents"
+  ],
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@legendapp/spark",
+      "react-native-enriched-markdown",
+      "fsevents"
+    ]
+  },
+  "overrides": {
+    "expo": "55.0.32",
+    "@expo/cli": "55.0.37",
+    "react-native-nitro-modules": "file:./spark-packages/react-native-nitro-modules-5df8774796c48ed54d238f3fada01b64d710b14077983c37f639607eb805e066.tgz",
+    "react-native-webview": "file:./spark-packages/react-native-webview-333e421ad38b0da2b1dc7b3306de019f257e31bfd6cdb0272d97b1bb2b129354.tgz",
+    "@op-engineering/op-sqlite": "file:./spark-packages/op-engineering-op-sqlite-a14b99ecf4911b55f586b2c5d1f58ac48b0a9d8fe4b84fa6edef1a167630646b.tgz",
+    "expo-asset": "55.0.20",
+    "expo-constants": "55.0.17",
+    "expo-file-system": "55.0.26",
+    "expo-font": "55.0.8",
+    "expo-keep-awake": "55.0.8",
+    "expo-modules-core": "55.0.27",
+    "expo-desktop-modules-core": "55.0.2",
+    "expo-desktop-stubs": "55.0.2",
+    "react": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-macos": "0.83.0",
+    "react-native-windows": "0.83.2",
+    "postcss": "8.5.31",
+    "dompurify": "3.4.17",
+    "@tiptap/core": "3.32.0",
+    "@tiptap/extension-blockquote": "3.32.0",
+    "@tiptap/extension-bold": "3.32.0",
+    "@tiptap/extension-code": "3.32.0",
+    "@tiptap/extension-document": "3.32.0",
+    "@tiptap/extension-heading": "3.32.0",
+    "@tiptap/extension-history": "3.32.0",
+    "@tiptap/extension-image": "3.32.0",
+    "@tiptap/extension-italic": "3.32.0",
+    "@tiptap/extension-link": "3.32.0",
+    "@tiptap/extension-list": "3.32.0",
+    "@tiptap/extension-paragraph": "3.32.0",
+    "@tiptap/extension-strike": "3.32.0",
+    "@tiptap/extension-text": "3.32.0",
+    "@tiptap/extension-text-align": "3.32.0",
+    "@tiptap/extension-underline": "3.32.0",
+    "@tiptap/extensions": "3.32.0",
+    "@tiptap/pm": "3.32.0",
+    "@tiptap/react": "3.32.0",
+    "@tiptap/extension-bubble-menu": "3.32.0",
+    "@tiptap/extension-floating-menu": "3.32.0",
+    "fast-xml-parser": "5.11.2",
+    "react-dom": "19.2.0",
+    "react-native-enriched-markdown": "1.1.1",
+    "react-native-enriched-html": "1.1.1",
+    "@react-native-runtimes/core": "file:./spark-packages/react-native-runtimes-core-3a04e0455ac44b0bc11cfa315943ad84509c445111a2b3974ca85c8ed489827c.tgz",
+    "expo-audio": "file:./spark-packages/expo-audio-a8d70b5b39bd3b69d95528011f14aa93a0fdf7ff1e6c89e0f7489329230be060.tgz",
+    "@legendapp/spark": "0.0.2"
+  },
+  "description": "Moyo Learn for macOS on Legend Spark. Separate npm graph from the root pnpm workspace.",
+  "engines": {
+    "node": ">=24.19.0"
+  }
+}

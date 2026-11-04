@@ -1,6 +1,9 @@
 packages:
   - apps/*
   - packages/*
+  # apps/desktop is a Legend Spark app on Expo SDK 55 / RN 0.83 with its own npm
+  # lockfile; re-include it when Spark ships on Expo SDK 58 or later (ADR desktop/0001).
+  - "!apps/desktop"
 
 # OVERRIDES LIVE IN package.json (`pnpm.overrides`), NOT HERE.
 #
