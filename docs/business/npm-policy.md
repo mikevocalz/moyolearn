@@ -43,6 +43,15 @@ Private Graphite headers come from the SHA-256-pinned [upstream header release](
 `node --test tooling/enable-skia-graphite.test.mjs` covers unknown combinations, mismatched header source/patches, missing ABIs, absent optional upstream header-shim directories, cold/warm cache invalidation and checksum/download failures without network calls. Separate cold and warm staging checks used integrity-verified npm artifacts and the checksum-verified real header archive; all copied Dawn libraries matched their owner bytes. Neither check proves native compile/link success. CocoaPods lock regeneration is complete for the checked-in native dependency and Podfile inputs. The artifact-producing commits, stable lock/output digests and subsequent tooling changes are distinguished in `native-lock-provenance.json`. The installer directory safeguard, Android diagnostics and opt-in CI scheduling do not change CocoaPods declarations or admitted package versions. Terminal native builds of the final published head remain required.
 
 
+## Shared Dawn admission for Graphite 157.1
+
+`react-native-webgpu@0.21.0` depends on `react-native-webgpu-dawn@157.1.0` and still declares Dawn `chrome-m157`, so the Gradle and podspec single-Dawn guards compare the same tag as before. The 157.1.0 Dawn is the same source commit (`ada56770…`) with one added `metal-suspend-submissions-in-background.patch`, and its Skia label becomes `m157a`; the Graphite binaries carry the same label. The installer admits that exact patch list and label and rejects the 157.0.0 metadata.
+
+Both Graphite/Dawn packages were published from react-native-skia `00a480f3`, whose `externals/skia` submodule is still `b94213a1`, the pin used for 157.0.0. The three private headers were downloaded again from that commit on 2026-11-04 and hash to the existing SHA-256 pins. A real install then staged them, and all four Android `libwebgpu_dawn.so` copies matched the owner package byte for byte.
+
+WebGPU 0.19.2 → 0.21.0 leaves the public surface the app uses unchanged: `Canvas`, `GPUDeviceProvider`, `useMainDevice` and the `CanvasRef`/`NativeCanvas`/`RNCanvasContext` types are the same in the declarations. The rest of the change is internal: codegen types now come from `react-native`'s `CodegenTypes`, there is a Dawn blob (pipeline) cache, background submissions are suspended on Metal, and device-loss and error events reach worklet runtimes on their next awaited operation. The Android Gradle file now honours a root `ndkPath`/`ndkVersion`. No app code changes. Terminal native builds of the published head remain required.
+
+
 Workflow pin provenance (verified 2026-10-11): [checkout v4 security backport](https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262), [setup-node v4.4.0](https://github.com/actions/setup-node/releases/tag/v4.4.0), and [upload-artifact v4.6.2](https://github.com/actions/upload-artifact/releases/tag/v4.6.2). Regression coverage rejects mutable refs and proves a failing candidate check prevents the publication shell from invoking authentication, commit or push.
 
 

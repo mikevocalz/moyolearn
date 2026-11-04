@@ -7,11 +7,34 @@
 // SOT-KEYWORDS: react native autolinking visionos executorch xros native dependency
 const visionOS = process.env.MOYO_VISIONOS_BUILD === '1';
 
+// `@viro-external/native-panels` (the native QuickDraw board and the native
+// Rive panel behind the Round 2 device-validation switches) is JS-only unless
+// a build sets MOYO_NATIVE_PANELS=1. Nitro is no longer the reason: the app
+// and the package both run Nitro 1.0 alpha. The reason left is viro. The
+// package's Kotlin imports `com.viromedia.bridge.canvas.CanvasSurfaces`
+// (WhiteboardRenderLoop.kt, SurfaceSlot.kt, RiveSurfaceLink.kt), and the
+// react_viro AAR in this app's viro 3.0.1-moyo.1 has no such class, so linking
+// it fails the Android compile. It peers viro >=3.0.3-moyo.1. Drop this gate in
+// the change that moves the app to that viro. Unlinked, the switches stay
+// inert: `nativePanelsLinked` reports false.
+const nativePanels = process.env.MOYO_NATIVE_PANELS === '1';
+
 module.exports = {
   dependencies: {
     'react-native-executorch': visionOS ? { platforms: { ios: null } } : {},
     'react-native-keyboard-controller': visionOS ? { platforms: { ios: null } } : {},
     'react-native-pulsar': visionOS ? { platforms: { ios: null } } : {},
     'react-native-webgpu': visionOS ? { platforms: { ios: null } } : {},
+    // apps/mobile lists these so the iOS SwiftPM build links them (see
+    // tooling/ios-spm.mjs). visionOS linked none of them before that and does
+    // not now. VisionCamera's AVCaptureVideoPreviewLayer and focus/exposure modes
+    // and Skia's UIScreen are unavailable in the visionOS SDK; the other three
+    // have never been built for it.
+    'react-native-vision-camera': visionOS ? { platforms: { ios: null } } : {},
+    '@shopify/react-native-skia': visionOS ? { platforms: { ios: null } } : {},
+    'react-native-audio-api': visionOS ? { platforms: { ios: null } } : {},
+    'react-native-enriched-html': visionOS ? { platforms: { ios: null } } : {},
+    '@react-native-masked-view/masked-view': visionOS ? { platforms: { ios: null } } : {},
+    '@viro-external/native-panels': nativePanels ? {} : { platforms: { android: null, ios: null } },
   },
 };
