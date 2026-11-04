@@ -1,3 +1,4 @@
+// SOT-KEYWORDS: world language course catalog pronunciation evidence transcript gate test
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { courseById, LANGUAGE_COURSES, languageLessonInstructions, isCourseSelection } from './course-catalog.ts';

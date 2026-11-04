@@ -1,5 +1,7 @@
 // Evidence guard. Speech-to-text is not a pronunciation scorer.
 // Transcript alone cannot establish phoneme, accent or fluency accuracy.
+// SOT: docs/design/world-language-teaching.md · docs/design/multilingual-speech-migration.md
+// SOT-KEYWORDS: pronunciation evidence whisper transcript phoneme fluency score gate language progress domain
 export type LanguageEvidenceSource =
   | 'typed'
   | 'speech-transcript'

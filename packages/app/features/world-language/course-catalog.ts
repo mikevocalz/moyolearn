@@ -1,5 +1,18 @@
 // World-language curriculum metadata. A language course is not a model router:
 // Natalie remains one tutor voice, with subject-specific pedagogy/evaluation.
+// Nothing imports this from a learner surface yet: course screens and
+// server-owned enrollment wait on vetted content (docs/design/world-language-teaching.md).
+// SOT: docs/design/world-language-teaching.md · packages/app/features/world-language/pronunciation-evidence.ts
+// SOT-KEYWORDS: world language course catalog locale dialect actfl level domain natalie lesson prompt
+
+interface LanguageCourse {
+  readonly label: string;
+  readonly locale: string;
+  readonly speechLanguage: string;
+  readonly script: 'Latin' | 'Han' | 'Arabic';
+  readonly tutoringStatus: 'evaluation-required';
+}
+
 export const LANGUAGE_COURSES = {
   'spanish-mx': { label: 'Spanish (Mexico)', locale: 'es-MX', speechLanguage: 'es', script: 'Latin', tutoringStatus: 'evaluation-required' },
   'spanish-es': { label: 'Spanish (Spain)', locale: 'es-ES', speechLanguage: 'es', script: 'Latin', tutoringStatus: 'evaluation-required' },
@@ -7,7 +20,7 @@ export const LANGUAGE_COURSES = {
   'mandarin-cn': { label: 'Mandarin Chinese (Simplified)', locale: 'zh-CN', speechLanguage: 'zh', script: 'Han', tutoringStatus: 'evaluation-required' },
   'arabic-msa': { label: 'Modern Standard Arabic', locale: 'ar', speechLanguage: 'ar', script: 'Arabic', tutoringStatus: 'evaluation-required' },
   'english-us': { label: 'English language learning (US)', locale: 'en-US', speechLanguage: 'en', script: 'Latin', tutoringStatus: 'evaluation-required' },
-} as const;
+} as const satisfies Record<string, LanguageCourse>;
 
 export type LanguageCourseId = keyof typeof LANGUAGE_COURSES;
 export type LanguageDomain = 'listening' | 'speaking' | 'reading' | 'writing';
