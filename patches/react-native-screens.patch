@@ -1,5 +1,270 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+index 0000000..5ef69c6
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,259 @@
++// swift-tools-version: 6.0
++// AUTO-SCAFFOLDED by react-native spm scaffold — safe to edit & commit via patch-package.
++// AUTO-SCAFFOLDED-VERSION: 20
++// Cache slot: 0.88.0/dual-flavor
++// Edit the contents below if needed and re-run `npx patch-package <dep-name>`
++// to persist across `npm install`. To regenerate from the podspec, remove
++// this file (or just this marker) and re-run `npx react-native spm scaffold`.
++//
++// Hand edits after scaffolding (react-native-screens 4.30.0):
++//   - common/cpp/react/renderer/components is a header path, for the
++//     "rnscreens/..." imports the podspec's header_dir provided;
++//   - public headers come from spm/include: a module map plus forwarders, so
++//     Swift can `import RNScreens` without the C++ Fabric headers.
++//
++// Package references are plain relative paths, computed when this file was
++// scaffolded. They stay correct because the file is re-scaffolded per app
++// and cache slot, and any node_modules relayout reinstalls this package
++// (dropping the file) anyway.
++
++import PackageDescription
++
++let package = Package(
++    name: "RNScreens",
++    platforms: [.iOS("17.0")],
++    products: [
++        .library(name: "RNScreens", targets: ["RNScreens"]),
++    ],
++    dependencies: [
++        .package(name: "ReactNative", path: "../../../../xcframeworks"),
++        .package(name: "React-GeneratedCode", path: "../../../ios"),
++    ],
++    targets: [
++        .target(
++            name: "RNScreens",
++            dependencies: [.product(name: "ReactHeaders", package: "ReactNative"), .product(name: "ReactNativeHeaders", package: "ReactNative"), .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"), .product(name: "ReactAppHeaders", package: "React-GeneratedCode")],
++            path: ".",
++            sources: [
++                "common/cpp/react/renderer/components/rnscreens/FrameCorrectionModes.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSFormSheetHostComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSFormSheetHostShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSFormSheetHostShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSFormSheetHostState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSFormSheetHostState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSFullWindowOverlayComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSFullWindowOverlayShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSFullWindowOverlayShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSFullWindowOverlayState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSModalScreenComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSModalScreenShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSModalScreenShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSSafeAreaViewComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSSafeAreaViewShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSSafeAreaViewShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSSafeAreaViewState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSSafeAreaViewState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenShadowNodeCommitHook.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenShadowNodeCommitHook.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderConfigComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderConfigShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderConfigShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderConfigState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderConfigState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderSubviewComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderSubviewShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderSubviewShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderSubviewState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenStackHeaderSubviewState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSScreenState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSSplitScreenComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSSplitScreenShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSSplitScreenShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSSplitScreenState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderConfigComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderConfigShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderConfigShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderConfigState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderConfigState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderItemComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderItemShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderItemShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderItemState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderItemState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderSubviewComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderSubviewShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderSubviewShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderSubviewState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackHeaderSubviewState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackScreenComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackScreenShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackScreenShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackScreenState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSStackScreenState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsBottomAccessoryComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsBottomAccessoryShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsBottomAccessoryShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsBottomAccessoryState.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsHostComponentDescriptor.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsHostShadowNode.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsHostShadowNode.h",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsHostState.cpp",
++                "common/cpp/react/renderer/components/rnscreens/RNSTabsHostState.h",
++                "common/cpp/react/renderer/components/rnscreens/utils/RectUtil.h",
++                "cpp/RNSScreenRemovalListener.cpp",
++                "cpp/RNSScreenRemovalListener.h",
++                "cpp/RNScreensTurboModule.cpp",
++                "cpp/RNScreensTurboModule.h",
++                "ios/RCTImageComponentView+RNSScreenStackHeaderConfig.h",
++                "ios/RCTImageComponentView+RNSScreenStackHeaderConfig.mm",
++                "ios/RNSBarButtonItem.h",
++                "ios/RNSBarButtonItem.mm",
++                "ios/RNSConvert.h",
++                "ios/RNSConvert.mm",
++                "ios/RNSEnums.h",
++                "ios/RNSFullWindowOverlay.h",
++                "ios/RNSFullWindowOverlay.mm",
++                "ios/RNSModalScreen.h",
++                "ios/RNSModalScreen.mm",
++                "ios/RNSModule.h",
++                "ios/RNSModule.mm",
++                "ios/RNSNavigationBar.h",
++                "ios/RNSNavigationBar.mm",
++                "ios/RNSOrientationProviding.h",
++                "ios/RNSPercentDrivenInteractiveTransition.h",
++                "ios/RNSPercentDrivenInteractiveTransition.mm",
++                "ios/RNSReactMountingTransactionObserving.h",
++                "ios/RNSScreen.h",
++                "ios/RNSScreen.mm",
++                "ios/RNSScreenContainer.h",
++                "ios/RNSScreenContainer.mm",
++                "ios/RNSScreenContentWrapper.h",
++                "ios/RNSScreenContentWrapper.mm",
++                "ios/RNSScreenFooter.h",
++                "ios/RNSScreenFooter.mm",
++                "ios/RNSScreenNavigationContainer.h",
++                "ios/RNSScreenNavigationContainer.mm",
++                "ios/RNSScreenStack.h",
++                "ios/RNSScreenStack.mm",
++                "ios/RNSScreenStackAnimator.h",
++                "ios/RNSScreenStackAnimator.mm",
++                "ios/RNSScreenStackHeaderConfig.h",
++                "ios/RNSScreenStackHeaderConfig.mm",
++                "ios/RNSScreenStackHeaderSubview.h",
++                "ios/RNSScreenStackHeaderSubview.mm",
++                "ios/RNSScreenWindowTraits.h",
++                "ios/RNSScreenWindowTraits.mm",
++                "ios/RNSScrollViewBehaviorOverriding.h",
++                "ios/RNSSearchBar.h",
++                "ios/RNSSearchBar.mm",
++                "ios/RNScreens-Bridging-Header.h",
++                "ios/UIScrollView+RNScreens.h",
++                "ios/UIScrollView+RNScreens.mm",
++                "ios/UIViewController+RNScreens.h",
++                "ios/UIViewController+RNScreens.mm",
++                "ios/UIWindow+RNScreens.h",
++                "ios/UIWindow+RNScreens.mm",
++                "ios/bridging/RNSReactBaseView.h",
++                "ios/bridging/RNSReactBaseView.mm",
++                "ios/conversion/RNSConversions-Fabric.mm",
++                "ios/conversion/RNSConversions-ScrollViewMarker.h",
++                "ios/conversion/RNSConversions-ScrollViewMarker.mm",
++                "ios/conversion/RNSConversions-SplitView.mm",
++                "ios/conversion/RNSConversions-Stack.h",
++                "ios/conversion/RNSConversions-Stack.mm",
++                "ios/conversion/RNSConversions-Tabs.mm",
++                "ios/conversion/RNSConversions.h",
++                "ios/conversion/RNSConversions.mm",
++                "ios/conversion/always_false.h",
++                "ios/events/RNSHeaderHeightChangeEvent.h",
++                "ios/events/RNSHeaderHeightChangeEvent.mm",
++                "ios/events/RNSScreenViewEvent.h",
++                "ios/events/RNSScreenViewEvent.mm",
++                "ios/helpers/container/RNSContainer.h",
++                "ios/helpers/container/RNSContainerHelpers.h",
++                "ios/helpers/container/RNSContainerHelpers.mm",
++                "ios/helpers/container/RNSContainerItem.h",
++                "ios/helpers/container/RNSContainerItemSupport.h",
++                "ios/helpers/container/RNSContainerItemSupport.mm",
++                "ios/helpers/container/RNSParentContainerItemRegistry.h",
++                "ios/helpers/container/RNSParentContainerItemRegistry.mm",
++                "ios/helpers/image/RNSImageLoading.h",
++                "ios/helpers/image/RNSImageLoadingHelper.h",
++                "ios/helpers/image/RNSImageLoadingHelper.mm",
++                "ios/helpers/scroll-view/RNSContentScrollViewProviding.h",
++                "ios/helpers/scroll-view/RNSScrollEdgeEffectApplicator.h",
++                "ios/helpers/scroll-view/RNSScrollEdgeEffectApplicator.mm",
++                "ios/helpers/scroll-view/RNSScrollViewFinder.h",
++                "ios/helpers/scroll-view/RNSScrollViewFinder.mm",
++                "ios/helpers/scroll-view/RNSScrollViewHelper.h",
++                "ios/helpers/scroll-view/RNSScrollViewHelper.mm",
++                "ios/integrations/RNSDismissibleModalProtocol.h",
++                "ios/safe-area/RNSSafeAreaProviding.h",
++                "ios/safe-area/RNSSafeAreaViewComponentView.h",
++                "ios/safe-area/RNSSafeAreaViewComponentView.mm",
++                "ios/safe-area/RNSSafeAreaViewNotifications.h",
++                "ios/stubs/RNSGammaStubs.h",
++                "ios/stubs/RNSGammaStubs.mm",
++                "ios/tabs/RCTConvert+RNSTabs.h",
++                "ios/tabs/RCTConvert+RNSTabs.mm",
++                "ios/tabs/RNSTabBarAppearanceCoordinator.h",
++                "ios/tabs/RNSTabBarAppearanceCoordinator.mm",
++                "ios/tabs/RNSTabBarItemCoordinator.h",
++                "ios/tabs/RNSTabBarItemCoordinator.mm",
++                "ios/tabs/RNSTabsSpecialEffectsSupporting.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryComponentView.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryComponentView.mm",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryContentComponentView.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryContentComponentView.mm",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryEventEmitter.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryEventEmitter.mm",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryHelper.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryHelper.mm",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryShadowStateProxy.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryShadowStateProxy.mm",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryWrapperView.h",
++                "ios/tabs/bottom-accessory/RNSTabsBottomAccessoryWrapperView.mm",
++                "ios/tabs/extensions/RNSTabsHostComponentView+RNSImageLoader.h",
++                "ios/tabs/extensions/RNSTabsHostComponentView+RNSImageLoader.mm",
++                "ios/tabs/host/RNSTabBarController.h",
++                "ios/tabs/host/RNSTabBarController.mm",
++                "ios/tabs/host/RNSTabsHostComponentView.h",
++                "ios/tabs/host/RNSTabsHostComponentView.mm",
++                "ios/tabs/host/RNSTabsHostEventEmitter.h",
++                "ios/tabs/host/RNSTabsHostEventEmitter.mm",
++                "ios/tabs/host/RNSTabsNavigationState.h",
++                "ios/tabs/host/RNSTabsNavigationState.mm",
++                "ios/tabs/host/RNSTabsNavigationStateObserverRegistry.h",
++                "ios/tabs/host/RNSTabsNavigationStateObserverRegistry.mm",
++                "ios/tabs/screen/RNSTabsScreenComponentView.h",
++                "ios/tabs/screen/RNSTabsScreenComponentView.mm",
++                "ios/tabs/screen/RNSTabsScreenEventEmitter.h",
++                "ios/tabs/screen/RNSTabsScreenEventEmitter.mm",
++                "ios/tabs/screen/RNSTabsScreenViewController.h",
++                "ios/tabs/screen/RNSTabsScreenViewController.mm",
++                "ios/utils/NSString+RNSUtility.h",
++                "ios/utils/NSString+RNSUtility.mm",
++                "ios/utils/RCTSurfaceTouchHandler+RNSUtility.h",
++                "ios/utils/RCTSurfaceTouchHandler+RNSUtility.mm",
++                "ios/utils/RNSBackBarButtonItem.h",
++                "ios/utils/RNSBackBarButtonItem.mm",
++                "ios/utils/RNSDefines.h",
++                "ios/utils/RNSLog.h",
++                "ios/utils/UINavigationBar+RNSUtility.h",
++                "ios/utils/UINavigationBar+RNSUtility.mm",
++                "ios/utils/UIView+RNSUtility.h",
++                "ios/utils/UIView+RNSUtility.mm",
++                "ios/utils/extensions/RCTImageSource+AccessHiddenMembers.h",
++            ],
++            publicHeadersPath: "spm/include",
++            cSettings: [.headerSearchPath("common/cpp"), .headerSearchPath("common/cpp/react/renderer/components"), .headerSearchPath("common/cpp/react/renderer/components/rnscreens"), .headerSearchPath("common/cpp/react/renderer/components/rnscreens/utils"), .headerSearchPath("cpp"), .headerSearchPath("ios"), .headerSearchPath("ios/bridging"), .headerSearchPath("ios/conversion"), .headerSearchPath("ios/events"), .headerSearchPath("ios/helpers/container"), .headerSearchPath("ios/helpers/image"), .headerSearchPath("ios/helpers/scroll-view"), .headerSearchPath("ios/integrations"), .headerSearchPath("ios/safe-area"), .headerSearchPath("ios/stubs"), .headerSearchPath("ios/tabs"), .headerSearchPath("ios/tabs/bottom-accessory"), .headerSearchPath("ios/tabs/extensions"), .headerSearchPath("ios/tabs/host"), .headerSearchPath("ios/tabs/screen"), .headerSearchPath("ios/utils"), .headerSearchPath("ios/utils/extensions"), .headerSearchPath("."), .unsafeFlags(["-include", "react-native-spm-prefix.h"])],
++            cxxSettings: [.headerSearchPath("common/cpp"), .headerSearchPath("common/cpp/react/renderer/components"), .headerSearchPath("common/cpp/react/renderer/components/rnscreens"), .headerSearchPath("common/cpp/react/renderer/components/rnscreens/utils"), .headerSearchPath("cpp"), .headerSearchPath("ios"), .headerSearchPath("ios/bridging"), .headerSearchPath("ios/conversion"), .headerSearchPath("ios/events"), .headerSearchPath("ios/helpers/container"), .headerSearchPath("ios/helpers/image"), .headerSearchPath("ios/helpers/scroll-view"), .headerSearchPath("ios/integrations"), .headerSearchPath("ios/safe-area"), .headerSearchPath("ios/stubs"), .headerSearchPath("ios/tabs"), .headerSearchPath("ios/tabs/bottom-accessory"), .headerSearchPath("ios/tabs/extensions"), .headerSearchPath("ios/tabs/host"), .headerSearchPath("ios/tabs/screen"), .headerSearchPath("ios/utils"), .headerSearchPath("ios/utils/extensions"), .headerSearchPath("."), .unsafeFlags(["-include", "react-native-spm-prefix.h"]), .define("DEBUG", .when(configuration: .debug)), .define("NDEBUG", .when(configuration: .release))],
++            linkerSettings: [.linkedFramework("UIKit"), .linkedFramework("Foundation"), .linkedFramework("CoreGraphics")]
++        ),
++    ],
++    cxxLanguageStandard: .cxx20
++)
 diff --git a/ios/bridging/RNSReactBaseView.h b/ios/bridging/RNSReactBaseView.h
-index 5fad6068b7ae846658af5ecd3520110618be0a15..2ac7b6c3b85aa73398b80cdc086cf6722963b39c 100644
+index 5fad606..2ac7b6c 100644
 --- a/ios/bridging/RNSReactBaseView.h
 +++ b/ios/bridging/RNSReactBaseView.h
 @@ -1,5 +1,7 @@
@@ -11,7 +276,7 @@ index 5fad6068b7ae846658af5ecd3520110618be0a15..2ac7b6c3b85aa73398b80cdc086cf672
  #if defined(__cplusplus)
  
 diff --git a/ios/conversion/RNSConversions-SplitView.mm b/ios/conversion/RNSConversions-SplitView.mm
-index faa1153e22a34a59856aa9c00da6f54fac662de2..f255929f70f7608bf4f11e61ea017b807b46db94 100644
+index faa1153..f255929 100644
 --- a/ios/conversion/RNSConversions-SplitView.mm
 +++ b/ios/conversion/RNSConversions-SplitView.mm
 @@ -11,9 +11,17 @@ UISplitViewControllerSplitBehavior SplitViewPreferredSplitBehaviorFromHostProp(
@@ -75,3 +340,674 @@ index faa1153e22a34a59856aa9c00da6f54fac662de2..f255929f70f7608bf4f11e61ea017b80
      case UISplitViewControllerDisplayModeAutomatic:
      default:
        return "automatic";
+diff --git a/package.json b/package.json
+index ae7de50..525e411 100644
+--- a/package.json
++++ b/package.json
+@@ -240,5 +240,8 @@
+       }
+     }
+   },
+-  "packageManager": "yarn@4.1.1"
++  "packageManager": "yarn@4.1.1",
++  "swiftpmConfig": {
++    "name": "RNScreens"
++  }
+ }
+diff --git a/react-native-spm-prefix.h b/react-native-spm-prefix.h
+new file mode 100644
+index 0000000..af5cea0
+--- /dev/null
++++ b/react-native-spm-prefix.h
+@@ -0,0 +1,10 @@
++// AUTO-SCAFFOLDED by react-native spm scaffold — mirrors CocoaPods' default
++// prefix header so ObjC sources that rely on an implicit Foundation/UIKit
++// import compile under SPM (which has no prefix-header mechanism). Safe to
++// delete + regenerate via `npx react-native spm scaffold`.
++#ifdef __OBJC__
++#import <Foundation/Foundation.h>
++#if __has_include(<UIKit/UIKit.h>)
++#import <UIKit/UIKit.h>
++#endif
++#endif
+diff --git a/spm/include/NSString+RNSUtility.h b/spm/include/NSString+RNSUtility.h
+new file mode 100644
+index 0000000..d9cdb5b
+--- /dev/null
++++ b/spm/include/NSString+RNSUtility.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/NSString+RNSUtility.h"
+diff --git a/spm/include/RCTConvert+RNSTabs.h b/spm/include/RCTConvert+RNSTabs.h
+new file mode 100644
+index 0000000..b8afc00
+--- /dev/null
++++ b/spm/include/RCTConvert+RNSTabs.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/RCTConvert+RNSTabs.h"
+diff --git a/spm/include/RCTImageComponentView+RNSScreenStackHeaderConfig.h b/spm/include/RCTImageComponentView+RNSScreenStackHeaderConfig.h
+new file mode 100644
+index 0000000..d74767a
+--- /dev/null
++++ b/spm/include/RCTImageComponentView+RNSScreenStackHeaderConfig.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RCTImageComponentView+RNSScreenStackHeaderConfig.h"
+diff --git a/spm/include/RCTImageSource+AccessHiddenMembers.h b/spm/include/RCTImageSource+AccessHiddenMembers.h
+new file mode 100644
+index 0000000..59f2556
+--- /dev/null
++++ b/spm/include/RCTImageSource+AccessHiddenMembers.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/extensions/RCTImageSource+AccessHiddenMembers.h"
+diff --git a/spm/include/RCTSurfaceTouchHandler+RNSUtility.h b/spm/include/RCTSurfaceTouchHandler+RNSUtility.h
+new file mode 100644
+index 0000000..1b93b09
+--- /dev/null
++++ b/spm/include/RCTSurfaceTouchHandler+RNSUtility.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/RCTSurfaceTouchHandler+RNSUtility.h"
+diff --git a/spm/include/RNSBackBarButtonItem.h b/spm/include/RNSBackBarButtonItem.h
+new file mode 100644
+index 0000000..6a5493f
+--- /dev/null
++++ b/spm/include/RNSBackBarButtonItem.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/RNSBackBarButtonItem.h"
+diff --git a/spm/include/RNSBarButtonItem.h b/spm/include/RNSBarButtonItem.h
+new file mode 100644
+index 0000000..6972d23
+--- /dev/null
++++ b/spm/include/RNSBarButtonItem.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSBarButtonItem.h"
+diff --git a/spm/include/RNSContainer.h b/spm/include/RNSContainer.h
+new file mode 100644
+index 0000000..83c0b4d
+--- /dev/null
++++ b/spm/include/RNSContainer.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/container/RNSContainer.h"
+diff --git a/spm/include/RNSContainerHelpers.h b/spm/include/RNSContainerHelpers.h
+new file mode 100644
+index 0000000..8f68a45
+--- /dev/null
++++ b/spm/include/RNSContainerHelpers.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/container/RNSContainerHelpers.h"
+diff --git a/spm/include/RNSContainerItem.h b/spm/include/RNSContainerItem.h
+new file mode 100644
+index 0000000..fbb8486
+--- /dev/null
++++ b/spm/include/RNSContainerItem.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/container/RNSContainerItem.h"
+diff --git a/spm/include/RNSContainerItemSupport.h b/spm/include/RNSContainerItemSupport.h
+new file mode 100644
+index 0000000..fa79f89
+--- /dev/null
++++ b/spm/include/RNSContainerItemSupport.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/container/RNSContainerItemSupport.h"
+diff --git a/spm/include/RNSContentScrollViewProviding.h b/spm/include/RNSContentScrollViewProviding.h
+new file mode 100644
+index 0000000..7d54dda
+--- /dev/null
++++ b/spm/include/RNSContentScrollViewProviding.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/scroll-view/RNSContentScrollViewProviding.h"
+diff --git a/spm/include/RNSConversions-ScrollViewMarker.h b/spm/include/RNSConversions-ScrollViewMarker.h
+new file mode 100644
+index 0000000..fe7ccb1
+--- /dev/null
++++ b/spm/include/RNSConversions-ScrollViewMarker.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/conversion/RNSConversions-ScrollViewMarker.h"
+diff --git a/spm/include/RNSConversions-Stack.h b/spm/include/RNSConversions-Stack.h
+new file mode 100644
+index 0000000..527ee88
+--- /dev/null
++++ b/spm/include/RNSConversions-Stack.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/conversion/RNSConversions-Stack.h"
+diff --git a/spm/include/RNSConversions.h b/spm/include/RNSConversions.h
+new file mode 100644
+index 0000000..d079514
+--- /dev/null
++++ b/spm/include/RNSConversions.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/conversion/RNSConversions.h"
+diff --git a/spm/include/RNSConvert.h b/spm/include/RNSConvert.h
+new file mode 100644
+index 0000000..8ca20fa
+--- /dev/null
++++ b/spm/include/RNSConvert.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSConvert.h"
+diff --git a/spm/include/RNSDefines.h b/spm/include/RNSDefines.h
+new file mode 100644
+index 0000000..5548533
+--- /dev/null
++++ b/spm/include/RNSDefines.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/RNSDefines.h"
+diff --git a/spm/include/RNSDismissibleModalProtocol.h b/spm/include/RNSDismissibleModalProtocol.h
+new file mode 100644
+index 0000000..ac9acf7
+--- /dev/null
++++ b/spm/include/RNSDismissibleModalProtocol.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/integrations/RNSDismissibleModalProtocol.h"
+diff --git a/spm/include/RNSEnums.h b/spm/include/RNSEnums.h
+new file mode 100644
+index 0000000..c9d8ebc
+--- /dev/null
++++ b/spm/include/RNSEnums.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSEnums.h"
+diff --git a/spm/include/RNSFullWindowOverlay.h b/spm/include/RNSFullWindowOverlay.h
+new file mode 100644
+index 0000000..7fa4f19
+--- /dev/null
++++ b/spm/include/RNSFullWindowOverlay.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSFullWindowOverlay.h"
+diff --git a/spm/include/RNSGammaStubs.h b/spm/include/RNSGammaStubs.h
+new file mode 100644
+index 0000000..e36c7ba
+--- /dev/null
++++ b/spm/include/RNSGammaStubs.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/stubs/RNSGammaStubs.h"
+diff --git a/spm/include/RNSHeaderHeightChangeEvent.h b/spm/include/RNSHeaderHeightChangeEvent.h
+new file mode 100644
+index 0000000..700c667
+--- /dev/null
++++ b/spm/include/RNSHeaderHeightChangeEvent.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/events/RNSHeaderHeightChangeEvent.h"
+diff --git a/spm/include/RNSImageLoading.h b/spm/include/RNSImageLoading.h
+new file mode 100644
+index 0000000..bd10a28
+--- /dev/null
++++ b/spm/include/RNSImageLoading.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/image/RNSImageLoading.h"
+diff --git a/spm/include/RNSImageLoadingHelper.h b/spm/include/RNSImageLoadingHelper.h
+new file mode 100644
+index 0000000..e28d897
+--- /dev/null
++++ b/spm/include/RNSImageLoadingHelper.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/image/RNSImageLoadingHelper.h"
+diff --git a/spm/include/RNSLog.h b/spm/include/RNSLog.h
+new file mode 100644
+index 0000000..946f280
+--- /dev/null
++++ b/spm/include/RNSLog.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/RNSLog.h"
+diff --git a/spm/include/RNSModalScreen.h b/spm/include/RNSModalScreen.h
+new file mode 100644
+index 0000000..175e596
+--- /dev/null
++++ b/spm/include/RNSModalScreen.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSModalScreen.h"
+diff --git a/spm/include/RNSModule.h b/spm/include/RNSModule.h
+new file mode 100644
+index 0000000..8e95a1a
+--- /dev/null
++++ b/spm/include/RNSModule.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSModule.h"
+diff --git a/spm/include/RNSNavigationBar.h b/spm/include/RNSNavigationBar.h
+new file mode 100644
+index 0000000..0f5d885
+--- /dev/null
++++ b/spm/include/RNSNavigationBar.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSNavigationBar.h"
+diff --git a/spm/include/RNSOrientationProviding.h b/spm/include/RNSOrientationProviding.h
+new file mode 100644
+index 0000000..8202674
+--- /dev/null
++++ b/spm/include/RNSOrientationProviding.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSOrientationProviding.h"
+diff --git a/spm/include/RNSParentContainerItemRegistry.h b/spm/include/RNSParentContainerItemRegistry.h
+new file mode 100644
+index 0000000..1dbb5e5
+--- /dev/null
++++ b/spm/include/RNSParentContainerItemRegistry.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/container/RNSParentContainerItemRegistry.h"
+diff --git a/spm/include/RNSPercentDrivenInteractiveTransition.h b/spm/include/RNSPercentDrivenInteractiveTransition.h
+new file mode 100644
+index 0000000..d866539
+--- /dev/null
++++ b/spm/include/RNSPercentDrivenInteractiveTransition.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSPercentDrivenInteractiveTransition.h"
+diff --git a/spm/include/RNSReactBaseView.h b/spm/include/RNSReactBaseView.h
+new file mode 100644
+index 0000000..2641cfb
+--- /dev/null
++++ b/spm/include/RNSReactBaseView.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/bridging/RNSReactBaseView.h"
+diff --git a/spm/include/RNSReactMountingTransactionObserving.h b/spm/include/RNSReactMountingTransactionObserving.h
+new file mode 100644
+index 0000000..61567ea
+--- /dev/null
++++ b/spm/include/RNSReactMountingTransactionObserving.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSReactMountingTransactionObserving.h"
+diff --git a/spm/include/RNSSafeAreaProviding.h b/spm/include/RNSSafeAreaProviding.h
+new file mode 100644
+index 0000000..0d0c46c
+--- /dev/null
++++ b/spm/include/RNSSafeAreaProviding.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/safe-area/RNSSafeAreaProviding.h"
+diff --git a/spm/include/RNSSafeAreaViewComponentView.h b/spm/include/RNSSafeAreaViewComponentView.h
+new file mode 100644
+index 0000000..a257c53
+--- /dev/null
++++ b/spm/include/RNSSafeAreaViewComponentView.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/safe-area/RNSSafeAreaViewComponentView.h"
+diff --git a/spm/include/RNSSafeAreaViewNotifications.h b/spm/include/RNSSafeAreaViewNotifications.h
+new file mode 100644
+index 0000000..b37e550
+--- /dev/null
++++ b/spm/include/RNSSafeAreaViewNotifications.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/safe-area/RNSSafeAreaViewNotifications.h"
+diff --git a/spm/include/RNSScreen.h b/spm/include/RNSScreen.h
+new file mode 100644
+index 0000000..394ee92
+--- /dev/null
++++ b/spm/include/RNSScreen.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreen.h"
+diff --git a/spm/include/RNSScreenContainer.h b/spm/include/RNSScreenContainer.h
+new file mode 100644
+index 0000000..601030b
+--- /dev/null
++++ b/spm/include/RNSScreenContainer.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenContainer.h"
+diff --git a/spm/include/RNSScreenContentWrapper.h b/spm/include/RNSScreenContentWrapper.h
+new file mode 100644
+index 0000000..3d5ba9e
+--- /dev/null
++++ b/spm/include/RNSScreenContentWrapper.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenContentWrapper.h"
+diff --git a/spm/include/RNSScreenFooter.h b/spm/include/RNSScreenFooter.h
+new file mode 100644
+index 0000000..234918f
+--- /dev/null
++++ b/spm/include/RNSScreenFooter.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenFooter.h"
+diff --git a/spm/include/RNSScreenNavigationContainer.h b/spm/include/RNSScreenNavigationContainer.h
+new file mode 100644
+index 0000000..5f0c50f
+--- /dev/null
++++ b/spm/include/RNSScreenNavigationContainer.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenNavigationContainer.h"
+diff --git a/spm/include/RNSScreenStack.h b/spm/include/RNSScreenStack.h
+new file mode 100644
+index 0000000..3910a75
+--- /dev/null
++++ b/spm/include/RNSScreenStack.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenStack.h"
+diff --git a/spm/include/RNSScreenStackAnimator.h b/spm/include/RNSScreenStackAnimator.h
+new file mode 100644
+index 0000000..b1d1ed7
+--- /dev/null
++++ b/spm/include/RNSScreenStackAnimator.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenStackAnimator.h"
+diff --git a/spm/include/RNSScreenStackHeaderConfig.h b/spm/include/RNSScreenStackHeaderConfig.h
+new file mode 100644
+index 0000000..df55931
+--- /dev/null
++++ b/spm/include/RNSScreenStackHeaderConfig.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenStackHeaderConfig.h"
+diff --git a/spm/include/RNSScreenStackHeaderSubview.h b/spm/include/RNSScreenStackHeaderSubview.h
+new file mode 100644
+index 0000000..00ad4d2
+--- /dev/null
++++ b/spm/include/RNSScreenStackHeaderSubview.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenStackHeaderSubview.h"
+diff --git a/spm/include/RNSScreenViewEvent.h b/spm/include/RNSScreenViewEvent.h
+new file mode 100644
+index 0000000..fe20f93
+--- /dev/null
++++ b/spm/include/RNSScreenViewEvent.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/events/RNSScreenViewEvent.h"
+diff --git a/spm/include/RNSScreenWindowTraits.h b/spm/include/RNSScreenWindowTraits.h
+new file mode 100644
+index 0000000..22eb6e6
+--- /dev/null
++++ b/spm/include/RNSScreenWindowTraits.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScreenWindowTraits.h"
+diff --git a/spm/include/RNSScrollEdgeEffectApplicator.h b/spm/include/RNSScrollEdgeEffectApplicator.h
+new file mode 100644
+index 0000000..86ca84d
+--- /dev/null
++++ b/spm/include/RNSScrollEdgeEffectApplicator.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/scroll-view/RNSScrollEdgeEffectApplicator.h"
+diff --git a/spm/include/RNSScrollViewBehaviorOverriding.h b/spm/include/RNSScrollViewBehaviorOverriding.h
+new file mode 100644
+index 0000000..cf87eff
+--- /dev/null
++++ b/spm/include/RNSScrollViewBehaviorOverriding.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSScrollViewBehaviorOverriding.h"
+diff --git a/spm/include/RNSScrollViewFinder.h b/spm/include/RNSScrollViewFinder.h
+new file mode 100644
+index 0000000..7504bb8
+--- /dev/null
++++ b/spm/include/RNSScrollViewFinder.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/scroll-view/RNSScrollViewFinder.h"
+diff --git a/spm/include/RNSScrollViewHelper.h b/spm/include/RNSScrollViewHelper.h
+new file mode 100644
+index 0000000..33dcef2
+--- /dev/null
++++ b/spm/include/RNSScrollViewHelper.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/helpers/scroll-view/RNSScrollViewHelper.h"
+diff --git a/spm/include/RNSSearchBar.h b/spm/include/RNSSearchBar.h
+new file mode 100644
+index 0000000..c1ead90
+--- /dev/null
++++ b/spm/include/RNSSearchBar.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNSSearchBar.h"
+diff --git a/spm/include/RNSTabBarAppearanceCoordinator.h b/spm/include/RNSTabBarAppearanceCoordinator.h
+new file mode 100644
+index 0000000..3bd076f
+--- /dev/null
++++ b/spm/include/RNSTabBarAppearanceCoordinator.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/RNSTabBarAppearanceCoordinator.h"
+diff --git a/spm/include/RNSTabBarController.h b/spm/include/RNSTabBarController.h
+new file mode 100644
+index 0000000..f035d99
+--- /dev/null
++++ b/spm/include/RNSTabBarController.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/host/RNSTabBarController.h"
+diff --git a/spm/include/RNSTabBarItemCoordinator.h b/spm/include/RNSTabBarItemCoordinator.h
+new file mode 100644
+index 0000000..838a8dc
+--- /dev/null
++++ b/spm/include/RNSTabBarItemCoordinator.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/RNSTabBarItemCoordinator.h"
+diff --git a/spm/include/RNSTabsBottomAccessoryComponentView.h b/spm/include/RNSTabsBottomAccessoryComponentView.h
+new file mode 100644
+index 0000000..ba318ab
+--- /dev/null
++++ b/spm/include/RNSTabsBottomAccessoryComponentView.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/bottom-accessory/RNSTabsBottomAccessoryComponentView.h"
+diff --git a/spm/include/RNSTabsBottomAccessoryContentComponentView.h b/spm/include/RNSTabsBottomAccessoryContentComponentView.h
+new file mode 100644
+index 0000000..6385b34
+--- /dev/null
++++ b/spm/include/RNSTabsBottomAccessoryContentComponentView.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/bottom-accessory/RNSTabsBottomAccessoryContentComponentView.h"
+diff --git a/spm/include/RNSTabsBottomAccessoryEventEmitter.h b/spm/include/RNSTabsBottomAccessoryEventEmitter.h
+new file mode 100644
+index 0000000..bb23895
+--- /dev/null
++++ b/spm/include/RNSTabsBottomAccessoryEventEmitter.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/bottom-accessory/RNSTabsBottomAccessoryEventEmitter.h"
+diff --git a/spm/include/RNSTabsBottomAccessoryHelper.h b/spm/include/RNSTabsBottomAccessoryHelper.h
+new file mode 100644
+index 0000000..f3b3781
+--- /dev/null
++++ b/spm/include/RNSTabsBottomAccessoryHelper.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/bottom-accessory/RNSTabsBottomAccessoryHelper.h"
+diff --git a/spm/include/RNSTabsBottomAccessoryShadowStateProxy.h b/spm/include/RNSTabsBottomAccessoryShadowStateProxy.h
+new file mode 100644
+index 0000000..b618921
+--- /dev/null
++++ b/spm/include/RNSTabsBottomAccessoryShadowStateProxy.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/bottom-accessory/RNSTabsBottomAccessoryShadowStateProxy.h"
+diff --git a/spm/include/RNSTabsBottomAccessoryWrapperView.h b/spm/include/RNSTabsBottomAccessoryWrapperView.h
+new file mode 100644
+index 0000000..3d508f9
+--- /dev/null
++++ b/spm/include/RNSTabsBottomAccessoryWrapperView.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/bottom-accessory/RNSTabsBottomAccessoryWrapperView.h"
+diff --git a/spm/include/RNSTabsHostComponentView+RNSImageLoader.h b/spm/include/RNSTabsHostComponentView+RNSImageLoader.h
+new file mode 100644
+index 0000000..ecc0180
+--- /dev/null
++++ b/spm/include/RNSTabsHostComponentView+RNSImageLoader.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/extensions/RNSTabsHostComponentView+RNSImageLoader.h"
+diff --git a/spm/include/RNSTabsHostComponentView.h b/spm/include/RNSTabsHostComponentView.h
+new file mode 100644
+index 0000000..e1330a2
+--- /dev/null
++++ b/spm/include/RNSTabsHostComponentView.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/host/RNSTabsHostComponentView.h"
+diff --git a/spm/include/RNSTabsHostEventEmitter.h b/spm/include/RNSTabsHostEventEmitter.h
+new file mode 100644
+index 0000000..f954dcc
+--- /dev/null
++++ b/spm/include/RNSTabsHostEventEmitter.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/host/RNSTabsHostEventEmitter.h"
+diff --git a/spm/include/RNSTabsNavigationState.h b/spm/include/RNSTabsNavigationState.h
+new file mode 100644
+index 0000000..eed1d79
+--- /dev/null
++++ b/spm/include/RNSTabsNavigationState.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/host/RNSTabsNavigationState.h"
+diff --git a/spm/include/RNSTabsNavigationStateObserverRegistry.h b/spm/include/RNSTabsNavigationStateObserverRegistry.h
+new file mode 100644
+index 0000000..75e49c2
+--- /dev/null
++++ b/spm/include/RNSTabsNavigationStateObserverRegistry.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/host/RNSTabsNavigationStateObserverRegistry.h"
+diff --git a/spm/include/RNSTabsScreenComponentView.h b/spm/include/RNSTabsScreenComponentView.h
+new file mode 100644
+index 0000000..bda67fc
+--- /dev/null
++++ b/spm/include/RNSTabsScreenComponentView.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/screen/RNSTabsScreenComponentView.h"
+diff --git a/spm/include/RNSTabsScreenEventEmitter.h b/spm/include/RNSTabsScreenEventEmitter.h
+new file mode 100644
+index 0000000..b36e671
+--- /dev/null
++++ b/spm/include/RNSTabsScreenEventEmitter.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/screen/RNSTabsScreenEventEmitter.h"
+diff --git a/spm/include/RNSTabsScreenViewController.h b/spm/include/RNSTabsScreenViewController.h
+new file mode 100644
+index 0000000..a1bd323
+--- /dev/null
++++ b/spm/include/RNSTabsScreenViewController.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/screen/RNSTabsScreenViewController.h"
+diff --git a/spm/include/RNSTabsSpecialEffectsSupporting.h b/spm/include/RNSTabsSpecialEffectsSupporting.h
+new file mode 100644
+index 0000000..4d5bb1a
+--- /dev/null
++++ b/spm/include/RNSTabsSpecialEffectsSupporting.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/tabs/RNSTabsSpecialEffectsSupporting.h"
+diff --git a/spm/include/RNScreens-Bridging-Header.h b/spm/include/RNScreens-Bridging-Header.h
+new file mode 100644
+index 0000000..f2a87c7
+--- /dev/null
++++ b/spm/include/RNScreens-Bridging-Header.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/RNScreens-Bridging-Header.h"
+diff --git a/spm/include/RNScreens-SwiftPM.h b/spm/include/RNScreens-SwiftPM.h
+new file mode 100644
+index 0000000..300ef78
+--- /dev/null
++++ b/spm/include/RNScreens-SwiftPM.h
+@@ -0,0 +1,9 @@
++// Umbrella for Swift importers of RNScreens under SwiftPM (expo-router's
++// `import RNScreens`). CocoaPods exposed every ios/ header through its generated
++// umbrella; this names the ones Swift code uses. The quoted imports inside them
++// resolve through the forwarders next to this file.
++#import <UIKit/UIKit.h>
++#import "RNSEnums.h"
++#import "RNSScreen.h"
++#import "RNSScreenStack.h"
++#import "RNSDismissibleModalProtocol.h"
+diff --git a/spm/include/UINavigationBar+RNSUtility.h b/spm/include/UINavigationBar+RNSUtility.h
+new file mode 100644
+index 0000000..cf8e00b
+--- /dev/null
++++ b/spm/include/UINavigationBar+RNSUtility.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/UINavigationBar+RNSUtility.h"
+diff --git a/spm/include/UIScrollView+RNScreens.h b/spm/include/UIScrollView+RNScreens.h
+new file mode 100644
+index 0000000..c6e3e20
+--- /dev/null
++++ b/spm/include/UIScrollView+RNScreens.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/UIScrollView+RNScreens.h"
+diff --git a/spm/include/UIView+RNSUtility.h b/spm/include/UIView+RNSUtility.h
+new file mode 100644
+index 0000000..07d0917
+--- /dev/null
++++ b/spm/include/UIView+RNSUtility.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/utils/UIView+RNSUtility.h"
+diff --git a/spm/include/UIViewController+RNScreens.h b/spm/include/UIViewController+RNScreens.h
+new file mode 100644
+index 0000000..1cf85c7
+--- /dev/null
++++ b/spm/include/UIViewController+RNScreens.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/UIViewController+RNScreens.h"
+diff --git a/spm/include/UIWindow+RNScreens.h b/spm/include/UIWindow+RNScreens.h
+new file mode 100644
+index 0000000..2c70cee
+--- /dev/null
++++ b/spm/include/UIWindow+RNScreens.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/UIWindow+RNScreens.h"
+diff --git a/spm/include/always_false.h b/spm/include/always_false.h
+new file mode 100644
+index 0000000..45c0712
+--- /dev/null
++++ b/spm/include/always_false.h
+@@ -0,0 +1,2 @@
++// SwiftPM forwarder: lets the RNScreens module resolve this quoted import.
++#import "../../ios/conversion/always_false.h"
+diff --git a/spm/include/module.modulemap b/spm/include/module.modulemap
+new file mode 100644
+index 0000000..76ff6d2
+--- /dev/null
++++ b/spm/include/module.modulemap
+@@ -0,0 +1,4 @@
++module RNScreens {
++  umbrella header "RNScreens-SwiftPM.h"
++  export *
++}

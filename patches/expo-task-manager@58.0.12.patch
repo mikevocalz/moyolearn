@@ -1,0 +1,58 @@
+diff --git a/spm.config.json b/spm.config.json
+new file mode 100644
+index 0000000..b4d3434
+--- /dev/null
++++ b/spm.config.json
+@@ -0,0 +1,52 @@
++{
++  "$schema": "../../tools/src/prebuilds/schemas/spm.config.schema.json",
++  "products": [
++    {
++      "name": "ExpoTaskManager",
++      "podName": "ExpoTaskManager",
++      "platforms": ["iOS(\"16.4\")"],
++      "externalDependencies": [
++        "ReactNativeDependencies",
++        "React",
++        "Hermes",
++        "expo-modules-core/ExpoModulesCore",
++        "unimodules-app-loader/UMAppLoader"
++      ],
++      "targets": [
++        {
++          "type": "objc",
++          "name": "ExpoTaskManager_ios_objc",
++          "moduleName": "ExpoTaskManager",
++          "path": "ios",
++          "pattern": "EXTaskManager/*.m",
++          "headerPattern": "EXTaskManager/*.h",
++          "dependencies": [
++            "ReactNativeDependencies",
++            "React",
++            "Hermes",
++            "expo-modules-core/ExpoModulesCore",
++            "unimodules-app-loader/UMAppLoader"
++          ],
++          "linkedFrameworks": ["Foundation", "UIKit"],
++          "includeDirectories": ["."]
++        },
++        {
++          "type": "swift",
++          "name": "ExpoTaskManager",
++          "path": "ios",
++          "pattern": "*.swift",
++          "exclude": ["Tests/**"],
++          "dependencies": [
++            "Hermes",
++            "React",
++            "ReactNativeDependencies",
++            "expo-modules-core/ExpoModulesCore",
++            "unimodules-app-loader/UMAppLoader",
++            "ExpoTaskManager_ios_objc"
++          ],
++          "linkedFrameworks": ["Foundation", "UIKit"]
++        }
++      ]
++    }
++  ]
++}

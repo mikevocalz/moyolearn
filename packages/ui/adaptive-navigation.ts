@@ -37,6 +37,12 @@ export interface ResolveAdaptiveNavigationPlacementInput {
   widthDp: number;
   folds: readonly FoldLayout[];
   hardwareEdge?: HardwareEdgeColumn | null;
+  /**
+   * Headset build (Quest, PICO, Vision Pro). The panel floats in space with no
+   * hand-grip edge, so navigation sits on the left like Harlem Might's spatial
+   * rail. Optional so phone and web callers never have to know headsets exist.
+   */
+  spatial?: boolean;
   isRTL: boolean;
 }
 
@@ -60,6 +66,9 @@ function logicalStart(isRTL: boolean): 'left' | 'right' {
  * - ordinary compact iPhone -> bottom
  * - regular-width iPad/tablet -> leading sidebar
  *
+ * Headsets (Quest, PICO, Vision Pro) -> left rail at every size, ahead of
+ * every rule above: a floating panel has no physical edge to honour.
+ *
  * Fold posture comes from the Expo Modules 2 WindowManager bridge. Multiple
  * folds are accepted so a trifold is not collapsed to "hinge #1".
  */
@@ -71,7 +80,19 @@ export function resolveAdaptiveNavigationPlacement({
   folds,
   hardwareEdge,
   isRTL,
+  spatial = false,
 }: ResolveAdaptiveNavigationPlacementInput): AdaptiveNavigationPlacement {
+  if (spatial) {
+    const expanded = sizeClass === 'extraLarge';
+    return {
+      kind: expanded ? 'rail-expanded' : 'rail-collapsed',
+      position: 'left',
+      rail: true,
+      expanded,
+      hardwareWidth: 0,
+    };
+  }
+
   const tabletop = folds.some((fold) => fold.posture === 'tabletop');
 
   if (platform === 'ios') {
