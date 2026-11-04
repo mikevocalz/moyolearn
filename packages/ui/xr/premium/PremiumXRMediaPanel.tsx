@@ -78,6 +78,13 @@ import { type ButtonFaceId } from './button-faces/faces';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { spatialSpacing, SLOTS, type PanelSlot } from './spatialTokens';
 import { SIZES, HEADER_H, MEDIA_ART_Z } from './panel-media-area.ts';
+import {
+  carrierDragged,
+  carrierGrab,
+  carrierPosition,
+  carrierReleased,
+  type CarrierGrab,
+} from '../carrier-drag.ts';
 export { SIZES, HEADER_H, panelMediaArea } from './panel-media-area.ts';
 
 type ViroAnimationDict = Parameters<typeof ViroAnimations.registerAnimations>[0];
@@ -528,7 +535,8 @@ type PanelState = {
   closeHot: boolean;
   scrollTop: number;
   railHot: RailHot;
-  /** Accumulated grab-handle drag, added to the slot position (world-space). */
+  /** COMMITTED grab-handle drag, added to the slot position (world-space).
+      Written on release only; the live drag is native (see onGrabDrag). */
   dragOffset: Vec3;
 };
 
@@ -736,26 +744,45 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   };
 
   // ── Grab-handle drag (header bar) ────────────────────────────────────────
-  // dragType "Gizmo" (fork extension, decax9-verified): reports drag positions
-  // WITHOUT natively moving the handle node, so the header stays glued to the
-  // card while JS applies the delta to the panel ROOT. This is the drag-sink
+  // Report-only drag: `dragTransform="none"` makes the renderer report drag
+  // positions WITHOUT moving any node, so the header stays glued to the card
+  // while JS applies the delta to the panel ROOT. This is the drag-sink
   // pattern — native drag on the root itself swallowed all child input, and
-  // native drag on a child ripped that child out of the card.
-  const dragLast = useRef<Vec3 | null>(null);
+  // native drag on a child ripped that child out of the card. (The decax9
+  // fork spelled this dragType "Gizmo"; the renderer Moyo pins has no Gizmo,
+  // reads the unknown string as FixedDistance and MOVES the node, which on top
+  // of the JS offset moved a dragged panel twice.)
+  //
+  // NO RENDER PER REPORT. Each report is folded into a live offset that is
+  // written straight to the root node (`setNativeProps`); the store, and so
+  // the whole panel's render, only hears the committed offset on release.
+  // A store write per report re-rendered every quad in the card at controller
+  // rate, which is the flicker a dragged panel showed.
+  const rootNode = useRef<ViroNode>(null);
+  const grab = useRef<CarrierGrab | null>(null);
+  const basePosition = (): Vec3 =>
+    (worldPlacement?.position ?? mountPose.position) as Vec3;
   const onGrabDrag = (pos: number[]) => {
-    if (__DEV__) console.log('[panel] onGrabDrag', JSON.stringify(pos));
     if (disabled || !draggable) return;
-    const p: Vec3 = [pos[0] ?? 0, pos[1] ?? 0, pos[2] ?? 0];
-    if (!dragLast.current) {
-      dragLast.current = p;
-      return;
-    }
-    const d = dragLast.current;
-    const off = store.getState().dragOffset;
-    store.setState({
-      dragOffset: [off[0] + p[0] - d[0], off[1] + p[1] - d[1], off[2] + p[2] - d[2]],
+    const next = carrierDragged(grab.current ?? carrierGrab(), pos);
+    grab.current = next.grab;
+    if (!next.moved) return;
+    rootNode.current?.setNativeProps({
+      position: carrierPosition(basePosition(), store.getState().dragOffset, next.grab.live),
     });
-    dragLast.current = p;
+  };
+  const onGrabRelease = () => {
+    const current = grab.current;
+    grab.current = null;
+    if (current === null) return;
+    const committed = carrierReleased(store.getState().dragOffset, current);
+    if (committed === null) return;
+    if (snapOnRelease) {
+      const b = SLOTS[activeSlot].position as Vec3;
+      goToSlot(nearestSlot([b[0] + committed[0], b[1] + committed[1], b[2] + committed[2]]));
+    } else {
+      store.setState({ dragOffset: [committed[0], committed[1], committed[2]] });
+    }
   };
 
   useEffect(() => {
@@ -912,6 +939,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
 
   return (
     <ViroNode
+      ref={rootNode}
       position={[
         (worldPlacement?.position[0] ?? mountPose.position[0]) + dragOffset[0],
         (worldPlacement?.position[1] ?? mountPose.position[1]) + dragOffset[1],
@@ -933,22 +961,16 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
           // small grab quad when grip is squeezed (hitNode=undefined), and drag-
           // start has no hover-hysteresis fallback — so a tiny handle never caught
           // a drag. Making this wrapper (which contains every panel quad) the
-          // draggable node means a grip ANYWHERE on the panel walks up to it. Gizmo
-          // = report-only (doesn't move the node, so the lift animation still owns
-          // position); onGrabDrag applies the delta to the panel root. Trigger
+          // draggable node means a grip ANYWHERE on the panel walks up to it.
+          // dragTransform "none" = report-only (doesn't move the node, so the
+          // lift animation still owns position); onGrabDrag applies the delta to the panel root. Trigger
           // clicks on close/chevrons still fire — they're closer OnClick handlers,
           // and drag only starts on the grip source (dragEligible), not the trigger.
-          dragType={'Gizmo' as never}
+          dragType="FixedDistance"
+          dragTransform="none"
           onDrag={draggable ? onGrabDrag : undefined}
           onClickState={(state: number) => {
-            if (state === 2) {
-              dragLast.current = null;
-              if (snapOnRelease && store.getState().dragOffset.some((v) => v !== 0)) {
-                const base = SLOTS[activeSlot].position as Vec3;
-                const off = store.getState().dragOffset;
-                goToSlot(nearestSlot([base[0] + off[0], base[1] + off[1], base[2] + off[2]]));
-              }
-            }
+            if (state === 2 || state === 3) onGrabRelease();
           }}
           animation={{
             name: hovered && !disabled ? 'pxrmpLiftIn' : 'pxrmpLiftOut',
@@ -1015,23 +1037,14 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
             />
             {/* GRAB HANDLE — TITLE AREA ONLY (left of the close button). Invisible
                 hit quad placed IN FRONT of the title text (this fork lets ViroText
-                eat clicks). Gizmo drag reports positions without moving the node;
+                eat clicks). A report-only drag moves no node;
                 onGrabDrag applies the delta to the panel root. */}
             <ViroNode
-              dragType={'Gizmo' as never}
+              dragType="FixedDistance"
+              dragTransform="none"
               onDrag={draggable ? onGrabDrag : undefined}
               onClickState={(state: number) => {
-                if (__DEV__) console.log('[panel] grab clickState', state);
-                if (state === 2) {
-                  dragLast.current = null;
-                  if (snapOnRelease && store.getState().dragOffset.some((v) => v !== 0)) {
-                    const base = SLOTS[activeSlot].position as Vec3;
-                    const off = store.getState().dragOffset;
-                    goToSlot(
-                      nearestSlot([base[0] + off[0], base[1] + off[1], base[2] + off[2]]),
-                    );
-                  }
-                }
+                if (state === 2 || state === 3) onGrabRelease();
               }}
             >
               <ViroQuad
