@@ -11,15 +11,16 @@
 //
 // Same props and the same outline/filled crossfade as ForgeBoardIcon.tsx. The
 // crossfade is a CSS opacity transition, so Reduce Motion swaps instantly.
-// The caller's className (`text-text`, `text-text-inverse`) resolves to a colour
-// through the kit's css() boundary and reaches the paths as `currentColor`.
+// The caller's className (`text-text`, `text-text-inverse`) goes on a kit View.
+// On web, react-native-css hands react-native-web a compiled class, not a
+// `color` value, so the colour reaches the paths only through the CSS cascade
+// into `currentColor`. Reading `color` off the flattened style finds nothing.
 // SOT: packages/ui/ForgeBoardIcon.tsx (native fork; carries the Mobbin citation)
 // SOT-KEYWORDS: forge board icon glyph pen highlighter eraser undo redo trash whiteboard web svg
-import { useId, type CSSProperties, type ReactNode } from 'react';
-import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
+import { useId, type CSSProperties } from 'react';
 import { getGlyph } from '@nitro-forge/icons';
 import { useReducedMotion } from './motion';
-import { css } from './html/css';
+import { View } from './primitives';
 import type { ForgeBoardIconName } from './ForgeBoardIcon';
 
 export type { ForgeBoardIconName } from './ForgeBoardIcon';
@@ -31,20 +32,6 @@ interface Props {
   className?: string;
 }
 
-// Only the resolved text colour crosses onto the DOM span: the caller's classes
-// are colour tokens, and the box size comes from `size`, not from CSS.
-const Box = ({ style, children }: { style?: StyleProp<TextStyle>; children?: ReactNode }) => {
-  const color = StyleSheet.flatten(style)?.color;
-  return (
-    <span
-      aria-hidden
-      style={{ position: 'relative', display: 'inline-flex', pointerEvents: 'none', color: typeof color === 'string' ? color : undefined }}
-    >
-      {children}
-    </span>
-  );
-};
-const TintedBox = css(Box, 'ForgeBoardIconBox');
 
 function Glyph({ name, filled, size, style }: { name: ForgeBoardIconName; filled: boolean; size: number; style?: CSSProperties }) {
   const maskId = `forge-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
@@ -86,9 +73,9 @@ export function ForgeBoardIcon({ name, selected = false, size = 20, className }:
   const reducedMotion = useReducedMotion();
   if (reducedMotion) {
     return (
-      <TintedBox className={className}>
+      <View className={className} style={{ width: size, height: size }} pointerEvents="none" aria-hidden>
         <Glyph name={name} filled={selected} size={size} />
-      </TintedBox>
+      </View>
     );
   }
   const layer = (visible: boolean): CSSProperties => ({
@@ -98,11 +85,9 @@ export function ForgeBoardIcon({ name, selected = false, size = 20, className }:
     transition: 'opacity 120ms ease-out',
   });
   return (
-    <TintedBox className={className}>
-      <span style={{ position: 'relative', display: 'block', width: size, height: size }}>
-        <Glyph name={name} filled={false} size={size} style={layer(!selected)} />
-        <Glyph name={name} filled size={size} style={layer(selected)} />
-      </span>
-    </TintedBox>
+    <View className={className} style={{ width: size, height: size }} pointerEvents="none" aria-hidden>
+      <Glyph name={name} filled={false} size={size} style={layer(!selected)} />
+      <Glyph name={name} filled size={size} style={layer(selected)} />
+    </View>
   );
 }
