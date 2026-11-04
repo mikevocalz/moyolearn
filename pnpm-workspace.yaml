@@ -1,5 +1,6 @@
 packages:
   - apps/*
+  - '!apps/desktop' # Spark SDK 55 isolated from root Expo 58 and RN 0.88 overrides
   - packages/*
 
 # OVERRIDES LIVE IN package.json (`pnpm.overrides`), NOT HERE.

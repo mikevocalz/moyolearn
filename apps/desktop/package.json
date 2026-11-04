@@ -1,0 +1,63 @@
+{
+  "name": "moyo-desktop-preview",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moyo Learn native macOS preview built with Legend Spark",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24.19.0"
+  },
+  "main": "index.ts",
+  "scripts": {
+    "start": "spark dev --platform macos",
+    "dev": "spark dev --platform macos",
+    "macos": "spark dev --platform macos",
+    "doctor": "spark doctor",
+    "build": "spark build --platform macos",
+    "package": "spark package",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "postinstall": "node node_modules/@legendapp/spark/init-template.cjs"
+  },
+  "dependencies": {
+    "@legendapp/spark": "0.0.1-next.3",
+    "expo": "55.0.32",
+    "expo-desktop": "1.0.6",
+    "expo-desktop-prebuild-config": "1.1.3",
+    "expo-desktop-config-plugins": "1.3.2",
+    "expo-desktop-metro-config": "55.83.3",
+    "expo-desktop-template-bare-minimum": "55.83.10",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-macos": "0.83.0",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "20.1.3",
+    "@types/react": "19.2.18",
+    "typescript": "5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "expo": "55.0.32",
+      "react": "19.2.0",
+      "react-dom": "19.2.0",
+      "react-native": "0.83.10",
+      "react-native-macos": "0.83.0",
+      "react-native-windows": "0.83.2",
+      "@expo/cli": "55.0.37",
+      "expo-asset": "55.0.20",
+      "expo-constants": "55.0.17",
+      "expo-file-system": "55.0.26",
+      "expo-font": "55.0.8",
+      "expo-keep-awake": "55.0.8",
+      "expo-modules-core": "55.0.27",
+      "react-native-nitro-modules": "0.37.0"
+    },
+    "onlyBuiltDependencies": [
+      "@legendapp/spark",
+      "fsevents"
+    ]
+  }
+}

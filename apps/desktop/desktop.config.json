@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/@legendapp/spark/schema.json",
+  "name": "Moyo Learn Desktop",
+  "version": "0.1.0",
+  "window": {
+    "size": {
+      "width": 1280,
+      "height": 820
+    },
+    "restoreBounds": true
+  },
+  "macos": {
+    "bundleIdentifier": "com.moyolearn.desktop.preview"
+  },
+  "platforms": [
+    "macos"
+  ],
+  "expo": {
+    "icon": "./assets/icon.png"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Moyo Learn Desktop Preview",
+    "slug": "moyo-desktop-preview",
+    "version": "0.1.0",
+    "platforms": [
+      "macos"
+    ],
+    "icon": "./assets/icon.png",
+    "macos": {
+      "version": "0.1.0",
+      "buildNumber": "1"
+    }
+  }
+}
