@@ -112,6 +112,8 @@ const nextConfig: NextConfig = {
     'react-native',
     'react-native-web',
     'react-native-gesture-handler',
+    // RNGH 3.4 probes reanimated's AnimatedComponent by its src .tsx path.
+    'react-native-reanimated',
     'react-native-enriched-html',
     'solito',
   ],

@@ -1,0 +1,14 @@
+diff --git a/tools/src/prebuilds/SPMBuild.ts b/tools/src/prebuilds/SPMBuild.ts
+index 3f6f8d4..6901f08 100644
+--- a/tools/src/prebuilds/SPMBuild.ts
++++ b/tools/src/prebuilds/SPMBuild.ts
+@@ -360,7 +360,8 @@ export const buildXcodeBuildArgs = (
+ 
+   return [
+     '-scheme',
+-    pkg.packageName,
++    // Xcode names no scheme after a scoped package ("@expo/ui"); its only scheme is the product.
++    pkg.packageName.startsWith('@') ? product.name : pkg.packageName,
+     '-destination',
+     `generic/platform=${buildPlatform}`,
+     '-derivedDataPath',
