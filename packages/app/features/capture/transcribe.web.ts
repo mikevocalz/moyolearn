@@ -1,6 +1,12 @@
 // On-device multilingual Whisper via Transformers.js. Raw recordings never
 // leave the student's browser. The model promise is reused across voice notes.
 // Failure preserves the original recording for review, not a guessed transcript.
+//
+// `whisper-tiny` (multilingual) rather than `base`: the download lands on a
+// school Chromebook over shared wi-fi, and one Tiny checkpoint now covers every
+// course language instead of the English-only `tiny.en`.
+// SOT: packages/app/features/capture/speech-language.ts · docs/design/multilingual-speech-migration.md
+// SOT-KEYWORDS: transcribe web whisper transformers speech to text on-device voice multilingual locale
 import { whisperLanguageForLocale } from './speech-language.ts';
 
 async function loadWhisper() {
