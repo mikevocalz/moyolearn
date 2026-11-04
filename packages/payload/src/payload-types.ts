@@ -87,6 +87,7 @@ export interface Config {
     classes: Class;
     assignments: Assignment;
     'assignment-completions': AssignmentCompletion;
+    'ai-model-routes': AiModelRoute;
     families: Family;
     leads: Lead;
     sessions: Session;
@@ -117,6 +118,7 @@ export interface Config {
     classes: ClassesSelect<false> | ClassesSelect<true>;
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     'assignment-completions': AssignmentCompletionsSelect<false> | AssignmentCompletionsSelect<true>;
+    'ai-model-routes': AiModelRoutesSelect<false> | AiModelRoutesSelect<true>;
     families: FamiliesSelect<false> | FamiliesSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     sessions: SessionsSelect<false> | SessionsSelect<true>;
@@ -769,6 +771,48 @@ export interface AssignmentCompletion {
   createdAt: string;
 }
 /**
+ * Evaluation selections only. Production tutor routing remains code-owned until provider approval and grade-band evaluations pass.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-model-routes".
+ */
+export interface AiModelRoute {
+  id: number;
+  lane:
+    | 'tutor-math'
+    | 'tutor-ela'
+    | 'tutor-science'
+    | 'tutor-social-studies'
+    | 'tutor-cs'
+    | 'tutor-world-language'
+    | 'tutor-other'
+    | 'summary-narrative'
+    | 'homework-structuring';
+  /**
+   * Evaluation preference only. Does not change the live InferenceGateway.
+   */
+  primaryModel: 'claude-opus-5' | 'claude-haiku-4-5';
+  /**
+   * Exactly one Qwen candidate. Never retry a provider refusal or a safety block.
+   */
+  fallbackModel: 'none' | 'qwen3.8-max';
+  /**
+   * No production-enabled option exists until provider review, safe audit and per-cell evaluation are implemented.
+   */
+  mode: 'disabled' | 'evaluation-only';
+  /**
+   * Reference only. An admin-entered value does not grant learner-data access.
+   */
+  providerApprovalReference?: string | null;
+  /**
+   * Reference only. Publishing requires verifying a real passing evaluation record server-side.
+   */
+  subjectEvaluationReference?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "families".
  */
@@ -945,6 +989,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'assignment-completions';
         value: number | AssignmentCompletion;
+      } | null)
+    | ({
+        relationTo: 'ai-model-routes';
+        value: number | AiModelRoute;
       } | null)
     | ({
         relationTo: 'families';
@@ -1355,6 +1403,21 @@ export interface AssignmentCompletionsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-model-routes_select".
+ */
+export interface AiModelRoutesSelect<T extends boolean = true> {
+  lane?: T;
+  primaryModel?: T;
+  fallbackModel?: T;
+  mode?: T;
+  providerApprovalReference?: T;
+  subjectEvaluationReference?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "families_select".
  */
 export interface FamiliesSelect<T extends boolean = true> {
@@ -1499,6 +1562,7 @@ export interface CollectionQueryWidget {
       | 'classes'
       | 'assignments'
       | 'assignment-completions'
+      | 'ai-model-routes'
       | 'families'
       | 'leads'
       | 'sessions';
@@ -1545,6 +1609,7 @@ export interface ActivityWidget {
           | 'classes'
           | 'assignments'
           | 'assignment-completions'
+          | 'ai-model-routes'
           | 'families'
           | 'leads'
           | 'sessions'

@@ -283,14 +283,14 @@ catalogs:
       specifier: ~4.30.0
       version: 4.30.0
     react-native-skia-graphite-android:
-      specifier: 157.0.0
-      version: 157.0.0
+      specifier: 157.1.0
+      version: 157.1.0
     react-native-skia-graphite-apple-ios:
-      specifier: 157.0.0
-      version: 157.0.0
+      specifier: 157.1.0
+      version: 157.1.0
     react-native-skia-graphite-apple-macos:
-      specifier: 157.0.0
-      version: 157.0.0
+      specifier: 157.1.0
+      version: 157.1.0
     react-native-svg:
       specifier: 15.16.0
       version: 15.16.0
@@ -298,8 +298,8 @@ catalogs:
       specifier: 0.21.2
       version: 0.21.2
     react-native-webgpu:
-      specifier: 0.19.2
-      version: 0.19.2
+      specifier: 0.21.1
+      version: 0.21.1
     react-native-webview:
       specifier: 14.0.1
       version: 14.0.1
@@ -764,7 +764,7 @@ importers:
         version: 0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-native-webgpu:
         specifier: 'catalog:'
-        version: 0.19.2(675f005f5c7bd37d86a9ed8acf738b1e)
+        version: 0.21.1(675f005f5c7bd37d86a9ed8acf738b1e)
       react-native-webview:
         specifier: 'catalog:'
         version: 14.0.1(patch_hash=d5f40c2a43072b00490f4d2491850816ba34c1748b3989270322eb01443bd800)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -1266,13 +1266,13 @@ importers:
         version: 5.10.1(patch_hash=c9df6e754816c62f456c1332a664e4eb992d04347227cb79b00334cd449de5eb)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-skia-graphite-android:
         specifier: 'catalog:'
-        version: 157.0.0
+        version: 157.1.0
       react-native-skia-graphite-apple-ios:
         specifier: 'catalog:'
-        version: 157.0.0
+        version: 157.1.0
       react-native-skia-graphite-apple-macos:
         specifier: 'catalog:'
-        version: 157.0.0
+        version: 157.1.0
       react-native-svg:
         specifier: 'catalog:'
         version: 15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -10868,14 +10868,14 @@ packages:
   react-native-skia-apple-tvos@154.0.0:
     resolution: {integrity: sha512-W06tUa+O3TJTYg5G+Lly/pwxE+2zKsmwJ/23yeR+25zSu7VmfdSz3VqFN3BM0jEioN4ASMm/0cMECocV7vxbMQ==}
 
-  react-native-skia-graphite-android@157.0.0:
-    resolution: {integrity: sha512-/FFq+Lw7xBk2cQVRwp49NZCbn71tUxdIYAQjbbcfGH6n+HODEgSbw4VRcGzH5L6VgbFOR7Ee+an1/VvExoSVbg==}
+  react-native-skia-graphite-android@157.1.0:
+    resolution: {integrity: sha512-keiIRZc3Vx0B3CwgrCt16BNl6xUS48LfP10DD05lZHX2bGZIHSG5a/spgweXGv44mmyhC4vKxeYqkTuhmArsOw==}
 
-  react-native-skia-graphite-apple-ios@157.0.0:
-    resolution: {integrity: sha512-5QWJOWQD+NdGt7ANfuWIOxKasyeglJVuBLFEKoBkaiaSYF7/uUv9hJQMtLXGyCxGNHeithnA+EqdS4/1eC89MA==}
+  react-native-skia-graphite-apple-ios@157.1.0:
+    resolution: {integrity: sha512-zO5rlQtgbx6d5ul0XMSACzGI1RL3tO+r4x4cPP3FeNiBrqYNgbdoMG/q+H2mqafAu0wDLph86Bua3NZqkYvehw==}
 
-  react-native-skia-graphite-apple-macos@157.0.0:
-    resolution: {integrity: sha512-dqyfEa2cJVELKv/GFLa7VqsJiY5RQ9DSjSQRv6K3vz2czRykqleYet0GObG+yP3MNtv5A7cY4AuUo0+9XoZUPw==}
+  react-native-skia-graphite-apple-macos@157.1.0:
+    resolution: {integrity: sha512-983/KzFyE9bvLtBsA32lJUhdQFl3WiETHUlBjTeDdfWknrnmCiIvz3bbUDt7cCXkMt/dU43KISslaN1CV9f66g==}
 
   react-native-svg@15.16.0:
     resolution: {integrity: sha512-uh8yktufYeRU3W9Omi8+SPyLF9BVN4JmLflSgc9oOcKkSKk/S5JUmmTjKZq/L8GHfQUtCvcu/W6X4xhEfBBAjQ==}
@@ -10904,11 +10904,11 @@ packages:
       react: 19.3.0
       react-dom: 19.3.0
 
-  react-native-webgpu-dawn@157.0.0:
-    resolution: {integrity: sha512-HRquN2/995ZvcxiKDTiCwk3CduOYg9g3AK4yyoPrfMt5qUBbS6SefCpXE5mksvY4YaFrj2PqrtUuY2K1NkXsmQ==}
+  react-native-webgpu-dawn@157.1.0:
+    resolution: {integrity: sha512-T197EGYxTBuw5Qb1yihnOX6+tNsSNem3ymJ+RZVOQbkHn9I2PnKwg3HA+l3eAEGep552kotkNDBAnM5x4oo8QA==}
 
-  react-native-webgpu@0.19.2:
-    resolution: {integrity: sha512-u+kJxyEUs2SKuphvNpkkyAltUwkWG5lIfB2moclr8GVxsDr/jsCS0iAe1va1IuHe6TafjtMHqYjQY8c/0H4AlQ==}
+  react-native-webgpu@0.21.1:
+    resolution: {integrity: sha512-H6Xv8QCbHmMc1E0r13fhKAZylYP3iq69vcT75/I4DmEBAOPHGUoNLfeUvMNZopiTQrMhy7D0SKM/xRVNmzukBw==}
     peerDependencies:
       react: 19.3.0
       react-native: 0.88.0
@@ -22897,11 +22897,11 @@ snapshots:
 
   react-native-skia-apple-tvos@154.0.0: {}
 
-  react-native-skia-graphite-android@157.0.0: {}
+  react-native-skia-graphite-android@157.1.0: {}
 
-  react-native-skia-graphite-apple-ios@157.0.0: {}
+  react-native-skia-graphite-apple-ios@157.1.0: {}
 
-  react-native-skia-graphite-apple-macos@157.0.0: {}
+  react-native-skia-graphite-apple-macos@157.1.0: {}
 
   react-native-svg@15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
@@ -22934,13 +22934,13 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  react-native-webgpu-dawn@157.0.0: {}
+  react-native-webgpu-dawn@157.1.0: {}
 
-  react-native-webgpu@0.19.2(675f005f5c7bd37d86a9ed8acf738b1e):
+  react-native-webgpu@0.21.1(675f005f5c7bd37d86a9ed8acf738b1e):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
-      react-native-webgpu-dawn: 157.0.0
+      react-native-webgpu-dawn: 157.1.0
     optionalDependencies:
       react-native-reanimated: 4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-worklets: 0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)

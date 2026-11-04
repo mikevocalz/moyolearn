@@ -42,6 +42,7 @@ ALTER TABLE "payload"."classes" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."assignments" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."assignments_work_items" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."assignment_completions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "payload"."ai_model_routes" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."tutor_engagements" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."families" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."families_contacts" ENABLE ROW LEVEL SECURITY;

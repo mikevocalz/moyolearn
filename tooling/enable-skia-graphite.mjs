@@ -9,16 +9,19 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// The 157.0.0 Graphite and shared-Dawn npm artifacts were published from the
+// The 157.1.0 Graphite and shared-Dawn npm artifacts were published from the
 // same upstream commit. Dawn's own metadata records both its source and patches.
+// 157.1.0 rebuilds the same Dawn commit with one added Metal patch (labelled
+// m157a); the Dawn release tag WebGPU declares stays chrome-m157.
 export const ADMISSION = Object.freeze({
-  renderer: '2.14.0', version: '157.0.0', skia: 'm157',
+  renderer: '2.14.0', version: '157.1.0', skia: 'm157a',
   dawnCommit: 'ada567700e13aecf7989d78b21f7d330b522ea80',
-  dawnTag: 'chrome-m157', webgpu: '0.19.2',
-  patches: ['metal-maccatalyst.patch', 'vulkan-fifo-three-images-android.patch'],
+  dawnTag: 'chrome-m157', webgpu: '0.21.1',
+  patches: ['metal-maccatalyst.patch', 'metal-suspend-submissions-in-background.patch', 'vulkan-fifo-three-images-android.patch'],
   // No m157 header release exists, so the three private Graphite headers come
-  // straight from Skia at the externals/skia commit of the 157.0.0 publisher
-  // (react-native-skia gitHead 15be4cf71b04d64f0db47e2e8f8ef0f41d5a0517).
+  // straight from Skia at the externals/skia commit of the 157.1.0 publisher
+  // (react-native-skia gitHead 00a480f354ea1029fec3b71842e3a8a67f31af3b). That
+  // submodule pin is unchanged from 157.0.0, so the header bytes are too.
   // Dawn comes from the npm package.
   headersBaseUrl: 'https://raw.githubusercontent.com/google/skia/b94213a11b3a2edadfae89f0c57a7f4ab72772c9/src/gpu/graphite/',
   headersSha256: Object.freeze({
