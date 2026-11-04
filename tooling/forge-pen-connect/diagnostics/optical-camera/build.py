@@ -16,10 +16,13 @@ with zipfile.ZipFile(aar) as z:
  for name in ['classes.jar','jni/arm64-v8a/libopencv_java4.so','jni/arm64-v8a/libc++_shared.so']:z.extract(name,cv)
 cvjar=cv/'classes.jar' 
 blob=root/'src/com/moyolearn/museopticalprobe/BrightBlobDetector.java'
-run(java/'javac','--release','8','-Xlint:-options','-d',out/'tests',blob,root/'src/com/moyolearn/museopticalprobe/CameraCalibration.java',root/'src/com/moyolearn/museopticalprobe/FrameFreshness.java',*sorted((root/'tests').rglob('*.java')))
+run(java/'javac','--release','8','-Xlint:-options','-d',out/'tests',blob,root/'src/com/moyolearn/museopticalprobe/CameraCalibration.java',root/'src/com/moyolearn/museopticalprobe/FrameFreshness.java',root/'src/com/moyolearn/museopticalprobe/LumaObservability.java',root/'src/com/moyolearn/museopticalprobe/UnmodifiedTrialPhase.java',root/'src/com/moyolearn/museopticalprobe/CaptureJournal.java',*sorted((root/'tests').rglob('*.java')))
 run(java/'java','-cp',out/'tests','com.moyolearn.museopticalprobe.BrightBlobDetectorTest')
 run(java/'java','-cp',out/'tests','com.moyolearn.museopticalprobe.CameraCalibrationTest')
 run(java/'java','-cp',out/'tests','com.moyolearn.museopticalprobe.FrameFreshnessTest')
+run(java/'java','-cp',out/'tests','com.moyolearn.museopticalprobe.LumaObservabilityTest')
+run(java/'java','-cp',out/'tests','com.moyolearn.museopticalprobe.UnmodifiedTrialPhaseTest')
+run(java/'java','-cp',out/'tests','com.moyolearn.museopticalprobe.CaptureJournalTest')
 run(java/'javac','--release','8','-Xlint:-options','-cp',str(sdk/'platforms/android-36/android.jar')+':'+str(cvjar),'-d',out/'classes',*sorted((root/'src').rglob('*.java')))
 run(bt/'d8','--min-api','29','--lib',sdk/'platforms/android-36/android.jar','--output',out/'dex',*sorted((out/'classes').rglob('*.class')),cvjar)
 run(bt/'aapt2','link','-I',sdk/'platforms/android-36/android.jar','--manifest',root/'AndroidManifest.xml','-o',out/'unsigned.apk')
