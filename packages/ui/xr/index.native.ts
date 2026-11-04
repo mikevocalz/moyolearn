@@ -19,6 +19,9 @@ export { XrTriPanel } from './XrTriPanel.native.tsx';
 export { XrBoardSurface } from './XrBoardSurface.native.tsx';
 export { XrBoardTray } from './XrBoardTray.native.tsx';
 export { worldSlot, xrRotateY, type XrWorldPose } from './world-slot.ts';
+export { dragStep, movePlacement, workspaceHeadOf, WORKSPACE_DRAG_MAX_STEP_M } from './workspace-drag.ts';
+export { addOffset, carrierPosition, ZERO_OFFSET } from './carrier-drag.ts';
+export { useCarrierDrag, type CarrierDrag, type CarrierDragOptions, type CarrierNode } from './use-carrier-drag.ts';
 /* Pen ownership and plane geometry, exported for the screen that hosts
    `MusePenInput` — the stylus listener used to live inside `XrBoardSurface`;
    the viro-external bridge moved it to the screen that funnels all input. */
