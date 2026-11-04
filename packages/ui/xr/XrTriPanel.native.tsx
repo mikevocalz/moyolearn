@@ -1,11 +1,16 @@
 'use client';
 // Three world-locked panels: tools, portrait paper, and the current conversation.
 // A successful native binding selects the live board material. Otherwise the
-// last export remains a recovery preview; the screen disables handwriting.
-// Panel dragging is disabled so artwork and the sibling input plane cannot drift.
+// last export plus pending ink is the board, and it still takes handwriting.
+// Dragging: each flank's grip moves that flank alone (native carrier write,
+// committed on release — see carrier-drag.ts). This fallback centre panel is
+// not draggable because `XrBoardSurface` is placed from the same `worldSlot`
+// and would not follow it; the Rive board, which carries its own input plane,
+// drags alone.
 // SOT: world-slot.ts · premium/PremiumXRMediaPanel.tsx
 // SOT-KEYWORDS: xr panels live board tools portrait workspace
 
+import { ViroNode, ViroSpinner } from '@reactvision/react-viro';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { PremiumXRMediaPanel } from './premium/index.ts';
 /* The same call `XrBoardSurface` places the pointer quad by — one arithmetic,
@@ -14,6 +19,7 @@ import { worldSlot } from './world-slot.ts';
 import type { XrTriPanelProps } from './XrTriPanel.types.ts';
 
 export function XrTriPanel({
+  loading = false,
   centerPanel,
   leftPanel,
   questionRows,
@@ -34,6 +40,19 @@ export function XrTriPanel({
 
   return (
     <>
+      {loading ? [left, centre, right].map((slot, i) => (
+        <ViroSpinner
+          key={i}
+          type="light"
+          materials={[XR_MATERIAL.spinner]}
+          ignoreEventHandling
+          position={[slot.position[0], slot.position[1], slot.position[2]]}
+          rotation={[0, slot.yaw, 0]}
+          scale={[0.3, 0.3, 0.3]}
+        />
+      )) : null}
+      {/* Always this node, so flipping `loading` never remounts the panels. */}
+      <ViroNode visible={!loading}>
       {leftPanel ?? <PremiumXRMediaPanel
         title={questionRows ? "Lesson & tools" : "Tools"}
         controlSize={controlSize}
@@ -44,7 +63,10 @@ export function XrTriPanel({
            the width the rows read in. */
         mediaFraction={0}
         worldPlacement={left}
-        draggable={false}
+        draggable
+        /* Slot snapping targets the head-local SLOTS table, not this world
+           placement — snapping would throw the panel across the room. */
+        snapOnRelease={false}
         animate={false}
       />}
       {/*
@@ -72,13 +94,15 @@ export function XrTriPanel({
         size="portraitCard"
         mediaFraction={0}
         worldPlacement={right}
-        draggable={false}
+        draggable
+        snapOnRelease={false}
         animate={false}
         /* The conversation is the surface that genuinely needs the rail — it is
            the only one that outgrows its panel. */
         alwaysShowRail
         scrollResetKey={chatRows[0]?.id}
       />
+      </ViroNode>
     </>
   );
 }
