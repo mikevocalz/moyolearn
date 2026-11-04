@@ -79,7 +79,7 @@ function applyMenuAction(itemId: string): void {
 /** Native macOS File/View menus merge with the system's Edit/Window menus. */
 export function DesktopNativeMenus() {
   const density = usePreviewStore((state) => state.density);
-  const menuItems: MenuRootItem[] = useMemo(
+  const menuItems = useMemo<MenuRootItem[]>(
     () => [
       {
         type: "submenu",
