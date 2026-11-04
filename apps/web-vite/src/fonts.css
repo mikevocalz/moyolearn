@@ -51,7 +51,8 @@
 
 @font-face {
   font-family: 'Clash Display Fallback';
-  src: local('Arial');
+  /* Liberation Sans and Arimo are Arial's metric-identical twins: Linux has no Arial. */
+  src: local('Arial'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
   size-adjust: 111.9%;
   ascent-override: 79.54%;
   descent-override: 22.34%;
@@ -68,11 +69,15 @@
   font-display: swap;
 }
 
+/* Width from web-designer-pro fallback.mjs (rendered advance on English text);
+   line-gap set so a line is the real face's 135% of the font size. The earlier
+   109.83% (hmtx-derived) set body copy one line longer at 320-520px columns.
+   tooling/check-font-fallbacks.mjs holds this to the real face. */
 @font-face {
   font-family: 'General Sans Fallback';
-  src: local('Arial');
-  size-adjust: 109.83%;
-  ascent-override: 91.96%;
-  descent-override: 21.85%;
-  line-gap-override: 9.1%;
+  src: local('Arial'), local('Liberation Sans'), local('Arimo'), local('Helvetica');
+  size-adjust: 97.7%;
+  ascent-override: 103.38%;
+  descent-override: 24.57%;
+  line-gap-override: 10.6%;
 }

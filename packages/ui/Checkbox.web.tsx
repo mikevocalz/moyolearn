@@ -7,7 +7,7 @@ const checkbox = tv({
   slots: {
     root:
       'flex-row items-center gap-2.5 self-start rounded-md transition-opacity duration-fast active:opacity-80 ' +
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 ' +
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ' +
       'motion-reduce:transition-none',
     box: 'h-5 w-5 items-center justify-center rounded-[6px] transition-all duration-fast motion-reduce:transition-none',
     check: 'text-xs font-bold text-on-primary',

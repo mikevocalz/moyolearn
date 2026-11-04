@@ -160,7 +160,11 @@ export function SiteFooter() {
             className={`${RULE} flex-row flex-wrap gap-section pt-section lg:flex-1 lg:border-t-0 lg:pt-0`}
           >
             {COLUMNS.map((column) => (
-              <View key={column.heading} className="min-w-28 flex-1 gap-stack">
+              // `grow` (basis auto), not `flex-1` (basis 0), with no-wrap labels: a
+              // column is as wide as its longest link and the row wraps whole
+              // columns. With equal-share columns a translated label ~35% longer
+              // broke mid-link at 390px (web-designer-pro matrix, l10n-phone).
+              <View key={column.heading} className="min-w-28 grow gap-stack">
                 <Text
                   id={`footer-col-${column.heading}`}
                   variant="label"
@@ -176,7 +180,7 @@ export function SiteFooter() {
                         : link.href;
                     return (
                       <ListItem key={link.label}>
-                        <Link href={href} className="text-site-body text-moyo-ink">
+                        <Link href={href} className="whitespace-nowrap text-site-body text-moyo-ink">
                           {link.label}
                         </Link>
                       </ListItem>
@@ -192,7 +196,10 @@ export function SiteFooter() {
         <View
           className={`${RULE} flex-col gap-group pt-section md:flex-row md:items-end md:justify-between`}
         >
-          <View className="max-w-content-prose gap-stack">
+          {/* min-w-0 + flex-1: in the md row this column has to give way, or
+              its prose width pushes the reader controls 15px past a 768px
+              viewport (caught by web-designer-pro shoot.mjs). */}
+          <View className="max-w-content-prose min-w-0 flex-1 gap-stack">
             <Paragraph className="text-site-body text-moyo-ink-muted">
               Moyo Learn is built for families and schools in the United States.
               Children&rsquo;s privacy follows COPPA, school data is handled on a
@@ -207,7 +214,7 @@ export function SiteFooter() {
             </Paragraph>
           </View>
 
-          <View className="gap-stack md:items-end">
+          <View className="shrink-0 gap-stack md:items-end">
             <Button
               className="moyo-pressable border-moyo-rule self-start rounded-moyo-card border-moyo-outline bg-moyo-mark px-inset-roomy py-inset text-site-body text-moyo-on-mark md:self-end"
               onPress={() => setReducedMotion(!reducedMotion)}

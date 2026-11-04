@@ -121,7 +121,7 @@ export function OtpField({
               <View
                 aria-hidden
                 className={s.cell({
-                  className: active ? 'border-border-strong ring-2 ring-focus/50' : undefined,
+                  className: active ? 'border-border-strong ring-2 ring-focus' : undefined,
                 })}
               >
                 <Text className={s.char()}>{code[index] ?? ''}</Text>
