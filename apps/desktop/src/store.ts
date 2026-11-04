@@ -1,13 +1,15 @@
 import { create } from "zustand";
-import type { DesktopSection } from "./layout";
+import type { DesktopDensity, DesktopSection } from "./layout";
 
 // UI-only ephemeral store; no credentials, learner records or school data.
 interface PreviewState {
   section: DesktopSection;
+  density: DesktopDensity;
   note: string;
   selectedResource: string | null;
   error: string | null;
   setSection: (section: DesktopSection) => void;
+  setDensity: (density: DesktopDensity) => void;
   setNote: (note: string) => void;
   clearNote: () => void;
   setResource: (fileName: string | null) => void;
@@ -15,10 +17,12 @@ interface PreviewState {
 }
 export const usePreviewStore = create<PreviewState>()((set) => ({
   section: "overview",
+  density: "comfortable",
   note: "",
   selectedResource: null,
   error: null,
   setSection: (section) => set({ section, error: null }),
+  setDensity: (density) => set({ density }),
   setNote: (note) => set({ note }),
   clearNote: () => set({ note: "" }),
   setResource: (selectedResource) => set({ selectedResource }),

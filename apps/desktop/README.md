@@ -97,3 +97,23 @@ Expo Modules v2 only on the compatible Expo 58 mobile target.
 
 The existing Moyo foldable policy remains intact; this desktop-only pane
 threshold never replaces Surface Duo hardware-aware navigation.
+
+## Native dropdowns and application menus
+
+The desktop preview now uses **real AppKit controls** through Legend Spark:
+
+- Workspace and density selectors: `Select` from `@legendapp/spark/ui`
+  (NSPopUpButton on macOS). Both are controlled by the existing Zustand store;
+  switching workspace changes content and switching spacing changes layout.
+- `More actions…`: native `Button` (NSButton) anchored with
+  `ControlRef.measureInWindow` to an OS `NSMenu` from
+  `@legendapp/spark/context-menu`, with actions and a checked layout option.
+- macOS menu bar: Spark `useMenu` contributes File and View actions to existing
+  native menu roots, including Cmd+O and Cmd+1…5. Edit, Window and the
+  application menu remain owned by AppKit and its normal responder chain.
+- There are no fake JavaScript-positioned dropdown overlays, no raw HTML and
+  no new UI state library. Missing native controls remain disabled/diagnosed.
+
+**Still to validate:** native menu hit testing, popup anchoring, VoiceOver,
+keyboard shortcuts, localization/RTL and Mac/Windows native parity. These
+source additions alone do not demonstrate a successful desktop build.

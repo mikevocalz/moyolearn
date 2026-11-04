@@ -3,6 +3,7 @@
  * Surface Duo, tablet, headset, or Expo Router navigation contracts.
  */
 export type DesktopSection = "overview" | "tutor" | "planner" | "resources" | "classrooms";
+export type DesktopDensity = "comfortable" | "compact";
 
 export const DESKTOP_SECTIONS: ReadonlyArray<{
   id: DesktopSection;

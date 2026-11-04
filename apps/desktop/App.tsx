@@ -8,8 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import { openFileDialog } from "@legendapp/spark/dialogs";
-import { useMenu, type MenuRootItem } from "@legendapp/spark/menus";
+import { DesktopNativeMenus, NativeWorkspaceToolbar, chooseResource } from "./src/native-menus";
 import { palette, semantic } from "../../packages/theme/tokens";
 import { DESKTOP_SECTIONS, desktopShellMode, sectionTitle, type DesktopSection } from "./src/layout";
 import { usePreviewStore } from "./src/store";
@@ -35,66 +34,6 @@ const color = {
   teal: palette["moyo-teal"],
   coral: palette["moyo-coral"],
 };
-
-const MENU_ITEMS: MenuRootItem[] = [
-  {
-    type: "submenu",
-    id: "moyo-file-menu",
-    label: "File",
-    target: { menu: "file" },
-    items: [
-      {
-        type: "action",
-        id: "moyo-choose-resource",
-        label: "Choose Lesson Resource…",
-        shortcut: "CmdOrCtrl+O",
-      },
-    ],
-  },
-  {
-    type: "submenu",
-    id: "moyo-view-menu",
-    label: "View",
-    target: { menu: "view" },
-    items: [
-      { type: "action", id: "moyo-overview", label: "Overview" },
-      { type: "action", id: "moyo-planner", label: "Lesson Planner" },
-    ],
-  },
-];
-
-async function chooseResource(): Promise<void> {
-  try {
-    const result = await openFileDialog({
-      title: "Choose a lesson resource",
-      multiple: false,
-    });
-    if (result.canceled) return;
-    // No contents, directory or absolute path are retained by the app.
-    const fileName = result.paths[0]?.split(/[/\\]/).pop() ?? null;
-    if (!fileName) return;
-    usePreviewStore.getState().setResource(fileName);
-    usePreviewStore.getState().setSection("resources");
-  } catch (error) {
-    usePreviewStore.getState().setError(
-      error instanceof Error ? error.message : "Unable to open the native file chooser.",
-    );
-  }
-}
-
-function DesktopMenus() {
-  useMenu({
-    id: "moyo-learn-desktop-menu",
-    items: MENU_ITEMS,
-    onAction: ({ itemId }) => {
-      if (itemId === "moyo-choose-resource") void chooseResource();
-      if (itemId === "moyo-overview") usePreviewStore.getState().setSection("overview");
-      if (itemId === "moyo-planner") usePreviewStore.getState().setSection("planner");
-    },
-    onError: (error) => usePreviewStore.getState().setError(String(error)),
-  });
-  return null;
-}
 
 function Action({
   label, onPress, emphasis = false,
@@ -329,11 +268,12 @@ function FutureCapabilities() {
 
 function MainContent({ section }: { section: DesktopSection }) {
   const error = usePreviewStore((store) => store.error);
+  const density = usePreviewStore((store) => store.density);
   const nitro = desktopNitroReadiness();
   return (
     <ScrollView
       style={styles.mainScroll}
-      contentContainerStyle={styles.mainContent}
+      contentContainerStyle={[styles.mainContent, density === "compact" && styles.mainContentCompact]}
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.pageMeta}>
@@ -342,6 +282,7 @@ function MainContent({ section }: { section: DesktopSection }) {
           <Text style={styles.previewTagText}>PREVIEW BUILD</Text>
         </View>
       </View>
+      <NativeWorkspaceToolbar />
       <View style={styles.titleGroup}>
         <Text accessibilityRole="header" style={styles.pageTitle}>
           {sectionTitle(section)}
@@ -384,7 +325,7 @@ export default function App() {
   const section = usePreviewStore((store) => store.section);
   return (
     <View style={styles.root}>
-      <DesktopMenus />
+      <DesktopNativeMenus />
       <View style={[styles.appFrame, compact && styles.appFrameCompact]}>
         <Sidebar compact={compact} />
         <MainContent section={section} />
@@ -422,6 +363,7 @@ const styles = StyleSheet.create({
   sidebarFooterCaption: { color: color.raised, fontSize: 12, lineHeight: 18, opacity: 0.75 },
   mainScroll: { flex: 1, backgroundColor: color.ground },
   mainContent: { maxWidth: 1440, width: "100%", alignSelf: "center", paddingVertical: 29, paddingHorizontal: 34, gap: 24 },
+  mainContentCompact: { paddingVertical: 15, paddingHorizontal: 18, gap: 14 },
   pageMeta: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 },
   pageMetaLeft: { color: color.plum, fontSize: 10, fontWeight: "800", letterSpacing: 1.6 },
   previewTag: { borderWidth: 1, borderColor: color.border, borderRadius: 30, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: color.raised },

@@ -12,6 +12,7 @@ test("desktop has its own package manager boundary", () => {
   assert.match(read("../pnpm-workspace.yaml"), /packages:\s*\n\s*- "\."/);
   assert.equal(manifest.dependencies.expo, "55.0.32");
   assert.equal(manifest.dependencies["react-native"], "0.83.10");
+  assert.equal(manifest.dependencies["@legendapp/spark"], "0.0.2");
   assert.deepEqual(config.platforms, ["macos"]);
 });
 
@@ -34,4 +35,25 @@ test("nitro v1 remains explicitly gated until native ABI is validated", () => {
 test("real Moyo branding is included, not redrawn", () => {
   assert.match(read("../App.tsx"), /\.\/assets\/mark\.png/);
   assert.match(read("../App.tsx"), /packages\/theme\/tokens/);
+});
+
+test("desktop dropdowns use actual Spark native controls and menu bar", () => {
+  const native = read("../src/native-menus.tsx");
+  const app = read("../App.tsx");
+  const store = read("../src/store.ts");
+  assert.match(native, /@legendapp\\/spark\\/ui/);
+  assert.match(native, /@legendapp\\/spark\\/context-menu/);
+  assert.match(native, /Button as NativeButton/);
+  assert.match(native, /Select as NativeSelect/);
+  assert.match(native, /showContextMenu\\(/);
+  assert.match(native, /measureInWindow\\(/);
+  assert.match(native, /windowId: "main"/);
+  assert.match(native, /target: \\{ menu: "file" \\}/);
+  assert.match(native, /target: \\{ menu: "view" \\}/);
+  assert.match(native, /CmdOrCtrl\\+O/);
+  assert.match(native, /checked: density === "compact"/);
+  assert.match(app, /<NativeWorkspaceToolbar \\/>/);
+  assert.match(store, /setDensity/);
+  assert.doesNotMatch(native, /useState\\(/);
+  assert.doesNotMatch(native, /position: "absolute"/);
 });
