@@ -33,3 +33,23 @@ jobs:
         run: node --test apps/desktop/tests/contract.test.mjs
       - name: Parse Metro configuration
         run: node --check apps/desktop/metro.config.js
+
+  typecheck-preview:
+    name: Spark preview (isolated install / TypeScript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.19.0"
+      - name: Enable corepack
+        run: corepack enable
+      - name: Install only the isolated Expo Desktop 55 workspace
+        working-directory: apps/desktop
+        run: corepack pnpm install --no-frozen-lockfile
+      - name: Typecheck native preview source
+        working-directory: apps/desktop
+        run: corepack pnpm typecheck
+      # This does not build or launch an AppKit target; macOS runner native
+      # compilation, menu interaction and signed release remain separate gates.
