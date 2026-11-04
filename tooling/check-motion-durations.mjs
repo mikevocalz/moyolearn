@@ -32,36 +32,70 @@ export const MIGRATED = Object.freeze([
 ]);
 
 // Each rule names the literal it catches. Keys are matched only as object keys
-// (not after a `.`), so `cond ? preset.durationMs : 0` is a read, not a timing.
-// A computed value (`presets.x.durationMs`,
-// `BEAT.page`, `t1 - t0`) never starts with a digit, so it passes.
+// (bare or quoted, never after a `.`), so `cond ? preset.durationMs : 0` is a
+// read, not a timing. A computed value (`presets.x.durationMs`, `BEAT.page`,
+// `t1 - t0`) never starts with a digit, so it passes. Rules run over the whole
+// comment-stripped file, so a value on the line after its key is still caught.
+// Not caught, and left to review: a literal behind an operator
+// (`duration: base ?? 300`) and a number inside a template string.
+const KEY = (names) => new RegExp(`(?<![.\\w])['"]?(?:${names})['"]?\\s*:\\s*-?\\.?\\d`, 'g');
 const RULES = Object.freeze([
-  { name: 'Kinetrell track timing', pattern: /(?<![.\w])(?:durationMs|delayMs|repeatDelayMs|settleDurationMs)\s*:\s*-?\d/ },
-  { name: 'duration literal', pattern: /(?<![.\w])(?:duration|animationDuration|animationDelay|transitionDuration)\s*:\s*-?\d/ },
-  { name: 'withDelay literal', pattern: /\bwithDelay\(\s*-?\d/ },
-  { name: '.duration()/.delay() literal', pattern: /\.(?:duration|delay)\(\s*-?\d/ },
-  { name: 'spring constant literal', pattern: /(?<![.\w])(?:damping|stiffness|mass)\s*:\s*-?\d/ },
+  { name: 'Kinetrell track timing', pattern: KEY('durationMs|delayMs|repeatDelayMs|settleDurationMs') },
+  { name: 'duration literal', pattern: KEY('duration|animationDuration|animationDelay|transitionDuration') },
+  { name: 'withDelay literal', pattern: /\bwithDelay\(\s*-?\.?\d/g },
+  { name: '.duration()/.delay() literal', pattern: /\.(?:duration|delay)\(\s*-?\.?\d/g },
+  { name: 'spring constant literal', pattern: KEY('damping|stiffness|mass') },
 ]);
 
 const MOTION_IMPORT = /from\s+['"]@acme\/motion(?:\/[a-z-]+)?['"]/;
 
-/** Blank out comments, keeping line numbers, so a decision comment can quote a number. */
+/**
+ * Blank out comments, keeping every newline, so a decision comment can quote a
+ * number and line numbers still point at the source. A small scanner rather
+ * than a regex: `//` inside a string or template literal is text, not a
+ * comment, and treating it as one would hide the rest of the line.
+ */
 export function stripComments(source) {
-  return source
-    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '))
-    .replace(/(^|[^:'"`])\/\/.*$/gm, (_, lead) => lead);
+  let out = '';
+  let quote = null;
+  for (let i = 0; i < source.length; i += 1) {
+    const ch = source[i];
+    const next = source[i + 1];
+    if (quote) {
+      out += ch;
+      if (ch === '\\') {
+        out += next ?? '';
+        i += 1;
+      } else if (ch === quote || (ch === '\n' && quote !== '`')) {
+        quote = null;
+      }
+    } else if (ch === '/' && next === '/') {
+      while (i < source.length && source[i] !== '\n') i += 1;
+      if (i < source.length) out += '\n';
+    } else if (ch === '/' && next === '*') {
+      const close = source.indexOf('*/', i + 2);
+      const stop = close === -1 ? source.length : close + 2;
+      out += source.slice(i, stop).replace(/[^\n]/g, ' ');
+      i = stop - 1;
+    } else {
+      if (ch === "'" || ch === '"' || ch === '`') quote = ch;
+      out += ch;
+    }
+  }
+  return out;
 }
 
 export function scanSource(source) {
+  const stripped = stripComments(source);
+  const lines = source.split('\n');
   const findings = [];
-  stripComments(source)
-    .split('\n')
-    .forEach((line, index) => {
-      for (const rule of RULES) {
-        if (rule.pattern.test(line)) findings.push({ line: index + 1, rule: rule.name, text: line.trim() });
-      }
-    });
-  return findings;
+  for (const rule of RULES) {
+    for (const match of stripped.matchAll(rule.pattern)) {
+      const line = stripped.slice(0, match.index).split('\n').length;
+      findings.push({ line, rule: rule.name, text: lines[line - 1].trim() });
+    }
+  }
+  return findings.sort((a, b) => a.line - b.line);
 }
 
 export function inScope(path, source) {

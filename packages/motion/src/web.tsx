@@ -4,8 +4,9 @@
  *
  * What the wrappers change, and nothing else:
  *  - `GsapMotionProvider` and `useBrowserReducedMotion` resolve the request
- *    through `resolveReducedMotionPolicy`, so 'never' cannot reach a production
- *    bundle.
+ *    through `resolveReducedMotionPolicy`. Browsers have no `__DEV__`, so on
+ *    the web 'never' resolves to 'system' unless a dev harness sets both
+ *    `globalThis.__DEV__` and the test flag; a production bundle sets neither.
  *  - `useGsapMotion` finishes the timeline under reduced motion. Kinetrell's
  *    hook has no reduced-motion input (src/web/gsap.ts), while its provider
  *    does (`timeline.progress(1).pause()`, src/web/react.tsx); this gives the
@@ -65,9 +66,13 @@ export function useGsapMotion(
     autoplay: options.autoplay === true && !reduced,
     dependencies: [reduced, ...(options.dependencies ?? [])],
   });
+  // Runs after useGSAP's layout effect, so `timeline.current` is the timeline
+  // just built. The deps are the same set useGSAP rebuilds on: a rebuild
+  // under reduced motion must be finished again, or it sits at progress 0.
   useEffect(() => {
     if (reduced) timeline.current?.progress(1).pause();
-  }, [reduced, timeline, motion, targets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- spreads the caller's rebuild deps, as useGSAP does
+  }, [reduced, timeline, motion, targets, ...(options.dependencies ?? [])]);
   return timeline;
 }
 

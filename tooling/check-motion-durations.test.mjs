@@ -16,7 +16,7 @@ test('literal timings are caught in every spelling the repo uses', () => {
   ].join('\n');
   assert.deepEqual(
     scanSource(source).map((f) => f.line),
-    [1, 2, 3, 4, 5, 6],
+    [1, 2, 3, 4, 5, 5, 6],
   );
 });
 
@@ -37,6 +37,17 @@ test('comments may quote a number; line numbers survive stripping', () => {
   assert.equal(stripComments(source).split('\n').length, 4);
   assert.deepEqual(scanSource(source).map((f) => f.line), [4]);
   assert.deepEqual(scanSource("const url = 'https://x.dev/a'; // duration: 1"), []);
+});
+
+test('a // inside a string or template does not hide the rest of the line', () => {
+  assert.deepEqual(scanSource('const u = "a//b"; x = { duration: 300 };').map((f) => f.line), [1]);
+  assert.deepEqual(scanSource('const u = `a//b`; x = { duration: 300 };').map((f) => f.line), [1]);
+});
+
+test('quoted keys, leading-dot numbers and a value on the next line are caught', () => {
+  assert.deepEqual(scanSource('{ "durationMs": 300 }').map((f) => f.line), [1]);
+  assert.deepEqual(scanSource('{ duration: .3 }').map((f) => f.line), [1]);
+  assert.deepEqual(scanSource('{\n  durationMs:\n    300 }').map((f) => f.line), [2]);
 });
 
 test('scope is motion importers, the motion package and the migrated screens', () => {

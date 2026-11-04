@@ -36,8 +36,11 @@ type MotionGlobals = typeof globalThis & {
 export type PolicyEnvironment = Readonly<{ dev: boolean; testFlag: boolean }>;
 
 /**
- * React Native and Metro define `__DEV__`; Vite builds do not, so the web
- * wrapper passes its own `import.meta.env.DEV` through `dev`.
+ * Metro defines `__DEV__`; browsers and Vite do not. `dev` lets a caller that
+ * knows its own build mode say so (the dev inspector takes it as an option);
+ * otherwise a web page counts as a development build only when a harness has
+ * set `globalThis.__DEV__ = true`, which fails safe: 'never' resolves to
+ * 'system'.
  */
 export function readPolicyEnvironment(dev?: boolean): PolicyEnvironment {
   const scope = globalThis as MotionGlobals;
