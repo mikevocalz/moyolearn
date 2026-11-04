@@ -33,11 +33,11 @@
 ## Acceptance criteria and release evidence
 
 - [ ] Sandbox QBO invoice/credit/payment export produces one accounting record per Moyo source event after repeated retries.
-- [ ] Duplicate/out-of-order Zapier deliver returns safe status; audit and signatures resist replay and spoofing.
+- [ ] Duplicate/out-of-order Zapier delivery returns safe status; audit and signatures resist replay and spoofing.
 - [ ] Wrong-tenant provider company or webhooks cannot cross post or enumerate financial records.
 - [ ] Provider API rate limit, revoked OAuth, prolonged outage, cursor collision and mapping correction have operator recovery states.
 - [ ] Webhook fixture scan asserts no learning/child-content fields and privacy-safe logging.
-- [ ] No live financial connector onboarding or accounting writes from docs-only draft.
+- [ ] No live financial connector onboarding or accounting writes from merging this contract.
 
 ## Review and release plan
 
@@ -47,4 +47,4 @@
 
 **Rollback:** Disable individual adapters; retain immutable receipt/outbox history and reverse incorrect remote postings through documented provider process.
 
-**Actual evidence for this planning PR:** reviewed GitHub source and existing specs; created branch/document/draft PR. No compile, lint, native build, database test, provider sandbox, real device, account connection or deployed changes were executed. Keep PR in draft until a complete tested implementation is added. Document unsupported devices separately. Do not auto-merge, rename subscriptions, send communication or execute transfers based on this contract.
+**Actual evidence for this contract:** reviewed GitHub source and existing specs; created branch/document/draft PR. No compile, lint, native build, database test, provider sandbox, real device, account connection or deployed changes were executed. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented. Document unsupported devices separately. Do not auto-merge, rename subscriptions, send communication or execute transfers based on this contract.
