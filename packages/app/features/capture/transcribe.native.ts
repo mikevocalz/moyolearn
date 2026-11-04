@@ -1,19 +1,22 @@
-// Turning a child's voice note into text, on device, via ExecuTorch's Whisper.
+// Turning a child's voice note into text on device via one multilingual Whisper.
 //
 // One module instance for the process. `fromModelName` downloads and loads a
 // model; doing that per voice note would make a session pay for it repeatedly.
 // SOT: packages/app/features/capture/read-attachment.native.ts
 // SOT-KEYWORDS: transcribe native whisper executorch speech to text voice on-device
-import { SpeechToTextModule, WHISPER_TINY_EN } from 'react-native-executorch';
+import { SpeechToTextModule, WHISPER_TINY } from 'react-native-executorch';
 import { decodeAudioData } from 'react-native-audio-api';
 import { toMono } from './pcm.ts';
+import { whisperLanguageForLocale } from './speech-language.ts';
 
 let stt: SpeechToTextModule | undefined;
 
-export async function transcribe(uri: string): Promise<string> {
+export async function transcribe(uri: string, locale?: string): Promise<string> {
+  const language = whisperLanguageForLocale(locale);
+  if (language === null) return ''; // Unsupported explicit locale: preserve audio for manual review.
   try {
-    stt ??= await SpeechToTextModule.fromModelName(WHISPER_TINY_EN);
-    const result = await stt.transcribe(await waveformFrom(uri));
+    stt ??= await SpeechToTextModule.fromModelName(WHISPER_TINY);
+    const result = await stt.transcribe(await waveformFrom(uri), language ? { language } : undefined);
     return result.text.trim();
   } catch {
     // Same contract as web: losing the transcript must not lose the note.
