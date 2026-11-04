@@ -49,6 +49,20 @@ test('rejects differing Dawn source patches', async (t) => {
   const f = fixture(t); f.pkg('react-native-webgpu-dawn', { version: ADMISSION.version, dawn: { skia: ADMISSION.skia, commit: ADMISSION.dawnCommit, patches: [] } });
   await assert.rejects(f.run(), /unreviewed/);
 });
+test('rejects the superseded 157.0.0 shared Dawn without the background-submission patch', async (t) => {
+  const f = fixture(t);
+  f.pkg('react-native-webgpu-dawn', { version: '157.0.0', dawn: { skia: 'm157', commit: ADMISSION.dawnCommit, patches: ['metal-maccatalyst.patch', 'vulkan-fifo-three-images-android.patch'] } });
+  await assert.rejects(f.run(), /unreviewed/); assert.equal(f.fetches(), 0);
+});
+test('header pins equal the bytes downloaded from the 157.1.0 publisher Skia commit', () => {
+  // Re-hashed from raw.githubusercontent.com at b94213a1 on 2026-11-04; a pin change needs a new download.
+  assert.match(ADMISSION.headersBaseUrl, /google\/skia\/b94213a11b3a2edadfae89f0c57a7f4ab72772c9\//);
+  assert.deepEqual({ ...ADMISSION.headersSha256 }, {
+    'ContextOptionsPriv.h': 'f801bcda10ea519d50983d312a06bd809cb01031c9d4f852e0dcdb8db6323274',
+    'ResourceTypes.h': '1822b5e90d4202026225cdf5aa1bd89bbc09d4aad57ee84357be98771ecbb10e',
+    'TextureProxyView.h': '2287d9848e01fa42f9a5e9894ccd3d73c6979e0272d1ae46fe24d3b7ce01362d',
+  });
+});
 test('rejects Graphite source identity different from shared Dawn', async (t) => {
   const f = fixture(t); f.pkg('react-native-skia-graphite-apple-ios', { version: ADMISSION.version, skia: { version: 'm154_8037_58c', graphite: true } });
   await assert.rejects(f.run(), /unreviewed/);

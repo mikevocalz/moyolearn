@@ -73,7 +73,7 @@ catalog:
   # expo-router imports it; listed so the iOS SwiftPM build links it (see tooling/ios-spm.mjs).
   "@react-native-masked-view/masked-view": 0.3.2
   react-native-reanimated: 4.7.1
-  react-native-webgpu: 0.19.2
+  react-native-webgpu: 0.21.0
   typegpu: 0.12.9
   react-native-safe-area-context: ~5.10.1
   react-native-screens: ~4.30.0
@@ -105,9 +105,9 @@ catalog:
   # Held with it: the fetcher registers into executorch's runtime.
   react-native-executorch-expo-resource-fetcher: 0.9.1
   "@shopify/react-native-skia": 2.14.0
-  react-native-skia-graphite-android: 157.0.0
-  react-native-skia-graphite-apple-ios: 157.0.0
-  react-native-skia-graphite-apple-macos: 157.0.0
+  react-native-skia-graphite-android: 157.1.0
+  react-native-skia-graphite-apple-ios: 157.1.0
+  react-native-skia-graphite-apple-macos: 157.1.0
   "@react-navigation/native": 7.4.1
   solito: 5.0.0
   lucide-react: 1.47.0
