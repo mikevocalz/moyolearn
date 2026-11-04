@@ -148,3 +148,16 @@ under semver. pnpm warns and installs; nothing enforces it.
 To recut one: commit and push on the port's `nitro-v1` branch, `npm pack` from
 the package directory, copy the tarball here, update the override and this
 table.
+
+## `kinetrell` 0.1.0-alpha.2 (the motion runtime behind `@acme/motion`)
+
+Packed from [mikevocalz/Kinetrell](https://github.com/mikevocalz/Kinetrell) tag
+`0.1.0-alpha.2` (commit `00d0ed4c8d825445686547b7760aa7664b0caefb`): the tag's
+source, built with its own `tsdown` (`prepare`) under Node 24.22.2, then
+`npm pack --ignore-scripts`. `package.json` is byte-identical to the tag's.
+No Moyo patches. Why a tarball and not the git tag:
+[ADR-124](../docs/decisions/adr-124-kinetrell-by-git-tag.md).
+
+| Tarball | sha256 | npm integrity |
+| --- | --- | --- |
+| `kinetrell-0.1.0-alpha.2.tgz` | `799a7df7b2e2f83c2fd5ea7d4252417a32d7c46b2a58382490eb80fa3ce6517a` | `sha512-f/l+xcD/VUOHU…wlxPyY0gC3fnw==` (full value in `pnpm-lock.yaml`) |

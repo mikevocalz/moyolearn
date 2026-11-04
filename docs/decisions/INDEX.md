@@ -39,7 +39,7 @@ hand — nothing regenerates it.
 | [`adr-121-gpu-device-topology.md`](adr-121-gpu-device-topology.md) | ADR-121: one GPU device for Natalie, Skia and inference — or siblings | proposed. The decision needs Scenario J/K numb | 2026-09-17 |
 | [`adr-122-local-inference-router.md`](adr-122-local-inference-router.md) | ADR-122: local inference routes through the gateway that already exists | proposed. The shape is decided by what is alre | 2026-09-17 |
 | [`adr-123-pgboss-schema-42.md`](adr-123-pgboss-schema-42.md) | ADR-123 — Take the pg-boss schema to 42, and take `main` with it | decided, migration not yet applied | — |
-| [`adr-124-kinetrell-by-git-tag.md`](adr-124-kinetrell-by-git-tag.md) | ADR-124 — Kinetrell is consumed by git tag, and its `prepare` build is allowed. Revisit when Kinetrell publishes to npm | accepted | 2026-11-04 |
+| [`adr-124-kinetrell-by-git-tag.md`](adr-124-kinetrell-by-git-tag.md) | ADR-124 — Kinetrell is pinned to its git tag through a vendored tarball (the git dependency's install-time build failed on CI). Revisit when Kinetrell publishes to npm | accepted | 2026-11-04 |
 | [`adr-homework-exact-math.md`](adr-homework-exact-math.md) | Exact arithmetic for homework | implemented checker; production assessment evi | 2026-09-16 |
 | [`bunny-storage-presign-spike.md`](bunny-storage-presign-spike.md) | Spike: can a client PUT directly to Bunny Storage? | RESOLVED — yes, verified against a live zone | — |
 

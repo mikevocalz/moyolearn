@@ -1,4 +1,4 @@
-# ADR-124 — Kinetrell is consumed by git tag, and its `prepare` build is allowed
+# ADR-124 — Kinetrell is pinned to its git tag through a vendored tarball
 
 **Date:** 2026-11-04 · **Status:** accepted
 **Decides:** how `packages/motion` depends on Kinetrell, which is not on npm
@@ -11,38 +11,39 @@ published from `github.com/mikevocalz/Kinetrell` (public) and tagged
 tag carries source only: every `kinetrell/*` export points at `dist/`, which the
 package's `prepare` script (`tsdown`) writes.
 
-The repo already vendors non-npm packages as tarballs under `vendors/` with
-`file:` specifiers (Viro, expo-pico, the Nitro V1 ports). Those exist because
-each one carries Moyo patches or a build nobody else publishes. Kinetrell carries
-neither: the tag is the release.
+## What was tried first
+
+`"kinetrell": "git+https://github.com/mikevocalz/Kinetrell.git#0.1.0-alpha.2"`,
+with `kinetrell` added to `onlyBuiltDependencies` (pnpm 10 otherwise refuses a
+git-hosted package with a build script: `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`).
+The lockfile pinned the commit tarball on codeload, and the install and build
+worked on a Mac with Node 24.22.2.
+
+On GitHub's ubuntu runners every job's `pnpm install --frozen-lockfile` failed
+in that `prepare`: tsdown reported "Failed to load the config file due to a
+known Node.js bug ... upgrading Node.js to v24.11.1 or later"
+(`ERR_PNPM_PREPARE_PACKAGE`, run 41914564828), although the job's own Node is
+24.19.0 from `.nvmrc`. The build runs inside pnpm's temporary install of the
+package, under a runtime the workflow does not choose. A dependency whose
+install depends on that is not reproducible.
 
 ## Decision
 
-`packages/motion/package.json` declares
+Pin the tag by its built artifact, the way this repo already consumes every
+non-npm package:
 
-    "kinetrell": "git+https://github.com/mikevocalz/Kinetrell.git#0.1.0-alpha.2"
+- `vendors/kinetrell-0.1.0-alpha.2.tgz`: the tag's source built with its own
+  `tsdown`, packed with `npm pack --ignore-scripts`. `package.json` is
+  byte-identical to the tag's. Provenance and sha256 are in `vendors/README.md`.
+- `packages/motion/package.json` declares `"kinetrell": "0.1.0-alpha.2"`; the
+  root `pnpm.overrides` maps it to `file:./vendors/kinetrell-0.1.0-alpha.2.tgz`,
+  the same shape as `@viro-external/*` and the Nitro V1 ports.
+- The lockfile records the tarball's sha512 integrity, so a changed file fails
+  `--frozen-lockfile` instead of installing.
+- No install-time build: `onlyBuiltDependencies` does not list it.
 
-and `pnpm-workspace.yaml` adds `kinetrell` to `onlyBuiltDependencies`.
-
-- **The lockfile pins the commit, not the tag.** pnpm resolves the tag once and
-  records `https://codeload.github.com/mikevocalz/Kinetrell/tar.gz/00d0ed4…`.
-  `--frozen-lockfile` installs that tarball; a moved tag cannot change what CI
-  installs without a lockfile diff in review.
-- **The build is allowed by name.** pnpm 10 refuses a git-hosted package with a
-  build script (`ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED`) unless it is listed.
-  Without the entry the install fails outright; it does not install an empty
-  package.
-- **Bumping is a two-line change**: the tag in `packages/motion/package.json`
-  and a fresh `pnpm install`, which rewrites the lockfile's commit.
-
-## Rejected
-
-- **A tarball in `vendors/`.** It works and needs no build at install, but it
-  makes a second copy of a release that already has a canonical address, and
-  the tarball's provenance (which commit it was packed from) would live only in
-  its file name.
-- **Publishing Kinetrell to npm first.** Out of this repo's control and not
-  needed to pin it reproducibly.
+Bumping is: pack the new tag the same way, replace the tarball, update the two
+version strings and `vendors/README.md`, run `pnpm install`.
 
 ## The npm admission gate
 
@@ -50,10 +51,9 @@ and `pnpm-workspace.yaml` adds `kinetrell` to `onlyBuiltDependencies`.
 family through the default catalog. Kinetrell is not in its `TARGETS`, and its
 peers resolve to the catalog's existing Reanimated 4.7.1, Worklets 0.13.1,
 Gesture Handler 3.4.0, GSAP 3.15.0 and Lenis 1.3.26, so no installed copy of a
-target changes. The gate's verdict is recorded in the PR that introduced this.
+target changes. The gate passes (exit 0) with this change.
 
-## Cost
+## Revisit when
 
-A cold install (no pnpm store cache) clones the tag and runs `tsdown` with
-Kinetrell's own dev dependencies. Measured locally: the whole workspace install
-with the build took 32.8 s against 22–24 s for a warm one.
+Kinetrell publishes to npm: then it becomes a catalog entry like any other
+package and the tarball goes.

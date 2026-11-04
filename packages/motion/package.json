@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
-    "kinetrell": "git+https://github.com/mikevocalz/Kinetrell.git#0.1.0-alpha.2"
+    "kinetrell": "0.1.0-alpha.2"
   },
   "peerDependencies": {
     "@gsap/react": "*",

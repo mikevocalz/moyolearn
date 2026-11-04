@@ -1,7 +1,8 @@
 # Motion
 
 `packages/motion` (`@acme/motion`) owns choreographed motion on every Moyo
-surface. Kinetrell (`0.1.0-alpha.2`, consumed by git tag per
+surface. Kinetrell (`0.1.0-alpha.2`, pinned to its git tag through
+`vendors/kinetrell-0.1.0-alpha.2.tgz` per
 [ADR-124](../decisions/adr-124-kinetrell-by-git-tag.md)) is its only animator.
 
 SOT-KEYWORDS: motion kinetrell presets handoff reduced-motion inspector gate

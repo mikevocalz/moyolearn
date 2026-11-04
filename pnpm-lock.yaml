@@ -384,6 +384,7 @@ overrides:
   '@viro-external/ui': file:./vendors/viro-external-ui-0.1.0-4dc2775.tgz
   '@viro-external/xr-contract': file:./vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz
   '@expo-pico/core': file:./vendors/expo-pico-core-1.0.0-nitro-v1.tgz
+  kinetrell: file:./vendors/kinetrell-0.1.0-alpha.2.tgz
   '@expo/dom-webview': 58.0.2
   '@payloadcms/plugin-cloud-storage': 4.0.0-canary.33
   '@payloadcms/translations': 4.0.0-canary.33
@@ -1472,8 +1473,8 @@ importers:
         specifier: workspace:*
         version: link:../theme
       kinetrell:
-        specifier: git+https://github.com/mikevocalz/Kinetrell.git#0.1.0-alpha.2
-        version: https://codeload.github.com/mikevocalz/Kinetrell/tar.gz/00d0ed4c8d825445686547b7760aa7664b0caefb(9606be2d5d9e88c7fb0734917e61d244)
+        specifier: file:../../vendors/kinetrell-0.1.0-alpha.2.tgz
+        version: file:vendors/kinetrell-0.1.0-alpha.2.tgz(9606be2d5d9e88c7fb0734917e61d244)
     devDependencies:
       '@acme/config':
         specifier: workspace:*
@@ -9365,8 +9366,8 @@ packages:
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
-  kinetrell@https://codeload.github.com/mikevocalz/Kinetrell/tar.gz/00d0ed4c8d825445686547b7760aa7664b0caefb:
-    resolution: {tarball: https://codeload.github.com/mikevocalz/Kinetrell/tar.gz/00d0ed4c8d825445686547b7760aa7664b0caefb}
+  kinetrell@file:vendors/kinetrell-0.1.0-alpha.2.tgz:
+    resolution: {integrity: sha512-f/l+xcD/VUOHUxRqnoXMuRcRpfdNZpi6zzgiM4eJxP91TJ8C0uWScoWU43l+IGc71IJQJ3v7owlxPyY0gC3fnw==, tarball: file:vendors/kinetrell-0.1.0-alpha.2.tgz}
     version: 0.1.0-alpha.2
     engines: {node: '>=22.13'}
     peerDependencies:
@@ -21029,7 +21030,7 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  kinetrell@https://codeload.github.com/mikevocalz/Kinetrell/tar.gz/00d0ed4c8d825445686547b7760aa7664b0caefb(9606be2d5d9e88c7fb0734917e61d244):
+  kinetrell@file:vendors/kinetrell-0.1.0-alpha.2.tgz(9606be2d5d9e88c7fb0734917e61d244):
     optionalDependencies:
       '@gsap/react': 2.1.2(gsap@3.15.0)(react@19.3.0)
       gsap: 3.15.0

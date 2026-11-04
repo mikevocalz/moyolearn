@@ -30,10 +30,6 @@ onlyBuiltDependencies:
   - sharp
   - unrs-resolver
   - esbuild
-  # Git-hosted (packages/motion pins the 0.1.0-alpha.2 tag). Its `prepare` is
-  # `tsdown`, which emits the dist/ that every `kinetrell/*` export points at;
-  # the tag carries source only, so without this the package installs empty.
-  - kinetrell
 
 # One version per dependency, declared once. Every package.json uses `catalog:`.
 catalog:
