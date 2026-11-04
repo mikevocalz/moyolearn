@@ -4,16 +4,16 @@
 <!-- Why: reviewable end-to-end operations slice built on canonical Moyo services. -->
 <!-- SOT-KEYWORDS: moyo business agreement attendance credits roadmap test gates -->
 
-**Status:** Planning/review draft only. Existing behavior unchanged; no migration, payment, provider write or runtime feature is implemented here.
+**Status:** Implementation contract (merged 2026-11-04). Existing behavior unchanged; no migration, payment, provider write or runtime feature is implemented here.
 **Implementation blocked by:** MB-06, MB-07, MB-08. Architecture: [MB-01 PR #101](https://github.com/mikevocalz/moyolearn/pull/101).
 
 ## Source-of-truth files to inspect and extend
 
-- `docs/business/noto-business-lifecycle.md` — inspect currently installed interfaces and tests before editing
-- `packages/payload/src/collections/Sessions.ts` — inspect currently installed interfaces and tests before editing
-- `packages/app/features/ops` — inspect currently installed interfaces and tests before editing
-- `packages/app/features/institution` — inspect currently installed interfaces and tests before editing
-- `packages/jobs` — inspect currently installed interfaces and tests before editing
+- `docs/business/noto-business-lifecycle.md`: inspect currently installed interfaces and tests before editing
+- `packages/payload/src/collections/Sessions.ts`: inspect currently installed interfaces and tests before editing
+- `packages/app/features/ops`: inspect currently installed interfaces and tests before editing
+- `packages/app/features/institution`: inspect currently installed interfaces and tests before editing
+- `packages/jobs`: inspect currently installed interfaces and tests before editing
 
 ## User-visible tracer bullet
 
@@ -48,4 +48,4 @@
 
 **Rollback:** Reverse financial effects by compensating entries; no destructive record deletion or policy rewrite.
 
-**Evidence now:** GitHub repo inspection and documentation commit only. Runtime code, schema migrations, CI, real Postgres, browser, simulator, physical device, provider sandbox, and production validations were not run. Keep draft until complete behavior, test results and required security/financial reviews appear. Do not merge this document as a substitute for implementation.
+**Evidence now:** GitHub repo inspection and documentation commit only. Runtime code, schema migrations, CI, real Postgres, browser, simulator, physical device, provider sandbox, and production validations were not run. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented. The required security/financial reviews are part of that implementation PR.
