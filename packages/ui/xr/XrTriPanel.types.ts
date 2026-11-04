@@ -26,6 +26,9 @@ export interface XrPanelRow {
 }
 
 export interface XrTriPanelProps {
+  /** Panels still building: each slot shows a spinner and the panels stay
+      mounted but hidden, so their runtimes keep loading underneath. */
+  loading?: boolean;
   centerPanel?: ReactNode;
   leftPanel?: ReactNode;
   questionRows?: readonly XrPanelRow[];
