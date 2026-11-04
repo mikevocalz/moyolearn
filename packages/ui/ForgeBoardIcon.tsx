@@ -1,4 +1,9 @@
 'use client';
+// Forge board tool glyphs (pen, highlighter, eraser, undo, redo, trash) with an
+// outline-to-filled crossfade for the selected tool. Native fork; the web fork
+// (ForgeBoardIcon.web.tsx) draws the same glyphs with DOM <svg>.
+// Mobbin: https://mobbin.com/screens/6a91e0ce-13a4-42fe-b5d8-9d2aba344871 (Craft: undo and redo sit apart from the drawing tools, which share one row) · https://mobbin.com/screens/bffbe166-34a2-49ae-8f1d-587a518b3d03 (Freeform: the selected tool changes state in place instead of gaining a separate highlight chip) · https://mobbin.com/screens/a9791ffa-07a6-439f-8a76-9de63ac67c3c (Brave whiteboard: undo, redo and clear grouped as one cluster of equal-weight glyph buttons) · https://mobbin.com/screens/91721f84-50cc-4e30-98b0-b96daebba9bc (Apple Photos Markup: pen, highlighter and eraser as one ordered set, eraser last)
+// SOT-KEYWORDS: forge board icon glyph pen highlighter eraser undo redo trash whiteboard native svg
 
 import { useId } from 'react';
 import Svg, { Defs, G, Mask, Path, Rect } from 'react-native-svg';

@@ -11,8 +11,9 @@ The retained source consists of `probe.cpp`, `AndroidManifest.xml`, and
 allocation at 4096 entries and reports actual lookup/initialization/enumeration
 result codes. Java writes only its own package's private result file.
 
-The optional retained APK is
-`vendors/muse-openxr-runtime-probe-6c8f6dc6.apk` (11,027,067 bytes), SHA256
+The reviewed APK was `vendors/muse-openxr-runtime-probe-6c8f6dc6.apk`
+(11,027,067 bytes). It was removed from git on 2026-11-04 (PR #136) because no
+build or test reads it; rebuild it from the sources here and compare against SHA256
 `6c8f6dc6acba7ed03f0737f4ace0510220cbe34bba4a624533b2c44fcf5e4823`.
 This is the final artifact containing the required arm64 `libc++_shared.so`,
 not an earlier intermediate APK. It is a diagnostic artifact, not a product
