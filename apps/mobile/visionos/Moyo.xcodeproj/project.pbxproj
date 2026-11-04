@@ -17,6 +17,7 @@
 		7699B88040F8A987B510C191 /* libPods-Moyo-MoyoTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 19F6CBCC0A4E27FBF8BF4A61 /* libPods-Moyo-MoyoTests.a */; };
 		94BFE57FC5E36315C6633F81 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C90570D25DE29D1C38DD07B9 /* ExpoModulesProvider.swift */; };
 		B0C1E1F4E4DE555A027D2C7E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		F34B7478F3621ABD774F9CAF /* Autolinked in Frameworks */ = {isa = PBXBuildFile; productRef = 79B731EDA3C38F193E8C2D77 /* Autolinked */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +65,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C80B921A6F3F58F76C31292 /* libPods-Moyo.a in Frameworks */,
+				F34B7478F3621ABD774F9CAF /* Autolinked in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -220,6 +222,9 @@
 			dependencies = (
 			);
 			name = Moyo;
+			packageProductDependencies = (
+				79B731EDA3C38F193E8C2D77 /* Autolinked */,
+			);
 			productName = Moyo;
 			productReference = 13B07F961A680F5B00A75B9A /* Moyo.app */;
 			productType = "com.apple.product-type.application";
@@ -250,6 +255,9 @@
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
+			packageReferences = (
+				C1BE9BC78C6111CB03C82300 /* XCLocalSwiftPackageReference "Autolinked" */,
+			);
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -795,6 +803,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		C1BE9BC78C6111CB03C82300 /* XCLocalSwiftPackageReference "Autolinked" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = build/generated/autolinking/Autolinked;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		79B731EDA3C38F193E8C2D77 /* Autolinked */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C1BE9BC78C6111CB03C82300 /* XCLocalSwiftPackageReference "Autolinked" */;
+			productName = Autolinked;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 83CBB9F71A601CBA00E9B192 /* Project object */;
 }
