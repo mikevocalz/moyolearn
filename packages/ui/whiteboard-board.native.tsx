@@ -149,6 +149,7 @@ import {
 } from 'react';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { BOARD_HTML, createBridge } from '@quickdrawjs/react-native';
+import { WHITEBOARD_HISTORY_SHIM } from './whiteboard-history.ts';
 // The RN binding declares `Snapshot` but does not re-export it. Type-only, so
 // nothing from the browser package reaches the native bundle.
 import type { Snapshot } from '@quickdrawjs/core';
@@ -165,6 +166,7 @@ import type {
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
+  WhiteboardHistoryOwner,
   WhiteboardPagePoint,
   WhiteboardPointerSample,
   WhiteboardTool,
@@ -453,7 +455,7 @@ function calibrationResult(
 }
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ onChange, onReady, onCalibration, onHistory }, ref) {
+  function WhiteboardBoard({ history, onChange, onReady, onCalibration, onHistory }, ref) {
     /*
       `ComponentRef<typeof WebView>`, not `WebView`. react-native-webview 14 —
       the version SDK 58 pins — declares the export as
@@ -500,10 +502,13 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
     }, [send]);
 
     /* Callbacks read through a ref so a re-render cannot re-wire the page. */
-    const callbacks = useRef({ onChange, onReady, onCalibration, onHistory });
+    const gestureOwner = useRef<WhiteboardHistoryOwner | null>(null);
+    useEffect(() => () => { gestureOwner.current?.endGesture?.(); gestureOwner.current = null; }, []);
+    const callbacks = useRef({ history, onChange, onReady, onCalibration, onHistory });
     useEffect(() => {
-      callbacks.current = { onChange, onReady, onCalibration, onHistory };
-    }, [onChange, onReady, onCalibration, onHistory]);
+      callbacks.current = { history, onChange, onReady, onCalibration, onHistory };
+      if (pageReady.current) web.current?.injectJavaScript(`window.__moyoHistoryManaged=${history !== undefined};true;`);
+    }, [history, onChange, onReady, onCalibration, onHistory]);
 
     /*
       CALIBRATION, AND WHY IT IS A PROBE RATHER THAN A READ.
@@ -711,6 +716,8 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
             there is no window in which the page is up and the pointer path is
             not. A reload would replay `ready` and simply reassign it.
           */
+          web.current?.injectJavaScript(WHITEBOARD_HISTORY_SHIM);
+          web.current?.injectJavaScript(`window.__moyoHistoryManaged=${callbacks.current.history !== undefined};true;`);
           web.current?.injectJavaScript(POINTER_SHIM);
           /*
             NO SNAPSHOT IN `init`, AND THAT IS A CAMERA DECISION, not a
@@ -803,6 +810,20 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
           not polled, and it carries the batch boundaries a diff stream cannot
           see. See `WhiteboardHistory` for why this is not folded into onChange.
         */
+        case 'moyo:gesture-history': {
+          if (message.action === 'begin' && gestureOwner.current === null) {
+            gestureOwner.current = callbacks.current.history ?? null;
+            gestureOwner.current?.beginGesture?.();
+          } else if (message.action === 'end') {
+            gestureOwner.current?.endGesture?.();
+            gestureOwner.current = null;
+          }
+          break;
+        }
+        case 'moyo:history-action': {
+          if (message.action === 'undo' || message.action === 'redo') callbacks.current.history?.[message.action]();
+          break;
+        }
         case 'moyo:history': {
           callbacks.current.onHistory?.({
             canUndo: message.canUndo === true,
@@ -847,8 +868,8 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         bridgeRef.current?.post({ type: 'setTool', tool });
       },
       setInk: (colour) => bridgeRef.current?.post({ type: 'setStyle', key: 'color', value: colour }),
-      undo: () => bridgeRef.current?.post({ type: 'undo' }),
-      redo: () => bridgeRef.current?.post({ type: 'redo' }),
+      undo: () => callbacks.current.history ? callbacks.current.history.undo() : bridgeRef.current?.post({ type: 'undo' }),
+      redo: () => callbacks.current.history ? callbacks.current.history.redo() : bridgeRef.current?.post({ type: 'redo' }),
       /*
         Not `bridge.post`: a pointer is not a board command and must not sit in
         the same queue behind one. It is also dropped rather than queued when the

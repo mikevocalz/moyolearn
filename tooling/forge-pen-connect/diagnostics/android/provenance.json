@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "testOnly": true,
+  "productionProvider": false,
+  "package": "com.moyolearn.museprobe",
+  "selfTarget": true,
+  "apk": {
+    "path": "vendors/muse-hid-diagnostic-collector-753d9214.apk",
+    "byteLength": 29075,
+    "sha256": "753d9214a51cad2daeed4b90e21447564178e777fd97cc0fb15767c7283a54d3"
+  },
+  "sources": [
+    {
+      "path": "tooling/forge-pen-connect/diagnostics/android/AndroidManifest.xml",
+      "byteLength": 628,
+      "sha256": "4153e1c7fd809a04b6c70b272cf57f862cbaf8813dbfe7ec3129ce9f04a875bd"
+    },
+    {
+      "path": "tooling/forge-pen-connect/diagnostics/android/src/com/moyolearn/museprobe/MuseDescriptorInstrumentation.java",
+      "byteLength": 8801,
+      "sha256": "4f1c2391b2c3f488183af9a67447810c0d021abfac6ca4dfb651659c693e70d0"
+    },
+    {
+      "path": "tooling/forge-pen-connect/diagnostics/android/src/com/moyolearn/museprobe/MuseLiveReadInstrumentation.java",
+      "byteLength": 12075,
+      "sha256": "a5b0df9d262a613db22c59e813b04dccdae595b57f65ad123933c8c6c55cd420"
+    }
+  ],
+  "build": {
+    "compileSdk": 36,
+    "minSdk": 33,
+    "targetSdk": 34,
+    "javaRelease": 17,
+    "compiler": "existing Zulu JDK26 javac",
+    "packaging": "existing Android SDK36 d8/aapt2/zipalign/apksigner",
+    "signing": "local disposable diagnostic signing identity; no signing material retained",
+    "byteReproducible": false
+  },
+  "runtimeScope": {
+    "globalGATTDeadlineSeconds": 40,
+    "maxPollingSeconds": 25,
+    "maxSamples": 100,
+    "maxReadRateHz": 4,
+    "temporaryNamedPermissions": [
+      "android.permission.BLUETOOTH_CONNECT",
+      "android.permission.BLUETOOTH_PRIVILEGED"
+    ],
+    "uiAutomationFlag": "FLAG_DONT_USE_ACCESSIBILITY",
+    "writes": "No GATT writes, notification subscriptions or explicit pairing calls; local result files only"
+  },
+  "expectedReportMapSHA256": "4708e62215883a297c88be41600d2ddea20345ecfbe41213db47f7d6778b3405",
+  "retention": "Exact reviewed APK and public source only; no signing keys/passwords copied or inspected. Rebuilding changes identity and requires review and pin correction."
+}

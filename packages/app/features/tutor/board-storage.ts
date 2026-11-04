@@ -16,18 +16,18 @@
 // SOT: packages/app/features/tutor/board-doc.ts · packages/app/features/capture/problem-storage.shared.ts
 // SOT-KEYWORDS: tutor board storage persist yjs update local server cross-device merge
 
-import { problemStorage, readBoard, writeBoard } from '../capture';
+import { problemStorage } from '../capture';
 import { API_URL } from './tutor-constants.ts';
 import { decodeBoardUpdate, encodeBoardUpdate, type BoardDoc } from './board-doc.ts';
+import { readSavedForgeBoard, writeSavedForgeBoard } from './forge-board-storage.ts';
 
 /** The local copy, read synchronously so the first paint already has it. */
 export function readLocalBoard(): Uint8Array | null {
-  const stored = readBoard(problemStorage);
-  return typeof stored === 'string' && stored.length > 0 ? decodeBoardUpdate(stored) : null;
+  return readSavedForgeBoard(problemStorage);
 }
 
 export function writeLocalBoard(doc: BoardDoc): void {
-  writeBoard(problemStorage, encodeBoardUpdate(doc.encode()));
+  writeSavedForgeBoard(problemStorage, doc);
 }
 
 /**

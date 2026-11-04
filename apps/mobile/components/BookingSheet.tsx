@@ -64,7 +64,16 @@ export function BookingSheet() {
   const handleClose = useCallback(() => closeBooking(), [closeBooking]);
 
   return (
-    <View pointerEvents="box-none" className="absolute bottom-0 left-0 right-0 top-0">
+    <View
+      pointerEvents={bookingOpen ? 'box-none' : 'none'}
+      accessibilityElementsHidden={!bookingOpen}
+      importantForAccessibility={bookingOpen ? 'auto' : 'no-hide-descendants'}
+      className="absolute bottom-0 left-0 right-0 top-0"
+      // A closed inline sheet stays mounted to retain the form draft. During
+      // window resize its animated offscreen position can lag the new bounds;
+      // hide the closed host and clip its contents to this window throughout.
+      style={{ overflow: 'hidden', opacity: bookingOpen ? 1 : 0 }}
+    >
       <BottomSheet
         ref={sheetRef}
         // Mount state only — the effect above owns open/close from here.

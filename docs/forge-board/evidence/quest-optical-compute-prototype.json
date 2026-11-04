@@ -1,0 +1,82 @@
+{
+  "scope": "Compiled Android Java/OpenCV compute-only fixture on physical Quest; synthetic inputs, no camera or pen observation.",
+  "apk": {
+    "package": "com.moyolearn.museopticalprobe",
+    "sha256": "e4f43f8276794ba4573b1c17c69322f0e0ff480af43892d91d54252ca35e1603",
+    "installed": true
+  },
+  "testedDexSha256": "025df92d6e70978cca1a6691ae7035e86687659825e99005c0fe1f3c5d80668a",
+  "deviceDexDigestMatched": true,
+  "reaEvidenceId": "ev_499a048a2d13d06038ecc9cd9a289d0935016c2d6640d8e69b150dc762358a04",
+  "exitCode": 0,
+  "fixture": {
+    "scope": "SYNTHETIC backend fixture, not live observation",
+    "passed": true,
+    "recovered": {
+      "phase": "camera-relative-marker-pose",
+      "markerId": 7,
+      "dictionary": "DICT_4X4_50",
+      "measuredBlackSideMeters": 0.04,
+      "translationMeters": [
+        0.009999998886830926,
+        0.019999997159170942,
+        0.29999997149494895
+      ],
+      "rotationRowMajor": [
+        0.9756187298668659,
+        -0.04631198132031585,
+        0.21453040418353275,
+        0.14383699671383454,
+        0.8732176169489099,
+        -0.46561992206778613,
+        -0.1657679471710607,
+        0.485124926010047,
+        0.8585888386500484
+      ],
+      "reprojectionRmsPixels": 0,
+      "alternateRmsPixels": 3.845272779399138,
+      "axes": "camera X right, Y down, Z forward",
+      "headsetOrWorldPose": false,
+      "museIdentityEstablished": false
+    },
+    "frontalAmbiguityRejected": true,
+    "generatedMarkerId7Decoded": true
+  },
+  "sourceSha256": {
+    "tooling/forge-pen-connect/diagnostics/optical-camera/AndroidManifest.xml": "d3151c33635e195ffdf4cba79ef94c365e82a30b1ef582783443ba9c346d323b",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/build.py": "7667db271fc1f21a58da791379a90359903a44439f2873b8e06fa0e056caf245",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/src/com/moyolearn/museopticalprobe/BrightBlobDetector.java": "afbb6f3234fbe1d9e1bd262eebc1552056f1dfdc74cb2a171f821ce5cee87a76",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/src/com/moyolearn/museopticalprobe/CameraCalibration.java": "2b64a153a2c48416bfa7cae4a76d473a7155de286aab461ad59f34a44e4807e0",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/src/com/moyolearn/museopticalprobe/FrameFreshness.java": "7189f3ee156f53f8a28a332aa7eb52b62708b3ab5dc9e1121d214bb92b07c06a",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/src/com/moyolearn/museopticalprobe/MarkerPoseEstimator.java": "5ccce59a42769d378cefcb819c5c1bb25fb3d9537c4f0b2ea3c7e2cbdd57d4c8",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/src/com/moyolearn/museopticalprobe/OpenCvNative.java": "9e57228c9c7521e181381ae715a4b01ee119b4f94deaf69c5b8ae9f559a188ba",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/src/com/moyolearn/museopticalprobe/OpticalCameraActivity.java": "57cd8a31b33e6f72d8a8ffe6f52b1fefe852286301943c03e647f4a959d364ef",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/src/com/moyolearn/museopticalprobe/OpticalComputeFixture.java": "d837eb717068aee8afa28865052649fda1476e91f0c3183f288f272ecd443044",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/tests/BrightBlobDetectorTest.java": "b7d0519dc032a5b842db804af066e714e3f1dc2eaab7c11afdb85a86fdc768f0",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/tests/CameraCalibrationTest.java": "3c9d912940fde7ed9d18e023383b99ddb3b0161beb7ec2842102704aee555d93",
+    "tooling/forge-pen-connect/diagnostics/optical-camera/tests/FrameFreshnessTest.java": "ca556e9f02dae2c8663e802c03133feefea43b64489a6fa1abb0d818f0259028"
+  },
+  "openCvAndroidAarSha256": "f71846a313388d9da667a59be1e921669fcf792d1ba264b3898253ca789bc3f0",
+  "checks": {
+    "typescriptOpticalTests": 13,
+    "mobileTypecheck": "passed",
+    "javaCalibrationBlobFreshnessSuites": "passed",
+    "signatureVerification": "passed",
+    "peerReview": "passed",
+    "markerAssetGeneratedAndDecoded": "DICT_4X4_50 ID 0"
+  },
+  "physicalCameraValidation": {
+    "completed": false,
+    "lastObservedScreen": "Enter passcode",
+    "roomFramesSaved": false,
+    "musePoseEstablished": false,
+    "worldPenModelRayValidated": false
+  },
+  "remaining": [
+    "Unlock Quest and grant the visible camera permission for actual calibration and frame checks.",
+    "Marker mode requires a measured printed target; its attachment to Muse and tip offset are not calibrated.",
+    "Unmodified Muse RGB/IR observability remains unmeasured.",
+    "The Moyo renderer sink is implemented but not mounted or fed a live source; capture-time camera-to-XR calibration is unresolved.",
+    "This is a bounded experimental prototype, not standalone native Muse support or working pen drawing."
+  ]
+}

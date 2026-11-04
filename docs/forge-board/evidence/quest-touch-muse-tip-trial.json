@@ -1,0 +1,162 @@
+{
+  "scope": "Physical Quest3S API34; user-confirmed Touch positive control versus three Muse tip presses",
+  "apkSha256": "30d96e691213625571c01327cfc0f0a49dff39f9dfe4023973bb2accb926266b",
+  "rendererCommit": "82ad61e74549073a9dc8ba95ede70f0f854889fc",
+  "runtime": {
+    "pid": 15278,
+    "focusedFrameSamples": 80,
+    "firstFocusedEpochSeconds": "1793680168.555",
+    "lastFocusedEpochSeconds": "1793680267.304",
+    "state": 5,
+    "shouldRender": true,
+    "viewsValid": true,
+    "layerCount": 1,
+    "observedProfiles": [
+      {
+        "epochSeconds": "1793680167.722",
+        "hand": "/user/hand/right",
+        "profile": "/interaction_profiles/oculus/touch_controller"
+      },
+      {
+        "epochSeconds": "1793680172.987",
+        "hand": "/user/hand/left",
+        "profile": "/interaction_profiles/khr/simple_controller"
+      },
+      {
+        "epochSeconds": "1793680172.987",
+        "hand": "/user/hand/right",
+        "profile": "/interaction_profiles/khr/simple_controller"
+      }
+    ],
+    "profileIdentityClaim": false,
+    "allCapturedFrameStates": [
+      {
+        "state": 4,
+        "shouldRender": true,
+        "viewsValid": true,
+        "layerCount": 1,
+        "count": 1
+      },
+      {
+        "state": 5,
+        "shouldRender": true,
+        "viewsValid": true,
+        "layerCount": 1,
+        "count": 80
+      }
+    ],
+    "note": "The log includes one initial VISIBLE rendered frame before the 80 FOCUSED rendered samples; no shouldRender0 sample in this log."
+  },
+  "positiveControl": {
+    "hardwareConfirmedByUser": "Quest Touch controller",
+    "state": {
+      "controllerEvents": 8,
+      "targetEvents": 8,
+      "lastTargetKind": "target-click",
+      "lastTargetWallTimeMs": 1793680169073,
+      "lastTargetSource": 1
+    }
+  },
+  "museTipTrial": {
+    "requestedPresses": 3,
+    "before": {
+      "controllerEvents": 8,
+      "targetEvents": 8,
+      "lastTargetKind": "target-click",
+      "lastTargetWallTimeMs": 1793680169073,
+      "lastTargetSource": 1
+    },
+    "after": {
+      "controllerEvents": 8,
+      "targetEvents": 8,
+      "lastTargetKind": "target-click",
+      "lastTargetWallTimeMs": 1793680169073,
+      "lastTargetSource": 1
+    },
+    "controllerDelta": 0,
+    "targetDelta": 0,
+    "lastTargetUnchanged": true,
+    "tipReportObserved": false,
+    "pressureVerified": false,
+    "musePoseVerified": false,
+    "note": "No new app event in this bounded focused trial; this does not identify profile ownership or prove universal hardware incompatibility."
+  },
+  "powerCycleFollowup": {
+    "userReportedRestarted": true,
+    "snapshot": {
+      "timeUtc": "2026-11-03T04:32:05.045193+00:00",
+      "afterUserRestart": true,
+      "museBonded": true,
+      "hidHostState": 2,
+      "hidHostConnected": true,
+      "nativeHidReady": false,
+      "nativeHidReports": 0,
+      "nativeHidDrops": 0,
+      "inputReaderLogitechOrMuseFound": false,
+      "inputReaderStylusSourceFound": false,
+      "otherIdentifiers": "redacted",
+      "actions": "read-only dumpsys; no protected GATT operations"
+    },
+    "offOnTransitionIndependentlyCaptured": false,
+    "repeatTipTrial": {
+      "status": "complete; no new probe event in bounded focused trial",
+      "tipPressesConfirmedByUser": 3,
+      "touchControllersHeldStillByUser": true,
+      "before": {
+        "controllerEvents": 8,
+        "targetEvents": 8,
+        "lastTargetKind": "target-click",
+        "lastTargetWallTimeMs": 1793680169073,
+        "lastTargetSource": 1
+      },
+      "after": {
+        "controllerEvents": 8,
+        "targetEvents": 8,
+        "lastTargetKind": "target-click",
+        "lastTargetWallTimeMs": 1793680169073,
+        "lastTargetSource": 1
+      },
+      "controllerDelta": 0,
+      "targetDelta": 0,
+      "lastTargetUnchanged": true,
+      "focusedFrameSamples": 54,
+      "firstFocusedEpochSeconds": "1793680323.018",
+      "lastFocusedEpochSeconds": "1793680389.290",
+      "allCapturedFramesFocusedAndRendering": true,
+      "pressureVerified": false,
+      "poseVerified": false,
+      "sources": {
+        "afterSha256": "1b02b586e958f00bf85c9b4328c96a9143b6571aaca9e602ff13acba737f28f1",
+        "runtimeLogSha256": "b033678d60d9d3d81dd84a2063fb725a73b6fb79943b6499844d56aa7b448b42"
+      }
+    }
+  },
+  "sources": {
+    "baselineSha256": "1b02b586e958f00bf85c9b4328c96a9143b6571aaca9e602ff13acba737f28f1",
+    "afterSha256": "1b02b586e958f00bf85c9b4328c96a9143b6571aaca9e602ff13acba737f28f1",
+    "runtimeLogSha256": "94366470429ac827cdc45c4cadca4e6d650a37c09c43b86b70279f5d721d85d9",
+    "paths": [
+      "/tmp/moyo-quest-muse-tip-baseline.json",
+      "/tmp/moyo-quest-muse-tip-after.json",
+      "/tmp/moyo-quest-muse-tip-window.log"
+    ]
+  },
+  "privacy": "Raw room position/rotation, logical device ID and Bluetooth addresses omitted",
+  "finalTouchBackExit": {
+    "controllerDownWallTimeMs": 1793680449768,
+    "targetDownWallTimeMs": 1793680449774,
+    "source": 3,
+    "sourceSemantic": "ViroOculus::BackButton (left Menu/right B)",
+    "sceneUnmountWallTimeMs": 1793680449970,
+    "activityFinishReason": "app-request",
+    "freshProcessId": 15278,
+    "retainedOwnPackageCrashEntryFound": false,
+    "completeTriggerCycleObserved": false,
+    "note": "A source 3 DOWN reached both controller and target handlers, then the native back callback exited VRActivity. The deep-linked route emitted an unhandled GO_BACK warning. This final attempt is not a completed source 1 trigger-cycle control; the preceding two focused Muse trials remain unchanged. The semantic event does not identify which physical button the user pressed.",
+    "sourcePaths": [
+      "/tmp/moyo-forge-metro-xr-final.log",
+      "/tmp/moyo-final-own-activity-events.log",
+      "/tmp/moyo-final-own-crash-header.log"
+    ]
+  }
+}

@@ -44,6 +44,12 @@ export type BoardOrigin = 'local' | 'remote' | 'restore';
 /** The board's records live under one key, so a doc can grow other maps later. */
 const RECORDS = 'records';
 
+/** The local author's available history actions, reported by {@link BoardDoc.onHistory}. */
+export interface BoardHistory {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+}
+
 export interface BoardDoc {
   readonly doc: Y.Doc;
   /**
@@ -77,6 +83,29 @@ export interface BoardDoc {
    * echo rule cannot be switched off by a caller passing the wrong flag.
    */
   onRecords(listener: (diff: WhiteboardDiff, origin: BoardOrigin) => void): () => void;
+  /**
+   * Reports local history availability immediately and after Yjs has updated
+   * its undo/redo stacks. Record observers run before that update and must not
+   * be used to decide whether a history action is enabled.
+   */
+  onHistory(listener: (history: BoardHistory) => void): () => void;
+  /**
+   * Ends the current local history capture window after an input gesture
+   * completes. The next local edit starts a separate undo step even when two
+   * gestures finish within Yjs's normal capture timeout. Call at a completed
+   * engine batch, never for each pointer sample.
+   */
+  stopCapturing(): void;
+  /**
+   * Begins one owned input gesture. Its edits share one undo step even across
+   * long pauses. Repeated begin calls do not nest or replace the active gesture.
+   */
+  beginGesture(): void;
+  /**
+   * Finishes the active gesture after its final edit or cancellation removal.
+   * Restores Yjs's previous capture timeout; repeated end calls are harmless.
+   */
+  endGesture(): void;
   /** Undo the LOCAL author's last change, never a collaborator's. */
   undo(): void;
   /**
@@ -115,9 +144,30 @@ export function createBoardDoc(): BoardDoc {
     engine so it survives a reconnect and a restore.
   */
   const undoManager = new Y.UndoManager(records, { trackedOrigins: new Set<BoardOrigin>(['local']) });
+  let gestureActive = false;
+  let gestureCaptureTimeout = undoManager.captureTimeout;
+  const finishGesture = () => {
+    if (!gestureActive) return;
+    gestureActive = false;
+    undoManager.captureTimeout = gestureCaptureTimeout;
+    undoManager.stopCapturing();
+  };
 
   const listeners = new Set<(diff: WhiteboardDiff) => void>();
   const recordListeners = new Set<(diff: WhiteboardDiff, origin: BoardOrigin) => void>();
+  const historyListeners = new Set<(history: BoardHistory) => void>();
+  const history = (): BoardHistory => ({ canUndo: undoManager.canUndo(), canRedo: undoManager.canRedo() });
+  let previousHistory = history();
+  const reportHistory = () => {
+    const next = history();
+    if (next.canUndo === previousHistory.canUndo && next.canRedo === previousHistory.canRedo) return;
+    previousHistory = next;
+    for (const listener of historyListeners) listener(next);
+  };
+  undoManager.on('stack-item-added', reportHistory);
+  undoManager.on('stack-item-popped', reportHistory);
+  undoManager.on('stack-item-updated', reportHistory);
+  undoManager.on('stack-cleared', reportHistory);
 
   /*
     ONE PATH FROM DOCUMENT TO CANVAS, and local edits take it too.
@@ -212,10 +262,30 @@ export function createBoardDoc(): BoardDoc {
       recordListeners.add(listener);
       return () => recordListeners.delete(listener);
     },
+    onHistory(listener) {
+      historyListeners.add(listener);
+      listener(history());
+      return () => { historyListeners.delete(listener); };
+    },
+    stopCapturing() {
+      undoManager.stopCapturing();
+    },
+    beginGesture() {
+      if (gestureActive) return;
+      gestureActive = true;
+      gestureCaptureTimeout = undoManager.captureTimeout;
+      undoManager.stopCapturing();
+      // Only an explicitly owned gesture disables time-based splitting. A
+      // stationary pen is still the same stroke when it starts moving again.
+      undoManager.captureTimeout = Infinity;
+    },
+    endGesture: finishGesture,
     undo() {
+      finishGesture();
       undoManager.undo();
     },
     redo() {
+      finishGesture();
       undoManager.redo();
     },
     canUndo() {
@@ -225,9 +295,15 @@ export function createBoardDoc(): BoardDoc {
       return undoManager.canRedo();
     },
     destroy() {
+      finishGesture();
       records.unobserve(observer);
       listeners.clear();
       recordListeners.clear();
+      historyListeners.clear();
+      undoManager.off('stack-item-added', reportHistory);
+      undoManager.off('stack-item-popped', reportHistory);
+      undoManager.off('stack-item-updated', reportHistory);
+      undoManager.off('stack-cleared', reportHistory);
       undoManager.destroy();
       doc.destroy();
     },

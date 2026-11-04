@@ -1,0 +1,32 @@
+{
+  "board": {
+    "repository": "mikevocalz/nitro-forge",
+    "commit": "fb6b14b9f9093d663e18c657ac6016ff972dc63a",
+    "file": "nitro-forge-board-0.1.0-moyo.1.tgz",
+    "sha256": "62ef664ae4e2399d6e72ba6cb63728aeea2a0cf886299c4a934281fa32ad72dc",
+    "nitrogen": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "runtime": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "android": "opt-in; requires CanvasSurfaces-enabled Viro"
+  },
+  "icons": {
+    "repository": "mikevocalz/nitro-forge",
+    "commit": "3c79e3d4c2dbd0c42d7fdccea40eb0a7162b6c48",
+    "file": "nitro-forge-icons-0.1.0-moyo.1.tgz",
+    "sha256": "b3247c24f6eb4826ebe91d23859074f313ba586dc71ebc74afd799e8e45b84d6"
+  },
+  "bluetooth-v1": {
+    "repository": "mikevocalz/nitro-forge",
+    "commit": "c213f1ca3f1d604a27ccf922362f0de3e4605831",
+    "file": "nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz",
+    "sha256": "1bda38f45277261455e5454abc3b5e023d749c7161f1999a5d7edb8ff90c3536",
+    "nitrogen": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "runtime": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "android": "BLE GATT diagnostics with explicit documented ASA host negotiation; Muse input unverified"
+  },
+  "pen-connect": {
+    "repository": "mikevocalz/nitro-forge",
+    "commit": "c213f1ca3f1d604a27ccf922362f0de3e4605831",
+    "file": "nitro-forge-pen-connect-0.1.0-moyo.10.tgz",
+    "sha256": "0c6815a5e183f91c76695a72af82d69dda1356f4057c92c5077289b341989928"
+  }
+}
