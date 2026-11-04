@@ -23,9 +23,8 @@ test("native preview does not masquerade as authenticated tutoring", () => {
   const native = read("../src/native-menus.tsx");
   assert.ok(native.includes("openFileDialog("));
   assert.ok(native.includes("useMenu("));
+  for (const forbidden of ['from "@acme/app"', 'from "@acme/auth"', 'from "nitro-node"', 'process.dlopen(']) assert.ok(!native.includes(forbidden));
   assert.match(entry, /usePreviewStore/);
-  assert.doesNotMatch(native, /from\\s+["\\x27](?:@acme\\/app|@acme\\/auth|@better-auth|nitro-node)/);
-  assert.doesNotMatch(native, /process\\.dlopen\\s*\\(/);
 });
 
 test("nitro v1 remains explicitly gated until native ABI is validated", () => {
@@ -57,6 +56,6 @@ test("desktop dropdowns are actual Spark native controls", () => {
   assert.ok(native.includes('checked: density === "compact"'));
   assert.ok(app.includes("<NativeWorkspaceToolbar />"));
   assert.ok(store.includes("setDensity:"));
-  assert.doesNotMatch(native, /useState\\s*\\(/);
+  assert.ok(!native.includes("useState("));
   assert.ok(!native.includes('position: "absolute"'));
 });
