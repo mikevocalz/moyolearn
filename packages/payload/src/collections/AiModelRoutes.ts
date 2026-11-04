@@ -1,9 +1,12 @@
-import type { Access, CollectionConfig } from 'payload';
+import type { CollectionConfig, PayloadRequest } from 'payload';
 
 /**
  * Server-side access control for the AI Control Center. The current User
  * collection has no trusted "senior admin" role, so deny by default until an
  * operations-owned allowlist exists. Authenticated does NOT mean administrator.
+ *
+ * SOT: packages/payload/migrations/ai_model_routes_additive.sql · docs/design/payload-ai-model-controls.md
+ * SOT-KEYWORDS: ai model routes control center senior admin allowlist qwen evaluation lane access
  */
 export function isAiModelAdministrator(user: { email?: string | null } | null | undefined, allowlist: string | undefined): boolean {
   const email = user?.email?.trim().toLowerCase();
@@ -11,7 +14,11 @@ export function isAiModelAdministrator(user: { email?: string | null } | null | 
   return allowlist.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean).includes(email);
 }
 
-const seniorAdminOnly: Access = ({ req }) =>
+// Returns a plain boolean, never a `Where`: `access.admin` only accepts
+// `boolean | Promise<boolean>`, and a row filter would be wrong here anyway,
+// since this is a yes/no on who the caller is, not on which rows they see.
+// The same function serves the CRUD slots so there is one check, not two.
+const seniorAdminOnly = ({ req }: { req: PayloadRequest }): boolean =>
   isAiModelAdministrator(
     { email: typeof req.user?.email === 'string' ? req.user.email : undefined },
     process.env.MOYO_AI_ADMIN_EMAILS,
