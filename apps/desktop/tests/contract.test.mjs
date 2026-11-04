@@ -20,9 +20,12 @@ test("native preview does not masquerade as authenticated tutoring", () => {
   const entry = read("../App.tsx");
   assert.doesNotMatch(entry, /from\s+["\x27](?:@acme\/app|@acme\/auth|@better-auth|nitro-node)/);
   assert.doesNotMatch(entry, /process\.dlopen\s*\(/);
-  assert.match(entry, /openFileDialog/);
-  assert.match(entry, /useMenu/);
+  const native = read("../src/native-menus.tsx");
+  assert.ok(native.includes("openFileDialog("));
+  assert.ok(native.includes("useMenu("));
   assert.match(entry, /usePreviewStore/);
+  assert.doesNotMatch(native, /from\\s+["\\x27](?:@acme\\/app|@acme\\/auth|@better-auth|nitro-node)/);
+  assert.doesNotMatch(native, /process\\.dlopen\\s*\\(/);
 });
 
 test("nitro v1 remains explicitly gated until native ABI is validated", () => {
@@ -37,23 +40,23 @@ test("real Moyo branding is included, not redrawn", () => {
   assert.match(read("../App.tsx"), /packages\/theme\/tokens/);
 });
 
-test("desktop dropdowns use actual Spark native controls and menu bar", () => {
+test("desktop dropdowns are actual Spark native controls", () => {
   const native = read("../src/native-menus.tsx");
   const app = read("../App.tsx");
   const store = read("../src/store.ts");
-  assert.match(native, /@legendapp\\/spark\\/ui/);
-  assert.match(native, /@legendapp\\/spark\\/context-menu/);
-  assert.match(native, /Button as NativeButton/);
-  assert.match(native, /Select as NativeSelect/);
-  assert.match(native, /showContextMenu\\(/);
-  assert.match(native, /measureInWindow\\(/);
-  assert.match(native, /windowId: "main"/);
-  assert.match(native, /target: \\{ menu: "file" \\}/);
-  assert.match(native, /target: \\{ menu: "view" \\}/);
-  assert.match(native, /CmdOrCtrl\\+O/);
-  assert.match(native, /checked: density === "compact"/);
-  assert.match(app, /<NativeWorkspaceToolbar \\/>/);
-  assert.match(store, /setDensity/);
-  assert.doesNotMatch(native, /useState\\(/);
-  assert.doesNotMatch(native, /position: "absolute"/);
+  assert.ok(native.includes('from "@legendapp/spark/ui"'));
+  assert.ok(native.includes('from "@legendapp/spark/context-menu"'));
+  assert.ok(native.includes("Button as NativeButton"));
+  assert.ok(native.includes("Select as NativeSelect"));
+  assert.ok(native.includes("showContextMenu("));
+  assert.ok(native.includes("measureInWindow("));
+  assert.ok(native.includes('windowId: "main"'));
+  assert.ok(native.includes('target: { menu: "file" }'));
+  assert.ok(native.includes('target: { menu: "view" }'));
+  assert.ok(native.includes('shortcut: "CmdOrCtrl+O"'));
+  assert.ok(native.includes('checked: density === "compact"'));
+  assert.ok(app.includes("<NativeWorkspaceToolbar />"));
+  assert.ok(store.includes("setDensity:"));
+  assert.doesNotMatch(native, /useState\\s*\\(/);
+  assert.ok(!native.includes('position: "absolute"'));
 });
