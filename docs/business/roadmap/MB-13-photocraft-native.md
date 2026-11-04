@@ -39,7 +39,7 @@
 - [ ] CPU reference and GPU output parity tolerances documented for raster/vector/text and exports; memory/resource cleanup stress-tested.
 - [ ] Cross-tenant asset and concurrent revision writes fail closed; edit drafts survive fold/resize/background.
 - [ ] Web preview, native platform adapters, accessibility, keyboard/pointer and reduced-motion workflows tested.
-- [ ] Record exact lockfile/runtime source/Graphic version compatibility and hardware not available.
+- [ ] Record exact lockfile/runtime source/Graphite version compatibility and hardware not available.
 
 ## Review and release plan
 
@@ -49,4 +49,4 @@
 
 **Rollback:** Feature flag hides native canvas while stored editable documents/export revisions stay intact; release handles and keep existing email composer.
 
-**Actual evidence for this planning PR:** reviewed GitHub source and existing specs; created branch/document/draft PR. No compile, lint, native build, database test, provider sandbox, real device, account connection or deployed changes were executed. Keep PR in draft until a complete tested implementation is added. Document unsupported devices separately. Do not auto-merge, rename subscriptions, send communication or execute transfers based on this contract.
+**Actual evidence for this contract:** reviewed GitHub source and existing specs; created branch/document/draft PR. No compile, lint, native build, database test, provider sandbox, real device, account connection or deployed changes were executed. Merged 2026-11-04 as the implementation contract; implementation is a separate PR that must satisfy every acceptance box. Nothing in this doc is implemented. Document unsupported devices separately. Do not auto-merge, rename subscriptions, send communication or execute transfers based on this contract.
