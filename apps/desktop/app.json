@@ -9,7 +9,8 @@
     "icon": "./assets/icon.png",
     "macos": {
       "version": "0.1.0",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "bundleIdentifier": "com.moyolearn.desktop.preview"
     }
   }
 }
