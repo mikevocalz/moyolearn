@@ -1,0 +1,12 @@
+diff --git a/ios/StatusBarVisibilityController.swift b/ios/StatusBarVisibilityController.swift
+index 19e43ed..e769ac8 100644
+--- a/ios/StatusBarVisibilityController.swift
++++ b/ios/StatusBarVisibilityController.swift
+@@ -1,5 +1,7 @@
+ // Copyright 2022-present 650 Industries. All rights reserved.
+ 
++import UIKit
++
+ /**
+  Since iOS 11, launching ImagePicker with `allowsEditing` option makes cropping rectangle
+  slightly moved upwards, because of StatusBar visibility.
