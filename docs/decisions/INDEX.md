@@ -16,6 +16,7 @@ hand — nothing regenerates it.
 | [`2026-09-22-migration-drift.md`](2026-09-22-migration-drift.md) | What is checked in but not applied, measured 2026-09-22 | — | — |
 | [`2026-09-22-pgboss-migration-analysis.md`](2026-09-22-pgboss-migration-analysis.md) | pg-boss schema 38 → 42: is running it against production reversible? | — | — |
 | [`2026-09-23-reset-password-contract.md`](2026-09-23-reset-password-contract.md) | The password-reset contract, read out of the installed better-auth | the sender is wired; findings 1 and 2 are open | — |
+| [`2026-11-04-skia-v3-defer.md`](2026-11-04-skia-v3-defer.md) | React Native Skia v3 deferred; #135 closed | DEFER. Revisit when visionOS has an answer, iPad/Android/PICO devices are available, and the npm gate TARGETS move to `react-native-skia` | 2026-11-04 |
 | [`adr-101-guardian-tab-set.md`](adr-101-guardian-tab-set.md) | ADR 101: Guardian mobile keeps doc 36's four tabs — Home · Reports · Alerts · Family | accepted | 2026-09-01 |
 | [`adr-102-teacher-shell-ia.md`](adr-102-teacher-shell-ia.md) | ADR 102: The teacher shell exists, with four tabs — Home · Classes · Assign · You | accepted | 2026-09-01 |
 | [`adr-103-school-admin-ia.md`](adr-103-school-admin-ia.md) | ADR 103: School admin is web-first; mobile parks at Overview-only; no More tab, ever | accepted | 2026-09-01 |
