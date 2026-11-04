@@ -14,6 +14,10 @@ test("desktop has its own package manager boundary", () => {
   assert.equal(manifest.dependencies["react-native"], "0.83.10");
   assert.equal(manifest.dependencies["@legendapp/spark"], "0.0.2");
   assert.deepEqual(config.platforms, ["macos"]);
+  assert.equal(config.projectId, "8fca7433-ce99-52ff-9b57-0fbea11b6c20");
+  const appConfig = JSON.parse(read("../app.json"));
+  assert.equal(appConfig.expo.macos.bundleIdentifier, config.macos.bundleIdentifier);
+  assert.ok(!manifest.scripts.postinstall, "hand-created app must not run the generated template initializer");
 });
 
 test("native preview does not masquerade as authenticated tutoring", () => {
