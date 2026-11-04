@@ -14,6 +14,13 @@ without introducing a second UI design system.
 | This Spark macOS preview | Expo 55 | RN 0.83 | Source scaffold only; native build unverified |
 | Windows desktop | — | — | Not enabled / requires upstream native validation |
 
+The desktop app has its own explicitly assigned stable Spark `projectId` (derived
+from the desktop bundle identifier). Do not regenerate it: native project
+identity, preferences and update enrollment depend on its stability.
+This hand-integrated app does **not** call Spark's generated-template-only
+`init-template.cjs` postinstall (which requires an Expo Desktop-generated
+Windows GUID); its ID and macOS bundle ID are declared in config instead.
+
 The desktop app has its own nested pnpm workspace. It is excluded from the
 root workspace because root-wide overrides pin RN 0.88, Nitro v1, and Expo 58;
 allowing those overrides into Spark's tested matrix would silently mix binary
