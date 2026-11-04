@@ -17,5 +17,6 @@
   ],
   "expo": {
     "icon": "./assets/icon.png"
-  }
+  },
+  "projectId": "8fca7433-ce99-52ff-9b57-0fbea11b6c20"
 }
