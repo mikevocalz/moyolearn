@@ -53,11 +53,11 @@ const PHASES = [0, 0.25, 0.5, 0.75, 1] as const;
 
 const CONTROL_CLASS =
   'min-h-target-adult items-center justify-center rounded-moyo-card border-moyo-rule border-moyo-outline bg-moyo-paper-raised px-inset py-inset-tight shadow-moyo-1 ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2';
 
 const CONTROL_ACTIVE_CLASS =
   'min-h-target-adult items-center justify-center rounded-moyo-card border-moyo-rule border-moyo-outline bg-moyo-sun px-inset py-inset-tight shadow-moyo-2 ' +
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2';
 
 function GlobeLab() {
   const override = usePerfStore((state) => state.override);

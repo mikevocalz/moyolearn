@@ -9,7 +9,7 @@ const iconButton = tv({
   base:
     'shrink-0 items-center justify-center self-start rounded-md border-2 border-border-strong transition-all duration-fast ' +
     'active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ' +
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 ' +
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ' +
     'motion-reduce:transition-none',
   variants: {
     variant: {

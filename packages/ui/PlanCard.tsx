@@ -42,7 +42,7 @@ const plan = tv({
       true: {
         root:
           'shadow-card hover:border-border-strong ' +
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
       },
     },
     selected: {

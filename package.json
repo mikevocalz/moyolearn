@@ -48,7 +48,8 @@
     "pg-boss": "catalog:",
     "turbo": "catalog:",
     "esbuild": "catalog:",
-    "jsdom": "catalog:"
+    "jsdom": "catalog:",
+    "playwright-core": "catalog:"
   },
   "pnpm": {
     "overrides": {

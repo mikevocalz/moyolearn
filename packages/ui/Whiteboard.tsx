@@ -182,7 +182,7 @@ const TARGET_DP: Record<NonNullable<WhiteboardProps['size']>, number> = {
  * `check-contrast.mjs` already gates.
  */
 const FOCUS =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2';
 
 const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
   sm: 'min-h-target-adult',

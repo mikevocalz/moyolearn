@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lumo dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#121214;--ink-2:#55555e;--ink-3:#6b6b74;--line:rgba(18,18,20,.07);--sans:"Geist",ui-sans-serif,system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b0b0b;padding:40px;display:grid;justify-content:center;font-family:var(--sans);-webkit-font-smoothing:antialiased;color:var(--ink)}
+.plate{width:1440px;height:900px;position:relative;overflow:hidden;background:#f4f4f2;display:grid;grid-template-columns:232px 1fr}
+ul{list-style:none}
+svg{display:block}
+.ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* sidebar */
+aside{background:#fafaf9;border-right:1px solid var(--line);padding:26px 16px;display:flex;flex-direction:column;gap:6px}
+.logo{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:500;padding:0 10px 22px}
+.logo svg{width:30px;height:30px}
+.search{display:flex;align-items:center;gap:10px;height:40px;border:1px solid var(--line);border-radius:12px;padding:0 12px;color:var(--ink-3);font-size:14px;background:#fff;margin-bottom:12px}
+.search kbd{margin-left:auto;font-family:var(--sans);font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--ink-2)}
+nav a{display:flex;align-items:center;gap:12px;height:40px;padding:0 12px;border-radius:12px;color:#3c3c44;font-size:14.5px;text-decoration:none}
+nav a.on{background:#ececea;color:var(--ink);font-weight:500}
+.sec{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:18px 12px 6px}
+.pro{margin-top:auto;border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff;font-size:13px;display:grid;grid-template-columns:28px 1fr 26px;gap:10px;align-items:center}
+.pro i{width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ffd27a 40%,#f29b38 100%)}
+.pro small{display:block;color:var(--ink-3);font-size:11.5px;line-height:1.35;margin-top:2px}
+.pro b{font-weight:500}
+.pro span{width:26px;height:26px;border-radius:8px;background:#f1f1ef;display:grid;place-items:center;color:var(--ink-2)}
+
+/* main */
+main{position:relative;padding:28px 32px}
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.hello{font-size:22px;color:var(--ink-2);font-weight:400;line-height:1.1}
+.hello b{display:block;font-size:46px;color:var(--ink);font-weight:600;letter-spacing:-.035em;line-height:1.05;margin-top:2px}
+.hello small{display:block;font-size:15px;color:var(--ink-2);margin-top:6px}
+.tools{display:flex;align-items:center;gap:14px;color:var(--ink-2);font-size:14px}
+.tools .arr{display:flex;gap:6px}
+.tools .arr span,.tools .bell{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;background:#fff}
+.avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#f6c99b,#d07b4f);display:grid;place-items:center;color:#fff;font-weight:600;font-size:14px;position:relative}
+.avatar::after{content:"";position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;background:#3ccf6e;border:2px solid #f4f4f2}
+
+/* hero: glass battery orb with hotspots, in a soft fog */
+.hero{position:absolute;left:32px;top:150px;width:470px;height:500px}
+.fog{position:absolute;inset:-60px -40px -20px -60px;background:radial-gradient(ellipse 55% 50% at 55% 50%,#fff 0%,rgba(255,255,255,.85) 40%,rgba(244,244,242,0) 75%)}
+.orb{position:absolute;left:120px;top:70px;width:300px;height:300px;border-radius:50%;overflow:hidden;isolation:isolate;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),inset 0 20px 40px rgba(255,255,255,.6),0 50px 80px -40px rgba(120,90,40,.35)}
+.orb::before{content:"";position:absolute;inset:-24px;z-index:-1;filter:blur(16px);
+  background:
+    radial-gradient(ellipse 52% 30% at 50% 78%,#ffb347 0%,rgba(255,170,70,.75) 35%,transparent 72%),
+    radial-gradient(ellipse 60% 40% at 50% 64%,rgba(255,226,170,.9) 0%,transparent 72%),
+    radial-gradient(ellipse 40% 18% at 45% 16%,#ffffff 0%,transparent 72%),
+    linear-gradient(180deg,#f7f6f3 0%,#eeeae2 40%,#f6d9a6 70%,#f0a94b 100%)}
+.orb .in{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;text-align:center}
+.orb small{font-size:13px;color:#4a3b25}
+.orb b{font-size:84px;font-weight:300;letter-spacing:-.05em;line-height:1;color:#2a2116}
+.orb b sup{font-size:30px;vertical-align:top;margin-left:2px;position:relative;top:10px}
+.orb em{font-style:normal;font-size:13px;color:#3d2f1b;font-weight:500}
+.hot{position:absolute;width:22px;height:22px;border-radius:50%;border:1px solid rgba(18,18,20,.25);display:grid;place-items:center;background:rgba(255,255,255,.5);backdrop-filter:blur(4px)}
+.hot::after{content:"";width:8px;height:8px;border-radius:50%;background:#f2b33d;box-shadow:0 0 0 3px rgba(242,179,61,.25)}
+.lbl{position:absolute;font-size:12.5px;color:var(--ink-2);line-height:1.25}
+.lbl b{display:block;font-size:22px;font-weight:500;color:var(--ink);letter-spacing:-.02em}
+.lbl b small{font-size:13px;font-weight:400;color:var(--ink-2);margin-left:3px;letter-spacing:0}
+.lbl em{font-style:normal;color:var(--ink-3)}
+.leader{position:absolute;height:1px;background:rgba(18,18,20,.2);transform-origin:left center}
+.caption{position:absolute;left:0;bottom:6px;font-size:13px;color:var(--ink-3);line-height:1.4}
+
+/* metric cards */
+.grid{position:absolute;left:510px;top:84px;right:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{position:relative;height:206px;border-radius:20px;padding:16px 18px;background:#fff;border:1px solid rgba(255,255,255,.8);overflow:hidden;
+  box-shadow:0 1px 1px rgba(20,20,10,.03),0 12px 30px -18px rgba(20,20,10,.18)}
+.card h3{font-size:13.5px;font-weight:500}
+.card .go{position:absolute;right:16px;top:16px;width:16px;height:16px;color:var(--ink-2)}
+.card .big{font-size:40px;font-weight:500;letter-spacing:-.04em;line-height:1;margin-top:12px}
+.card .unit{font-size:13px;color:#45454d;margin-top:4px}
+.card .foot{position:absolute;left:18px;right:18px;bottom:14px;display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2)}
+.card .foot b{font-weight:500;color:var(--ink)}
+.g-lime{background:linear-gradient(165deg,#f6faf0 0%,#e5f1d3 45%,#d6ebbd 100%)}
+.g-peach{background:linear-gradient(165deg,#fff7f1 0%,#ffe2cc 45%,#ffd2b0 100%)}
+.g-sky{background:linear-gradient(180deg,#ffffff 0%,#f3f6fd 55%,#e1e9fb 100%)}
+.g-rose{background:linear-gradient(180deg,#ffffff 0%,#fdf1f3 50%,#f9dde3 100%)}
+.chip{display:inline-block;margin-top:10px;font-size:12px;font-weight:500;padding:4px 9px;border-radius:999px;background:rgba(80,140,40,.14);color:#2f5513}
+.art{position:absolute;right:0;bottom:0;pointer-events:none}
+
+/* timeline + insights */
+.row2{position:absolute;left:510px;right:32px;top:520px;display:grid;grid-template-columns:1.1fr 1fr;gap:12px}
+.panel{background:#fff;border-radius:20px;padding:18px 20px;height:350px;position:relative;box-shadow:0 1px 1px rgba(20,20,10,.03),0 12px 30px -18px rgba(20,20,10,.18)}
+.panel h3{font-size:14.5px;font-weight:500;display:flex;justify-content:space-between;align-items:center}
+.panel h3 span{color:var(--ink-2);font-weight:400;font-size:20px;line-height:1}
+.tl{position:relative;margin:38px 0 8px;height:16px;border-radius:999px;background:#ededeb}
+.tl i{position:absolute;top:0;bottom:0;border-radius:999px}
+.now{position:absolute;top:-30px;transform:translateX(-50%);text-align:center}
+.now b{display:block;background:#121214;color:#fff;font-size:11.5px;font-weight:500;border-radius:999px;padding:3px 8px}
+.now::after{content:"";display:block;width:1.5px;height:44px;background:#121214;margin:2px auto 0}
+.ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-3);margin-top:8px}
+.ev{display:grid;grid-template-columns:14px 1fr auto;gap:10px;align-items:center;font-size:13.5px;padding:7px 0}
+.ev i{width:10px;height:10px;border-radius:50%}
+.ev small{display:block;color:var(--ink-3);font-size:12px;margin-top:1px}
+.ev em{font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.ins{display:grid;grid-template-columns:32px 1fr 12px;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-size:13.5px}
+.ins:first-of-type{border-top:0;margin-top:10px}
+.ins small{display:block;color:var(--ink-3);font-size:12px;margin-top:2px}
+.ins .ic{width:32px;height:32px;border-radius:50%;display:grid;place-items:center}
+.ins .ic svg{width:16px;height:16px}
+</style>
+</head>
+<body>
+<section class="plate" aria-label="Lumo home energy dashboard">
+  <aside>
+    <div class="logo"><svg viewBox="0 0 30 30"><g stroke="#121214" stroke-width="1.4" stroke-linecap="round">
+      <path d="M15 2v5M15 23v5M2 15h5M23 15h5M5.8 5.8l3.5 3.5M20.7 20.7l3.5 3.5M5.8 24.2l3.5-3.5M20.7 9.3l3.5-3.5"/><path d="M15 9.5v2M15 18.5v2M9.5 15h2M18.5 15h2" opacity=".5"/></g></svg>Lumo</div>
+    <div class="search"><svg class="ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>Search<kbd>⌘K</kbd></div>
+    <nav>
+      <a class="on" href="#"><svg class="ico" viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1Z"/></svg>Home</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Solar</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M7 10v4M10 10v4"/></svg>Battery</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7Z"/></svg>Grid</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><path d="M5 17V9M10 17V5M15 17v-6M20 17v-9M3 21h18"/></svg>Usage</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Bills</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><path d="M9 15 15 9M10 6l1-1a5 5 0 0 1 7 7l-1 1M14 18l-1 1a5 5 0 0 1-7-7l1-1"/></svg>Devices</a>
+    </nav>
+    <div class="sec">Tools</div>
+    <nav>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3c.6 4.3 2.7 6.4 7 7-4.3.6-6.4 2.7-7 7-.6-4.3-2.7-6.4-7-7 4.3-.6 6.4-2.7 7-7Z"/></svg>Ask Lumo</a>
+      <a href="#"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.3 3h-4.6l-.3 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.4-.9a7 7 0 0 0 2 1.2l.3 2.6h4.6l.3-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></svg>Settings</a>
+    </nav>
+    <div class="pro"><i></i><div><b>Night tariff</b><small>Save about €31 a month</small></div><span>›</span></div>
+  </aside>
+
+  <main>
+    <div class="top">
+      <div class="hello">Good evening,<b>Tobia.</b><small>Your house ran on sunshine for 9 hours today.</small></div>
+      <div class="tools"><span>Thu, Oct 16, 2026</span><span class="arr"><span>‹</span><span>›</span></span><span class="bell"><svg class="ico" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15ZM10 20a2 2 0 0 0 4 0"/></svg></span><span class="avatar">T</span></div>
+    </div>
+
+    <div class="hero">
+      <div class="fog"></div>
+      <div class="orb"><div class="in"><small>Home battery</small><b>78<sup>%</sup></b><em>Full by 18:40</em></div></div>
+      <span class="hot" style="left:262px;top:58px"></span>
+      <span class="leader" style="left:150px;top:69px;width:112px"></span>
+      <div class="lbl" style="left:40px;top:40px">Roof panels<b>4.2<small>kW</small></b><em>Peak sun</em></div>
+      <div class="lbl" style="left:330px;top:390px">Heat pump<b>1.1<small>kW</small></b><em>Heating to 20°</em></div>
+      <span class="hot" style="left:300px;top:352px"></span>
+      <span class="leader" style="left:311px;top:374px;width:24px;transform:rotate(60deg)"></span>
+      <div class="lbl" style="left:36px;top:300px">Car charger<b>Idle</b><em>Starts at 01:00</em></div>
+      <span class="hot" style="left:140px;top:318px"></span>
+      <span class="leader" style="left:118px;top:329px;width:22px"></span>
+      <p class="caption">Live, every 10 seconds.<br>From the meter, not an estimate.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card g-lime"><h3>Self-sufficiency</h3><svg class="ico go" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        <div class="big">86<span style="font-size:20px;letter-spacing:0">%</span></div><div class="unit">this month</div><span class="chip">+12 vs September</span>
+        <svg class="art" width="170" height="150" viewBox="0 0 190 150" fill="none" stroke="rgba(60,100,30,.16)" style="right:-30px;bottom:6px"><ellipse cx="120" cy="96" rx="30" ry="46"/><ellipse cx="120" cy="96" rx="52" ry="66"/><ellipse cx="120" cy="96" rx="74" ry="86"/><circle cx="120" cy="96" r="3.5" fill="#4f7f2a" stroke="none"/></svg>
+        <div class="foot"><span>Grid</span><span>Sun</span></div></div>
+      <div class="card g-peach"><h3>Solar today</h3><svg class="ico go" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        <div class="big">31.4</div><div class="unit">kWh</div>
+        <svg class="art" width="300" height="110" viewBox="0 0 300 110" fill="none"><path d="M0 92 C40 92 60 30 110 26 S 180 70 220 56 S 270 30 300 34" stroke="rgba(220,120,50,.55)" stroke-width="1.5"/><path d="M0 100 C50 98 70 50 120 46 S 190 82 230 70 S 280 52 300 54" stroke="rgba(220,120,50,.25)"/><circle cx="252" cy="44" r="4" fill="#ec7c2c"/></svg>
+        <div class="foot"><span>06:12</span><span><b>Peak</b> 13:05</span></div></div>
+      <div class="card"><h3>Battery cycles</h3><svg class="ico go" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        <div class="big">412</div><div class="unit">of 6,000</div>
+        <svg class="art" width="160" height="72" viewBox="0 0 160 90" style="right:16px;bottom:40px">
+          <rect x="4" y="60" width="4" height="26" rx="2" fill="#d6d6db"/><rect x="14" y="48" width="4" height="38" rx="2" fill="#d6d6db"/><rect x="24" y="66" width="4" height="20" rx="2" fill="#d6d6db"/><rect x="34" y="40" width="4" height="46" rx="2" fill="#c3c3ca"/><rect x="44" y="54" width="4" height="32" rx="2" fill="#d6d6db"/><rect x="54" y="30" width="4" height="56" rx="2" fill="#b4b4bc"/><rect x="64" y="46" width="4" height="40" rx="2" fill="#c3c3ca"/><rect x="74" y="20" width="4" height="66" rx="2" fill="#a5a5ae"/><rect x="84" y="36" width="4" height="50" rx="2" fill="#b4b4bc"/><rect x="94" y="12" width="4" height="74" rx="2" fill="#8d8d97"/><rect x="104" y="28" width="4" height="58" rx="2" fill="#a5a5ae"/><rect x="114" y="44" width="4" height="42" rx="2" fill="#c3c3ca"/><rect x="124" y="24" width="4" height="62" rx="2" fill="#a5a5ae"/><rect x="134" y="52" width="4" height="34" rx="2" fill="#d6d6db"/><rect x="144" y="38" width="4" height="48" rx="2" fill="#c3c3ca"/><rect x="154" y="62" width="4" height="24" rx="2" fill="#d6d6db"/></svg>
+        <div class="foot"><span><b>Healthy</b></span><span>99.2% capacity</span></div></div>
+      <div class="card g-sky"><h3>Used tonight</h3><svg class="ico go" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        <div class="big">3.8</div><div class="unit">kWh since 18:00</div>
+        <svg class="art" width="300" height="100" viewBox="0 0 300 100" fill="none" style="bottom:30px"><path d="M18 70 C40 70 46 40 66 42 S 92 74 112 66 S 140 30 160 34 S 190 70 210 60 S 236 40 262 46" stroke="#5b7fe0" stroke-width="1.6"/></svg>
+        <div class="foot"><span>Calm</span><span><b>−9%</b> vs usual</span></div></div>
+      <div class="card g-rose"><h3>Grid price now</h3><svg class="ico go" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        <div class="big">0.31</div><div class="unit">€ / kWh</div>
+        <svg class="art" width="170" height="90" viewBox="0 0 230 120" fill="none" style="right:12px;bottom:40px"><path d="M30 112 A 85 85 0 0 1 200 112" stroke="rgba(200,80,110,.18)" stroke-width="10"/><path d="M30 112 A 85 85 0 0 1 150 38" stroke="rgba(200,80,110,.45)" stroke-width="10" stroke-linecap="round"/><circle cx="150" cy="38" r="5" fill="#2f63e0"/></svg>
+        <div class="foot"><span>Peak hours</span><span>Cheap at <b>01:00</b></span></div></div>
+      <div class="card"><h3>CO₂ avoided</h3><svg class="ico go" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        <div class="big">1,284</div><div class="unit">kg this year</div>
+        <svg class="art" width="110" height="60" viewBox="0 0 150 80" style="right:18px;bottom:50px"><rect x="0" y="50" width="12" height="30" rx="3" fill="#dcdce0"/><rect x="20" y="40" width="12" height="40" rx="3" fill="#dcdce0"/><rect x="40" y="56" width="12" height="24" rx="3" fill="#dcdce0"/><rect x="60" y="30" width="12" height="50" rx="3" fill="#dcdce0"/><rect x="80" y="20" width="12" height="60" rx="3" fill="#c8c8ce"/><rect x="100" y="36" width="12" height="44" rx="3" fill="#dcdce0"/><rect x="120" y="8" width="12" height="72" rx="3" fill="#9fa0a8"/></svg>
+        <div class="foot" style="display:block"><div style="display:flex;justify-content:space-between"><span>64% of goal</span><span>2,000 kg</span></div><div style="height:6px;border-radius:3px;background:#ececea;margin-top:6px"><div style="width:64%;height:100%;border-radius:3px;background:#4cbf6a"></div></div></div></div>
+    </div>
+
+    <div class="row2">
+      <div class="panel"><h3>Today's plan <span>+</span></h3>
+        <div class="tl"><i style="left:4%;width:6%;background:#7fcf8a"></i><i style="left:42%;width:12%;background:#f2b33d"></i><i style="left:55%;width:6%;background:#8fa5ee"></i><i style="left:86%;width:10%;background:#8fa5ee"></i>
+          <div class="now" style="left:63%"><b>19:20</b></div></div>
+        <div class="ticks"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+        <div style="margin-top:14px">
+          <div class="ev"><i style="background:#7fcf8a"></i><span>Dishwasher on cheap power<small>01:00 – 02:30</small></span><em>Done</em></div>
+          <div class="ev"><i style="background:#f2b33d"></i><span>Battery charging from roof<small>10:00 – 13:00</small></span><em>Done</em></div>
+          <div class="ev"><i style="background:#8fa5ee"></i><span>Car charging<small>01:00 – 03:20</small></span><em style="color:#4a6ee0">Tonight</em></div>
+        </div></div>
+      <div class="panel"><h3>Lumo noticed <svg class="ico" viewBox="0 0 24 24" style="width:16px;height:16px;color:#5d5d66"><path d="M7 17 17 7M8 7h9v9"/></svg></h3>
+        <div class="ins"><span class="ic" style="background:#e9f6ec;color:#3a9b55"><svg class="ico" viewBox="0 0 24 24"><path d="m4 15 5-5 4 4 7-7M14 7h6v6"/></svg></span><span>Your roof made 14% more than last October<small>Today</small></span><span style="color:#9a9aa3">›</span></div>
+        <div class="ins"><span class="ic" style="background:#eef1fd;color:#4a6ee0"><svg class="ico" viewBox="0 0 24 24"><path d="M20 14A8 8 0 0 1 10 4a8 8 0 1 0 10 10Z"/></svg></span><span>Charging the car at night saved €18 this week<small>Yesterday</small></span><span style="color:#9a9aa3">›</span></div>
+        <div class="ins"><span class="ic" style="background:#fdf3e4;color:#d9902a"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6Z"/></svg></span><span>The heat pump's filter needs a clean<small>3 days ago</small></span><span style="color:#9a9aa3">›</span></div>
+        <div class="ins"><span class="ic" style="background:#fff0e8;color:#e0743a"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></span><span>Run the washing machine before 14:00 tomorrow<small>Sunny forecast</small></span><span style="color:#9a9aa3">›</span></div>
+      </div>
+    </div>
+  </main>
+</section>
+</body>
+</html>

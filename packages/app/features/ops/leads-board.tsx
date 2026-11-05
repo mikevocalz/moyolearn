@@ -121,7 +121,7 @@ export function LeadsBoard({
       <Pressable
         onPress={() => openLead(card.lead.id)}
         aria-label={`Open lead: ${card.lead.family}`}
-        className="min-w-0 flex-1 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+        className="min-w-0 flex-1 rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <Text className="text-label font-semibold text-text underline decoration-border-strong underline-offset-2">
           {card.lead.family}

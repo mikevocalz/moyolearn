@@ -74,7 +74,7 @@ function DesktopNavLink({
           }
         }}
         aria-current={active ? 'page' : undefined}
-        className={`rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+        className={`rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
           active ? 'bg-primary font-semibold text-on-primary' : 'text-text-muted hover:bg-surface-sunken hover:text-text'
         }`}
       >
@@ -125,7 +125,7 @@ function MobileNavLink({
         href={href}
         onClick={onNavigate}
         aria-current={active ? 'page' : undefined}
-        className={`flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+        className={`flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
           active ? 'bg-primary font-semibold text-on-primary' : 'text-text hover:bg-surface-sunken'
         }`}
       >
@@ -174,7 +174,7 @@ export function MarketingHeader() {
           href="/"
           onClick={close}
           aria-label="Home"
-          className="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+          className="flex items-center gap-2.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <MotionView
             initial={hydrated ? { scale: 0.6 } : undefined}
@@ -206,7 +206,7 @@ export function MarketingHeader() {
               href={PROFILE.href}
               aria-label="Your profile and settings"
               aria-current={profileActive ? 'page' : undefined}
-              className={`rounded-md transition-shadow duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+              className={`rounded-md transition-shadow duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
                 profileActive
                   ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface'
                   : 'hover:ring-2 hover:ring-border-strong'
@@ -222,7 +222,7 @@ export function MarketingHeader() {
             aria-expanded={open}
             aria-controls="mobile-menu"
             onClick={toggle}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-border transition-colors duration-fast hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 active:opacity-80 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-border transition-colors duration-fast hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus active:opacity-80 md:hidden"
           >
             <TWText className="text-xl leading-none text-text">{open ? '✕' : '☰'}</TWText>
           </button>
@@ -254,7 +254,7 @@ export function MarketingHeader() {
                 href={PROFILE.href}
                 onClick={close}
                 aria-current={profileActive ? 'page' : undefined}
-                className={`mx-3 mt-3 flex items-center gap-stack rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+                className={`mx-3 mt-3 flex items-center gap-stack rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
                   profileActive ? 'bg-surface-sunken' : 'hover:bg-surface-sunken'
                 }`}
               >

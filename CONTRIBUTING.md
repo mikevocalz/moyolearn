@@ -34,6 +34,21 @@ Rules, not architecture. Specs live in `docs/pack/`; read them when planning, no
 - Spacing uses the named tiers (`gap-stack`, `gap-group`, …). Touch targets come from the age-band token, never a hardcoded size.
 - Hierarchy comes from size, weight, and space. Borders are structure, never emphasis. One display moment and one highlighter accent per screen.
 
+## Design sequence
+Every screen goes through these steps in order; each leaves the artifact named beside it.
+1. User research: who uses the screen, when, and how often.
+2. Mobbin pass: 3–5 structural references, cited structure-only in the file header.
+3. Design system: token diff in `packages/theme/tokens.ts`.
+4. web-designer-pro (`tooling/web-designer-pro`): `DIRECTION.md`, three explorations (`explore/a|b|c`) for anything hero-scale, shots per round (`shots/rN/sheet.png`), scores in `CRITIQUE.md`.
+5. Frontend design: the screen, built from tokens.
+6. UX copy.
+7. Accessibility review: screen reader, keyboard, contrast in light and dark.
+8. Design critique against the rubric in `CRITIQUE.md`.
+9. Design handoff, including a motion row per component (`docs/motion/README.md`).
+10. Code review.
+
+CI's `design-evidence` job re-shoots and scans both web apps on every PR; a scan FAIL fails the build.
+
 ## Children's surfaces
 - No paywall, price, or upgrade prompt may render on a learner surface. Ever.
 - No engagement-pressure mechanics aimed at minors — no shame copy, no guilt notifications, no late-night pushes.
