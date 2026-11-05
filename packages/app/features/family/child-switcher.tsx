@@ -11,11 +11,17 @@
 // One child renders nothing: a picker with no alternative is noise — the same
 // rule ContextSwitcher applies to a single membership. Overflow scrolls
 // horizontally rather than wrapping so the row stays one visual line of chips.
-// Mobbin: mobbin.com/screens/6491097a-3861-4c87-ac75-caed6336b83b (Greenlight — parent home leads with a horizontal avatar+name chip row; the selected child scopes the whole dashboard below) ·
-// mobbin.com/screens/96c15ebb-251f-4261-b474-b4cf3c74d36a (Acorns — You/Kid switcher pinned at the top of home re-scopes every section; one login, never per-child accounts) ·
-// mobbin.com/screens/ea5d92c2-73fc-4fc7-9fb6-a6d32d332097 (Kit — single guardian overview switches per-child via one header control, so all child surfaces read one selection seam). Structure only.
+//
+// Semantics are a RADIO GROUP, not a row of buttons. Exactly one child is
+// selected at a time and selecting another deselects the first, which is what
+// a screen reader user needs announced: "Maya, 1 of 2, radio button, checked".
+// A row of plain buttons would read each chip as an independent action and
+// never say which child the rest of the screen is about.
+// Mobbin: mobbin.com/screens/96c15ebb-251f-4261-b474-b4cf3c74d36a (Acorns — You/Kid switcher pinned at the top of home re-scopes every section; one login, never per-child accounts) ·
+// mobbin.com/screens/ade862dc-3a68-429f-80be-595e4215442c (Kit — one "All kids" selector at the top scopes the whole list beneath it) ·
+// mobbin.com/screens/9d952a8b-7e1e-43a5-b034-041e84f78c49 (Duolingo ABC — "Who's learning?" picker: avatar beside name, the selected child ringed). Structure only.
 // SOT: docs/design/overhaul-v2/J-component-plan.md §2 row 10 · docs/pack/36-role-navigation-flows.md §3.2 · design/screens/guardian/guardian.home/contract.md
-// SOT-KEYWORDS: child switcher chips guardian family store active child g-8 avatar press scale
+// SOT-KEYWORDS: child switcher chips guardian family store active child g-8 avatar press scale radio group
 
 import { Avatar, PressScale } from '@acme/ui';
 import { ScrollView, Text as TWText } from '@acme/ui/tw';
@@ -34,16 +40,20 @@ export function ChildSwitcher() {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      role="radiogroup"
+      aria-label="Which child"
       contentContainerClassName="flex-row gap-element"
     >
-      {children.map((child) => {
+      {children.map((child, index) => {
         const active = child.id === activeId;
         return (
           <PressScale
             key={child.id}
             onPress={() => selectLearner(child.id)}
-            aria-label={child.name}
-            aria-selected={active}
+            role="radio"
+            aria-label={`${child.name}, ${String(index + 1)} of ${String(children.length)}`}
+            aria-checked={active}
+            accessibilityState={{ checked: active, selected: active }}
             className={`min-h-11 flex-row items-center gap-element rounded-card border-2 px-3 py-2 ${
               active ? 'border-border bg-primary shadow-card' : 'border-border bg-surface-raised'
             }`}

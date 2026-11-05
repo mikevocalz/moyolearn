@@ -23,7 +23,7 @@
  * SOT-KEYWORDS: motion web gsap lenis scrolltrigger wrapper reduced-motion
  *               kinetrell provider
  */
-import { useEffect, type DependencyList } from 'react';
+import { useEffect, useState, type DependencyList } from 'react';
 import type Lenis from 'lenis';
 import type { CompiledMotion } from 'kinetrell/core';
 import {
@@ -43,13 +43,28 @@ export function useBrowserReducedMotion(requested?: ReducedMotionPolicy): boolea
   return useKinetrellBrowserReducedMotion(resolveReducedMotionPolicy(requested));
 }
 
-export function GsapMotionProvider(props: GsapMotionProviderProps) {
-  return (
-    <KinetrellGsapMotionProvider
-      {...props}
-      reducedMotion={resolveReducedMotionPolicy(props.reducedMotion)}
-    />
+/**
+ * The OS setting read synchronously on the first client render. Kinetrell's
+ * hook reads it in a useEffect, after paint, so on a reduced-motion machine the
+ * provider's layout effect would first set and paint the `start` frame, then
+ * jump to the end: a flash for exactly the reader who asked for none. Reading
+ * matchMedia in the state initializer settles 'system' before the layout
+ * effect runs. The provider renders no markup of its own, so a server value
+ * that differs causes no hydration mismatch.
+ */
+function useInitialPolicy(requested: ReducedMotionPolicy | undefined): ReducedMotionPolicy {
+  const policy = resolveReducedMotionPolicy(requested);
+  const [reducedAtMount] = useState(
+    () =>
+      policy === 'system' &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   );
+  return reducedAtMount ? 'always' : policy;
+}
+
+export function GsapMotionProvider(props: GsapMotionProviderProps) {
+  return <KinetrellGsapMotionProvider {...props} reducedMotion={useInitialPolicy(props.reducedMotion)} />;
 }
 
 export function useGsapMotion(

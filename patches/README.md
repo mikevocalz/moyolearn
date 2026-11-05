@@ -80,3 +80,14 @@ an AAR that wraps a local `.aar`. That also caught
 leaves `*LocalLintAar` enabled; both shims build it. The same patch also carries
 the visionOS module changes and the `moyoViroRendererAar` override that were
 already in it.
+
+## `expo-sharing@58.0.22`
+
+**Why:** `ios/ResolveUrlContentDetails.swift` uses `URL`, `URLRequest`,
+`URLSession` and `HTTPURLResponse` without `import Foundation`. It is the only
+Swift file in the package without it. CocoaPods builds got Foundation through
+the umbrella header; the SwiftPM app build (explicit modules) does not, and fails
+with `cannot find type 'URL' in scope` (#141 iOS `simulator` run 41930144115).
+
+**What the patch does:** adds `import Foundation` at the top of that file.
+Remove it when an expo-sharing release adds the import.

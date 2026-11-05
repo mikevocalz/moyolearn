@@ -1,1 +1,76 @@
-{}
+{
+  "signature.movement-bar": [
+    {
+      "name": "start",
+      "timeMs": 0,
+      "state": {
+        "gain": {
+          "scaleX": 0
+        },
+        "settle": {
+          "scaleX": 1
+        },
+        "level": {
+          "opacity": 0
+        },
+        "position": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "name": "overshoot",
+      "timeMs": 300,
+      "state": {
+        "gain": {
+          "scaleX": 1.03
+        },
+        "settle": {
+          "scaleX": 1
+        },
+        "level": {
+          "opacity": 0
+        },
+        "position": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "name": "rest",
+      "timeMs": 500,
+      "state": {
+        "gain": {
+          "scaleX": 1.03
+        },
+        "settle": {
+          "scaleX": 0.970873786407767
+        },
+        "level": {
+          "opacity": 1
+        },
+        "position": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "name": "settled",
+      "timeMs": 800,
+      "state": {
+        "gain": {
+          "scaleX": 1.03
+        },
+        "settle": {
+          "scaleX": 0.970873786407767
+        },
+        "level": {
+          "opacity": 1
+        },
+        "position": {
+          "opacity": 1
+        }
+      }
+    }
+  ]
+}
