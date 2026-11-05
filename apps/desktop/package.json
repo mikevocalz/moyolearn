@@ -12,7 +12,8 @@
     "doctor": "spark doctor",
     "postinstall": "node node_modules/@legendapp/spark/init-template.cjs",
     "typecheck": "tsc --noEmit",
-    "analyze": "spark analyze"
+    "analyze": "spark analyze",
+    "test": "node --test scripts/commands.test.mjs"
   },
   "dependencies": {
     "@legendapp/spark": "0.0.2",
@@ -47,10 +48,7 @@
         "@legendapp/spark-audio",
         "@legendapp/spark-clipboard",
         "@legendapp/spark-codex",
-        "@legendapp/spark-desktop-shortcuts",
-        "@legendapp/spark-desktop-windows",
         "@legendapp/spark-drag-drop",
-        "@legendapp/spark-file-system",
         "@legendapp/spark-global-shortcuts",
         "@legendapp/spark-notifications",
         "@legendapp/spark-processes",
