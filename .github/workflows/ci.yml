@@ -208,3 +208,98 @@ jobs:
             cat "$log"
             exit 1
           fi
+
+  # Design evidence (tooling/web-designer-pro, VENDOR.md). Builds both web apps,
+  # serves them the way `web-app` does, and renders them in real browsers:
+  #   - shoot.mjs at 390/768/1280/1440 scans the rendered DOM at every width
+  #     (contrast on real pixels, sideways scroll, clipped text, the keyboard
+  #     focus walk, the slop tells) and exits 1 on any FAIL;
+  #   - matrix.mjs re-renders under Windows scaling and High Contrast, Linux and
+  #     Android fonts, Firefox, WebKit, a 320px reflow, reduced motion and
+  #     translation-length text, and exits 1 on any FAIL;
+  #   - check-font-fallbacks.mjs holds each `* Fallback` face to its real face.
+  # apps/web is shot at /login: every other route redirects a signed-out
+  # visitor there, and CI has no database to sign in against.
+  # `--wait 2500` outlasts the site's slowest entrance (siteMotion `page-turn`,
+  # 560ms, after its chapter delay), so a shot lands on the settled page.
+  design-evidence:
+    name: design evidence (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    # One app per job. On a 2-core runner with no GPU the web-vite globe renders
+    # in software, and its shoot alone took 34 minutes on the first run
+    # (run 41919727784), so the two apps in one job outran a 40-minute limit.
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web-vite
+            port: '4173'
+            start: node apps/web-vite/.output/server/index.mjs
+            url: http://127.0.0.1:4173/
+            shoot: --wait 2500
+          - app: web
+            port: '3101'
+            start: pnpm --filter web start
+            url: http://127.0.0.1:3101/login
+            shoot: --app --wait 1500
+            dark: --app --dark --widths 390,1440 --wait 1500
+            matrix_flags: --app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Google Chrome ships on the runner image; Firefox and WebKit are the
+      # matrix's optional engines and come from playwright-core's own installer.
+      - name: Install Firefox and WebKit for the matrix
+        run: node node_modules/playwright-core/cli.js install --with-deps firefox webkit
+      - name: Build ${{ matrix.app }}
+        run: pnpm exec turbo run build --filter=${{ matrix.app }}
+      - name: Font fallbacks match their faces
+        if: matrix.app == 'web-vite'
+        run: node tooling/check-font-fallbacks.mjs
+      - name: Shoot, scan and matrix
+        env:
+          APP: ${{ matrix.app }}
+          PORT: ${{ matrix.port }}
+          START: ${{ matrix.start }}
+          URL: ${{ matrix.url }}
+          SHOOT: ${{ matrix.shoot }}
+          DARK: ${{ matrix.dark }}
+          MATRIX_FLAGS: ${{ matrix.matrix_flags }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/design-evidence/$APP"
+          mkdir -p "$out"
+          env PORT="$PORT" NODE_ENV=production sh -c "$START" > "$out/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 90); do
+            if curl -fsS -o /dev/null "$URL"; then break; fi
+            if [ "$i" = 90 ]; then echo "::error::$URL never answered"; cat "$out/server.log"; exit 1; fi
+            sleep 1
+          done
+          status=0
+          wdp=tooling/web-designer-pro/scripts
+          # Flags are word-split on purpose: each matrix value is a flag list.
+          # shellcheck disable=SC2086
+          node $wdp/shoot.mjs "$URL" --out "$out/shots" $SHOOT || status=1
+          if [ -n "${DARK:-}" ]; then
+            # shellcheck disable=SC2086
+            node $wdp/shoot.mjs "$URL" --out "$out/shots-dark" $DARK || status=1
+          fi
+          # shellcheck disable=SC2086
+          node $wdp/matrix.mjs "$URL" --out "$out/matrix" ${MATRIX_FLAGS:-} || status=1
+          exit $status
+      - name: Upload shots and scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-evidence-${{ matrix.app }}
+          path: ${{ runner.temp }}/design-evidence
+          if-no-files-found: warn
+          retention-days: 14

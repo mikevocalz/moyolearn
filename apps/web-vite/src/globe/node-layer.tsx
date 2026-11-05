@@ -218,7 +218,7 @@ export function NodeLayer({ interactive }: NodeLayerProps) {
                 }
                 className={
                   'w-full items-start gap-element rounded-moyo-card border-moyo-rule border-moyo-outline bg-moyo-paper-raised p-inset text-left ' +
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 ' +
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ' +
                   (isActive ? 'shadow-moyo-3' : 'shadow-moyo-2')
                 }
               >

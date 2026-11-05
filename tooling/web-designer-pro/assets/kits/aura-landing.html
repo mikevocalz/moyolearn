@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura landing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Geist:wght@300;400;500;600&family=Geist+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--sans:"Geist",ui-sans-serif,system-ui,sans-serif;--display:"Archivo",sans-serif;--mono:"Geist Mono",ui-monospace,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0b0b0b;padding:40px;display:grid;gap:40px;justify-content:center;font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.plate{width:1440px;height:900px;position:relative;overflow:hidden}
+.small{font-size:12px;line-height:1.35}
+ul{list-style:none}
+.grain-unused::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.14;mix-blend-mode:multiply;z-index:20;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- Still: an aura product page, no images at all ---------- */
+.s{background:linear-gradient(180deg,#232a40 0%,#36405c 26%,#4d5672 42%,#7d6a6c 56%,#3b3440 66%,#16141a 80%,#0b0a0d 100%);color:#fff}
+.s .nav{position:absolute;top:36px;left:48px;right:48px;display:flex;justify-content:space-between;align-items:center;font-size:15px}
+.s .logo{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:400;letter-spacing:-.01em}
+.s .logo i{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#bfe6df 45%,#5e9c95 100%)}
+.s .nav ul{display:flex;gap:34px;color:rgba(255,255,255,.75)}
+.s .nav .pre{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:10px 18px;color:#fff;backdrop-filter:blur(12px)}
+.s h1{position:absolute;left:48px;top:170px;width:620px;font-size:76px;line-height:1.02;font-weight:400;letter-spacing:-.035em}
+.s .lede{position:absolute;left:48px;top:440px;width:440px;font-size:18px;line-height:1.5;color:#fff;text-shadow:0 1px 18px rgba(20,18,30,.55)}
+.s .cta{position:absolute;left:48px;top:560px;display:flex;gap:16px;align-items:center}
+.s .cta a{background:#fff;color:#0b0b0d;border-radius:999px;padding:18px 28px;font-size:16px;font-weight:500;text-decoration:none}
+.s .cta span{font-size:14px;color:rgba(255,255,255,.65)}
+.orb{position:absolute;left:820px;top:120px;width:470px;height:470px;border-radius:50%;overflow:hidden;isolation:isolate;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55),inset 0 24px 60px rgba(255,255,255,.15),0 60px 120px -50px rgba(0,0,0,.9)}
+.orb::before{content:"";position:absolute;inset:-30px;z-index:-1;filter:blur(18px);
+  background:
+    radial-gradient(ellipse 30% 18% at 50% 84%,rgba(236,255,250,.9) 0%,rgba(170,232,220,.65) 35%,transparent 75%),
+    radial-gradient(ellipse 60% 34% at 50% 72%,rgba(60,150,142,.9) 0%,transparent 75%),
+    radial-gradient(ellipse 80% 22% at 50% 44%,rgba(240,210,190,.28),transparent 75%),
+    radial-gradient(ellipse 50% 16% at 50% 14%,rgba(210,220,240,.6),transparent 72%),
+    linear-gradient(180deg,#2a3352 0%,#46557c 36%,#6f8aa0 58%,#2f5660 82%,#1c2c38 100%)}
+.orb .in{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;text-align:center}
+.orb small{font-size:15px;color:#fff;font-weight:500;text-shadow:0 1px 12px rgba(20,25,45,.6)}
+.orb b{font-weight:300;font-size:120px;line-height:1;letter-spacing:-.05em;margin:6px 0 2px}
+.orb em{font-style:normal;font-family:var(--mono);font-size:13px;color:#fff;background:rgba(10,30,40,.28);border-radius:999px;padding:3px 10px;margin-top:6px}
+.cards{position:absolute;left:640px;top:640px;display:grid;grid-template-columns:repeat(3,236px);gap:12px}
+.aura{position:relative;height:190px;border-radius:40px;padding:22px 26px;overflow:hidden;isolation:isolate;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25),inset 0 0 30px rgba(0,0,0,.2),0 30px 60px -30px rgba(0,0,0,.6)}
+.aura::before{content:"";position:absolute;inset:-20px;z-index:-1;filter:blur(16px)}
+.aura .l{font-size:16px;font-weight:300}
+.aura .v{position:absolute;left:26px;bottom:22px;font-size:46px;font-weight:300;letter-spacing:-.03em;line-height:1}
+.aura .v small{font-size:18px;margin-left:6px;letter-spacing:0}
+.aura .n{position:absolute;right:24px;top:24px;font-size:13px;opacity:.85}
+.c1::before{background:radial-gradient(ellipse 46% 50% at 55% 55%,#0b100e 0%,#1c2a25 40%,transparent 78%),linear-gradient(160deg,#627d6e,#4b6457)}
+.c2::before{background:radial-gradient(ellipse 44% 46% at 50% 42%,#060915 0%,#141d4a 40%,transparent 78%),linear-gradient(160deg,#4672f0,#2a56d8)}
+.c3::before{background:radial-gradient(ellipse 30% 32% at 76% 66%,#f2c27a 0%,rgba(240,180,110,.6) 35%,transparent 72%),linear-gradient(160deg,#b4562f,#963f22)}
+.bar{position:absolute;left:26px;right:26px;top:70px;height:5px;border-radius:3px;background:rgba(255,255,255,.3)}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:#fff}
+.dotrow{position:absolute;left:26px;right:26px;top:70px;display:flex;gap:7px}
+.dotrow i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35)}
+.dotrow i.on{background:#fff}
+</style>
+</head>
+<body>
+
+<section class="plate s" aria-label="Still">
+  <div class="nav"><span class="logo"><i></i><span>Still</span></span><ul><li>How it works</li><li>Sensors</li><li>FAQ</li></ul><span class="pre">Pre-order</span></div>
+  <h1>See what the air in your bedroom does at 3am.</h1>
+  <p class="lede">Still sits on the nightstand and measures CO₂, fine dust, humidity and temperature all night. In the morning it tells you the one thing to change, like opening the window ten minutes before bed.</p>
+  <div class="cta"><a href="#">Pre-order for €129</a><span>Ships in January · 30-day returns</span></div>
+  <div class="orb"><div class="in"><small>Your bedroom, now</small><b>12</b><em>PM2.5 µg/m³ · clean</em></div></div>
+  <div class="cards">
+    <div class="aura c1"><div class="l">CO₂</div><div class="bar"><i style="width:42%"></i></div><div class="v">640<small>ppm</small></div><div class="n">Window: open</div></div>
+    <div class="aura c2"><div class="l">Humidity</div><div class="dotrow"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div><div class="v">46<small>%</small></div><div class="n">Ideal</div></div>
+    <div class="aura c3"><div class="l">Temperature</div><div class="v">19.5<small>°C</small></div><div class="n">Cool</div></div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -178,9 +178,18 @@ and the system fallback binaries.
 | Face | Fallback | `size-adjust` | `ascent-override` | `descent-override` | `line-gap-override` |
 | --- | --- | --- | --- | --- | --- |
 | Clash Display | Arial | 111.9% | 79.54% | 22.34% | 8.04% |
-| General Sans | Arial | 109.83% | 91.96% | 21.85% | 9.1% |
+| General Sans | Arial | 97.7% | 103.38% | 24.57% | 10.6% |
 | Instrument Serif | Times New Roman | 84.28% | 117.47% | 36.78% | 0% |
 | Shantell Sans | Arial | 111.43% | 91.53% | 28.72% | 0% |
+
+General Sans was remeasured on 2026-11-04 by rendering, not from `hmtx`: the
+`hmtx` figure (109.83%) set body copy one line longer than the real face at
+320, 420 and 520px columns. Width now comes from web-designer-pro's
+`fallback.mjs` (advance of rendered English text against Arimo) and the line gap
+makes a line 135% of the font size, as the real face's is.
+`tooling/check-font-fallbacks.mjs` renders both faces at five widths and fails on
+any difference in line count or more than 1px of height; it runs in CI's
+`design-evidence` job.
 
 **Do not hand-edit these percentages.** Remeasure if a font file is replaced.
 

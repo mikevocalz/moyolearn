@@ -45,7 +45,7 @@ export function FileTrigger({
 
   return (
     <label
-      className={`relative flex cursor-pointer flex-col rounded-control focus-within:ring-2 focus-within:ring-focus/50 focus-within:ring-offset-2 ${
+      className={`relative flex cursor-pointer flex-col rounded-control focus-within:ring-2 focus-within:ring-focus focus-within:ring-offset-2 ${
         disabled ? 'cursor-not-allowed opacity-50' : ''
       } ${className ?? ''}`}
     >

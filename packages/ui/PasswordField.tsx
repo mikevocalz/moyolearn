@@ -28,7 +28,7 @@ const passwordField = tv({
       'focus:shadow-card focus:outline-none motion-reduce:transition-none',
     toggle:
       'absolute inset-y-0 right-0 min-w-target-adult items-center justify-center px-3 ' +
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus',
     toggleLabel: 'text-sm font-semibold text-text-muted hover:text-text',
     message: 'text-sm text-danger',
   },

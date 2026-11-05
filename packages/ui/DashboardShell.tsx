@@ -477,7 +477,7 @@ export function DashboardShell({
               window.matchMedia('(min-width: 64rem)').matches;
             onSetMode((atLg ? railAtLg : railAtMd) ? 'menu' : 'rail');
           }}
-          className="hidden min-h-target-adult shrink-0 flex-row items-center justify-center gap-element border-t-2 border-border-faint px-inset-tight hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 md:flex"
+          className="hidden min-h-target-adult shrink-0 flex-row items-center justify-center gap-element border-t-2 border-border-faint px-inset-tight hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus md:flex"
         >
           <View className={RAIL_ONLY[mode]}>
             {railAtMd ? (

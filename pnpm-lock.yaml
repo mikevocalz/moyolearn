@@ -240,6 +240,9 @@ catalogs:
     playwright:
       specifier: 1.63.0
       version: 1.63.0
+    playwright-core:
+      specifier: 1.63.0
+      version: 1.63.0
     qrcode:
       specifier: 1.5.4
       version: 1.5.4
@@ -503,6 +506,9 @@ importers:
       pg-boss:
         specifier: 'catalog:'
         version: 12.33.0
+      playwright-core:
+        specifier: 'catalog:'
+        version: 1.63.0
       turbo:
         specifier: 'catalog:'
         version: 2.10.13

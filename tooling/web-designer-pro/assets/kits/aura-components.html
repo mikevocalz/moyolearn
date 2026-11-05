@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400&family=Doto:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0c0c0e; --paper:#efefef;
+  --sans:"Geist",ui-sans-serif,system-ui,sans-serif;
+  --mono:"Geist Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0}
+body{background:#111113;font-family:var(--sans);color:#fff;padding:40px;display:grid;gap:40px;justify-content:center;-webkit-font-smoothing:antialiased}
+.plate{width:1200px;height:800px;position:relative;overflow:hidden;border-radius:4px}
+
+/* ---------- 1. Dusk ground + black app panel, glass orb, pearl orb, pill rows ---------- */
+.p1{background:linear-gradient(180deg,#2d3552 0%,#454e70 24%,#6c6f86 40%,#b39686 52%,#3a3644 64%,#141318 80%,#0b0b0d 100%)}
+.panel{position:absolute;left:96px;top:120px;width:1200px;height:760px;background:#000;border-radius:40px;padding:44px 48px}
+.panel nav{display:flex;align-items:center;justify-content:space-between;width:1000px}
+.brand{display:flex;gap:12px;align-items:center;font-size:30px;font-weight:400;letter-spacing:-.01em}
+.brand svg{width:34px;height:34px}
+.panel nav ul{display:flex;gap:40px;list-style:none;padding:0;font-size:17px;color:#bdbdc4}
+.tagline{position:absolute;left:48px;bottom:56px;width:210px;font-size:17px;line-height:1.3;color:#b6b6bd}
+.orbs{position:absolute;left:300px;top:130px;display:flex;gap:20px}
+.orb{width:350px;height:350px;border-radius:50%;position:relative;overflow:hidden;isolation:isolate;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6),inset 0 18px 40px rgba(255,255,255,.12),0 40px 80px -40px rgba(0,0,0,.9)}
+.orb::before{content:"";position:absolute;inset:-20px;z-index:-1;filter:blur(13px);
+  background:
+    radial-gradient(ellipse 25% 14% at 50% 73%,#050407 0%,#0b0709 62%,transparent 100%),
+    radial-gradient(ellipse 31% 19% at 50% 73%,#1a0a0a 0%,#2a0f0b 50%,rgba(236,104,44,.95) 74%,rgba(214,82,40,.6) 86%,transparent 100%),
+    radial-gradient(ellipse 50% 27% at 50% 70%,rgba(250,170,110,.6) 0%,rgba(230,130,90,.3) 55%,transparent 80%),
+    radial-gradient(ellipse 90% 22% at 50% 58%,rgba(250,214,180,.95),transparent 75%),
+    radial-gradient(ellipse 46% 16% at 52% 17%,rgba(208,214,236,.7),transparent 72%),
+    linear-gradient(180deg,#273050 0%,#3a466e 34%,#7d86a3 52%,#4e5a80 80%,#2c3455 100%)}
+.orb .state{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;font-size:17px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.25)}
+.spinner{width:20px;height:20px;border-radius:50%;background:conic-gradient(from 0deg,#fff 0 6%,transparent 6% 12.5%,#fff 12.5% 18.5%,transparent 18.5% 25%,#fff 25% 31%,transparent 31% 37.5%,#fff 37.5% 43.5%,transparent 43.5% 50%,#fff 50% 56%,transparent 56% 62.5%,#fff 62.5% 68.5%,transparent 68.5% 75%,#fff 75% 81%,transparent 81% 87.5%,#fff 87.5% 93.5%,transparent 93.5%);
+  -webkit-mask:radial-gradient(circle,transparent 7px,#000 7.5px);mask:radial-gradient(circle,transparent 7px,#000 7.5px)}
+.pearl{width:350px;height:350px;border-radius:50%;position:relative;
+  background:radial-gradient(circle at 34% 26%,#ffffff 0%,#f6f6f7 22%,#dedee2 52%,#b9b9c1 78%,#9c9ca6 100%);
+  box-shadow:inset -18px -28px 60px rgba(60,60,80,.25),0 40px 80px -40px rgba(0,0,0,.9);
+  display:grid;place-content:center;justify-items:center;gap:6px;color:#111}
+.pearl small{font-size:16px;color:#55555e}
+.pearl b{font-family:var(--mono);font-weight:400;font-size:34px;letter-spacing:-.02em}
+.pearl .up{font-family:var(--mono);font-size:22px;color:#111}
+.rows{position:absolute;left:300px;top:500px;width:900px;display:grid;gap:10px}
+.toolbar{display:grid;grid-template-columns:118px 1fr 180px;gap:8px}
+.pill{height:118px;border-radius:999px;background:#151517;display:flex;align-items:center;color:#a3a3ab;font-size:17px}
+.pill.icon{justify-content:center}
+.pill.icon svg{width:20px;height:20px;stroke:#8a8a92}
+.pill.wide{justify-content:center;gap:6px}
+.pill.wide b{color:#a9a9b0;font-weight:400}
+.row{height:118px;border-radius:999px;background:#141416;display:grid;grid-template-columns:140px 1fr 120px 140px;align-items:center;padding:0 28px;color:#a3a3ab;font-size:17px}
+.row.on{background:#3a3a3d;color:#fff}
+.row .tok{display:flex}
+.row .tok i{width:52px;height:52px;border-radius:50%;display:block;border:3px solid #000;margin-right:-14px}
+.row.on .tok i{border-color:#3a3a3d}
+.row .name small{display:block;color:#a0a0a8;font-size:16px;margin-top:2px}
+.row.on .name small{color:#c4c4cb}
+.row .num{text-align:right;line-height:1.25}
+.row .num small{display:block;color:#a0a0a8;font-size:15px}
+.row.on .num small{color:#c4c4cb}
+
+/* ---------- 2. Aura metric cards over a defocused figure ---------- */
+.p2{background:#b9b6ae}
+.p2 .photo{position:absolute;inset:0;background:url(img/figure.webp) center/cover;filter:blur(2px) saturate(1.1)}
+.cards{position:absolute;left:330px;top:150px;width:540px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.aura{position:relative;border-radius:46px;padding:26px 30px;height:200px;overflow:hidden;isolation:isolate;color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 0 30px rgba(0,0,0,.18),0 30px 60px -30px rgba(0,0,0,.45)}
+.aura::before{content:"";position:absolute;inset:-20px;z-index:-1;filter:blur(18px)}
+.aura .lbl{font-size:20px;font-weight:300;letter-spacing:-.005em;opacity:.95}
+.aura .val{position:absolute;left:30px;bottom:24px;font-size:52px;font-weight:300;letter-spacing:-.03em;line-height:1}
+.aura .val small{font-size:24px;margin-left:8px;letter-spacing:0}
+.aura.wide{grid-column:1/-1;height:230px}
+.a-rose::before{background:linear-gradient(180deg,#4a3b50 0%,#7b5262 45%,#c9767a 100%)}
+.a-sage::before{background:radial-gradient(ellipse 48% 52% at 52% 56%,#0c0d10 0%,#1d2522 35%,transparent 75%),linear-gradient(160deg,#627d6e,#4b6457)}
+.a-pink::before{background:radial-gradient(ellipse 40% 40% at 55% 45%,#7a0f4a 0%,#b5277a 30%,transparent 75%),linear-gradient(160deg,#bf4f90,#a23a7c)}
+.a-blue::before{background:radial-gradient(ellipse 45% 48% at 50% 40%,#050712 0%,#121a44 40%,transparent 78%),linear-gradient(160deg,#3a6af0,#2453d6)}
+.a-rust::before{background:radial-gradient(ellipse 30% 30% at 74% 45%,#3a55e6 0%,#4c5ad0 25%,transparent 70%),linear-gradient(160deg,#b4562f,#963f22)}
+.ring{position:absolute;right:30px;top:26px;width:150px;height:150px;border-radius:50%;border:1.5px solid rgba(255,255,255,.45);display:grid;place-items:center}
+.ring b{font-family:"Doto",var(--mono);font-size:44px;font-weight:700;color:rgba(255,255,255,.85);letter-spacing:.02em}
+.ring svg{position:absolute;inset:-6px;width:162px;height:162px}
+.track{position:absolute;left:30px;right:30px;top:96px;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(255,255,255,.35),#e5605e 55%,#e8453f)}
+.track i{position:absolute;left:68%;top:-11px;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:15px solid #f2f05a;transform:translateX(-50%)}
+.dots{position:absolute;left:30px;right:30px;top:98px;display:flex;justify-content:space-between}
+.dots i{width:8px;height:8px;border-radius:50%;background:#fff}
+.aura .tag{position:absolute;right:30px;bottom:28px;font-size:20px;font-weight:300}
+
+/* ---------- 3. Recorder popover: dusk sidebar, light sheet, grey glass card, fading mono ---------- */
+.p3{background:linear-gradient(180deg,#d9dadc 0%,#b8bcc4 18%,#5d6b84 52%,#27303f 76%,#0f1114 100%)}
+.p3 .cap{position:absolute;left:40px;bottom:96px;font-size:14px;color:#fff;line-height:1.4}
+.p3 .cap small{display:block;color:rgba(255,255,255,.6)}
+.sheet{position:absolute;left:280px;top:110px;right:-40px;bottom:-40px;background:#efefef;border-radius:56px 0 0 0;padding:36px}
+.grab{width:150px;height:84px;border-radius:999px;background:#a3a3a3;display:grid;place-items:center}
+.grab i{width:28px;height:4px;border-radius:2px;background:#fff}
+.rec{margin-top:24px;width:500px;border-radius:64px;padding:26px;background:linear-gradient(180deg,#9b9b9b 0%,#a7a7a7 50%,#bdbdbd 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35);color:#fff;position:relative}
+.rec .top{display:grid;grid-template-columns:150px 1fr;gap:26px;align-items:center}
+.thumb{width:150px;height:118px;border-radius:44px;background:url(img/desk.webp) 30% center/cover,#b9a796;position:relative}
+.thumb::after{content:"";position:absolute;right:-2px;bottom:6px;width:22px;height:22px;border-radius:50%;background:#ff4a1c;box-shadow:0 0 0 3px #a9a9a9}
+.rec h3{font-weight:400;font-size:26px;display:flex;gap:12px;align-items:center}
+.rec h3 span{font-size:14px;padding:3px 11px;border-radius:999px;background:rgba(255,255,255,.28)}
+.prog{margin-top:14px;height:3px;border-radius:2px;background:rgba(255,255,255,.35);position:relative}
+.prog i{position:absolute;left:0;top:0;bottom:0;width:62%;background:#fff;border-radius:2px}
+.times{display:flex;justify-content:space-between;margin-top:10px;font-size:14px;color:rgba(255,255,255,.75)}
+.transcript{margin-top:22px;font-family:var(--mono);font-size:19px;line-height:1.45;color:#fff;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.25) 16%,#000 42%);mask-image:linear-gradient(180deg,transparent 0%,rgba(0,0,0,.25) 16%,#000 42%)}
+.transcript p+p{margin-top:28px}
+.stop{margin-top:20px;width:500px;height:96px;border-radius:999px;background:#060606;color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;gap:14px}
+.stop i{width:20px;height:20px;border-radius:5px;background:#fff}
+
+/* ---------- 4. Small widgets on their own grounds ---------- */
+.p4{background:#0b0b0c;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:12px}
+.tile{border-radius:20px;position:relative;overflow:hidden;display:grid;place-items:center}
+.t-dusk{background:linear-gradient(180deg,#c9cbcf 0%,#596780 40%,#1f2632 75%,#0d0f13 100%)}
+.t-light{background:#ececec}
+.t-dark{background:#3a3a3a}
+.clock{width:230px;height:230px;border-radius:48px;background:#050505;display:grid;place-items:center;position:relative;box-shadow:0 30px 60px -30px rgba(0,0,0,.8)}
+.face{width:190px;height:190px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#fde5d6 0%,#f8b39a 30%,#ef7a5a 60%,#e2563f 100%);position:relative;filter:saturate(1.05)}
+.face::after{content:"";position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 30px rgba(255,255,255,.35)}
+.hand{position:absolute;left:50%;top:50%;height:3px;background:#fff;transform-origin:0 50%;border-radius:2px}
+.tick{position:absolute;background:#fff;opacity:.85}
+.chart{width:300px;border-radius:26px;background:#fff;padding:22px;box-shadow:0 20px 50px -30px rgba(0,0,0,.35);color:#111}
+.chart .h{border-left:2px solid #111;padding-left:10px;font-size:15px;line-height:1.25}
+.chart .h small{color:#5f5f66;display:block}
+.bars{display:flex;align-items:flex-end;gap:9px;height:110px;margin-top:18px;position:relative}
+.bars i{flex:1;border-radius:7px;background:linear-gradient(180deg,#e8603c 0%,#f39a7c 30%,#f6d9cf 52%,#ececee 64%)}
+.bars i.lo{background:linear-gradient(180deg,#ececee,#ececee)}
+.pct{position:absolute;left:0;bottom:22px;width:58%;border-top:1.5px solid #111;padding-top:6px;font-size:30px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.7))}
+.capsule{width:210px;height:330px;border-radius:999px;position:relative;overflow:hidden;color:#444;
+  background:radial-gradient(ellipse 60% 42% at 50% 56%,#ff6a3a 0%,rgba(255,120,80,.75) 35%,rgba(255,255,255,0) 75%),linear-gradient(180deg,#f2f0ee,#e7e3e0);
+  box-shadow:0 30px 60px -30px rgba(0,0,0,.6)}
+.capsule .k{position:absolute;top:30px;width:100%;text-align:center;font-size:14px}
+.capsule .b{position:absolute;right:22px;top:98px;font-size:11px;background:rgba(255,255,255,.75);border-radius:999px;padding:3px 7px}
+.capsule .hi{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);font-size:14px;color:#fff;background:#6a6a6a;border-radius:999px;padding:6px 16px}
+.capsule svg{position:absolute;left:30px;top:120px;width:150px;height:110px}
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="plate p1" aria-label="Glass orb panel">
+  <div class="panel" data-wd-crop>
+    <nav>
+      <div class="brand"><svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2"><path d="M16 3c1 7 3 10 13 13-10 3-12 6-13 13-1-7-3-10-13-13 10-3 12-6 13-13Z"/></svg>Halden</div>
+      <ul><li>Deposit</li><li>Withdraw</li><li>Settings</li></ul>
+    </nav>
+    <div class="orbs">
+      <div class="orb"><div class="state"><span class="spinner"></span>Scanning yield…</div></div>
+      <div class="pearl"><small>Balance</small><b>$50,214.08</b><small>Lifetime</small><span class="up">+$2,391.40</span></div>
+    </div>
+    <div class="rows">
+      <div class="toolbar">
+        <div class="pill icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></div>
+        <div class="pill wide"><b>%16.54</b> Total APY, <b>12</b> pools</div>
+        <div class="pill wide">Claim</div>
+      </div>
+      <div class="row"><span class="tok"><i style="background:#e9e9ea"></i><i style="background:#1f4fd1"></i></span><span class="name">USDCV Prime<small>Morpho</small></span><span class="num">15.45%<small>APY</small></span><span class="num">40%<small>Allocated</small></span></div>
+      <div class="row on"><span class="tok"><i style="background:#2b62f2"></i><i style="background:#2153d8"></i></span><span class="name">Restaked ETH<small>Morpho</small></span><span class="num">13.2%<small>APY</small></span><span class="num">40%<small>Allocated</small></span></div>
+    </div>
+    <p class="tagline">Your portfolio keeps thinking even when you don't.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="plate p2" aria-label="Aura metric cards">
+  <div class="photo"></div>
+  <div class="cards">
+    <div class="aura wide a-rose"><div class="lbl">Average glucose</div><div class="val">84<small>mg/dl</small></div>
+      <div class="ring"><svg viewBox="0 0 162 162" fill="none"><path d="M118 20c10 6 18 16 22 28" stroke="#f1e65a" stroke-width="2.5" stroke-linecap="round"/><path d="M112 14c14 4 26 18 30 36" stroke="rgba(255,255,255,.5)" stroke-width="1.2"/></svg><b>84</b></div></div>
+    <div class="aura a-sage"><div class="lbl">Time in range</div><div class="track"><i></i></div><div class="val">100<small>%</small></div></div>
+    <div class="aura a-pink"><div class="lbl">Variability</div><div class="dots"><i></i><i style="margin-left:22px"></i><i></i><i></i><i style="margin-left:-12px"></i><i></i><i style="margin-left:-12px"></i><i></i><i></i></div><div class="val">6.8<small>%</small></div></div>
+    <div class="aura a-blue"><div class="lbl">Vitamin D</div><div class="val">83</div><div class="tag">Good</div></div>
+    <div class="aura a-rust"><div class="lbl">Spikes</div><div class="val">0<small>%</small></div></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="plate p3" aria-label="Recorder popover">
+  <p class="cap">Real-time voice notes<small>Popover</small></p>
+  <div class="sheet">
+    <div class="grab"><i></i></div>
+    <div class="rec">
+      <div class="top"><div class="thumb"></div><div><h3>Daily <span>rec</span></h3><div class="prog"><i></i></div><div class="times"><span>00:00</span><span>12:35</span></div></div></div>
+      <div class="transcript">
+        <p>design side</p>
+        <p>Annie: How much of a delay are we talking about?</p>
+        <p>James: Two or three days. Nothing critical, but it moves development if we don't close the open items by Thursday.</p>
+      </div>
+    </div>
+    <div class="stop"><i></i>Stop</div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="plate p4" aria-label="Widgets">
+  <div class="tile t-dusk"><div class="clock"><div class="face">
+    <span class="hand" style="width:60px;transform:rotate(-160deg)"></span><span class="hand" style="width:78px;transform:rotate(-40deg);height:2px"></span>
+  </div>
+    <span class="tick" style="left:50%;top:6px;width:2px;height:14px"></span><span class="tick" style="left:50%;bottom:6px;width:2px;height:14px"></span><span class="tick" style="top:50%;left:6px;height:2px;width:14px"></span><span class="tick" style="top:50%;right:6px;height:2px;width:14px"></span>
+  </div></div>
+  <div class="tile t-light"><div class="chart"><div class="h">Adaptive<small>Social profile</small></div>
+    <div class="bars"><span class="pct">76%</span><i class="lo" style="height:40%"></i><i class="lo" style="height:52%"></i><i style="height:58%"></i><i style="height:80%"></i><i style="height:72%"></i><i style="height:90%"></i><i style="height:76%"></i><i style="height:100%"></i></div></div></div>
+  <div class="tile t-dark"><div class="capsule"><div class="k">Stress level</div><div class="b">128</div>
+    <svg viewBox="0 0 150 110" fill="none"><path d="M2 100 C30 100 34 20 58 20 S 84 96 104 70 S 128 6 148 10" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+    <div class="hi">High</div></div></div>
+</section>
+
+</body>
+</html>
