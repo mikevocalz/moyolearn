@@ -13,6 +13,7 @@ import { openURL } from "@legendapp/spark/links";
 import { COMMANDS, isCommandId, type CommandId, type WorkspaceRole } from "./commands";
 import { focusCommandSearch } from "./command-search-focus";
 import { signOut } from "./auth/session";
+import { loadClasses } from "./classrooms/load";
 import { describePlatformInfo, loadDesktopCore } from "./desktop-core";
 import { describeNitroProbe, probeNitro } from "./nitro-readiness";
 import { useShellStore, type ResourceFingerprint } from "./store";
@@ -111,7 +112,12 @@ const HANDLERS = {
     store.setDensity(store.density === "compact" ? "comfortable" : "compact");
   },
   "view.section.workspace": () => useShellStore.getState().setSection("workspace"),
+  "view.section.classrooms": () => {
+    useShellStore.getState().setSection("classrooms");
+    void loadClasses();
+  },
   "view.section.resources": () => useShellStore.getState().setSection("resources"),
+  "classrooms.reload": () => void loadClasses(),
   "view.findCommand": () => focusCommandSearch(),
   "workspace.learner": () => switchWorkspace("learner"),
   "workspace.guardian": () => switchWorkspace("guardian"),

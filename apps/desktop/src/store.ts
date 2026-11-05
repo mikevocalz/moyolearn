@@ -24,7 +24,9 @@ import { createJSONStorage, persist, type StateStorage } from "zustand/middlewar
 import { settings } from "@legendapp/spark/settings";
 import type { ThermalState } from "moyo-desktop-core";
 import type { SubscriptionState } from "../../../packages/auth/src/entitlements.ts";
-import type { WorkspaceRole } from "./commands";
+import { isCommandVisible, type WorkspaceRole } from "./commands";
+import { invalidateClassrooms } from "./classrooms/requests";
+import type { Enrollment, TeacherClass } from "./classrooms/types";
 import { isDensity, type DesktopDensity, type DesktopSection } from "./layout";
 
 export type ShellError = { readonly source: string; readonly message: string };
@@ -62,6 +64,21 @@ export type PlanState =
   | { readonly status: "ready"; readonly subscriptions: readonly SubscriptionState[] }
   | { readonly status: "failed"; readonly message: string };
 
+/** Why a classrooms read failed; each has its own sentence in the UI. */
+export type ClassroomsFailure = "offline" | "permission" | "not-found" | "error";
+
+export type ClassesState =
+  | { readonly status: "idle" }
+  | { readonly status: "loading" }
+  | { readonly status: "ready"; readonly classes: readonly TeacherClass[] }
+  | { readonly status: "failed"; readonly reason: ClassroomsFailure; readonly message: string };
+
+export type RosterState =
+  | { readonly status: "idle" }
+  | { readonly status: "loading"; readonly classId: string }
+  | { readonly status: "ready"; readonly classId: string; readonly rows: readonly Enrollment[] }
+  | { readonly status: "failed"; readonly classId: string; readonly reason: ClassroomsFailure; readonly message: string };
+
 export type ResourceFingerprint =
   | { readonly status: "pending" }
   | { readonly status: "ready"; readonly sha256: string }
@@ -75,6 +92,11 @@ interface ShellState {
   query: string;
   auth: AuthState;
   plan: PlanState;
+  classes: ClassesState;
+  roster: RosterState;
+  selectedClassId: string | null;
+  selectedEnrollmentId: string | null;
+  rosterQuery: string;
   /** Roles from the signed-in session. Empty while signed out. */
   sessionRoles: readonly WorkspaceRole[];
   /** The workspace the window shows; always one of `sessionRoles` or null. */
@@ -95,6 +117,11 @@ interface ShellState {
   setQuery: (query: string) => void;
   setSessionRoles: (roles: readonly WorkspaceRole[]) => void;
   setAuth: (auth: AuthState) => void;
+  setClasses: (classes: ClassesState) => void;
+  setRoster: (roster: RosterState) => void;
+  selectClass: (classId: string | null) => void;
+  selectEnrollment: (enrollmentId: string | null) => void;
+  setRosterQuery: (query: string) => void;
   setPlan: (plan: PlanState) => void;
   setActiveRole: (role: WorkspaceRole) => void;
   setResourceName: (name: string | null) => void;
@@ -169,6 +196,11 @@ export const useShellStore = create<ShellState>()(
       query: "",
       auth: { status: "checking" },
       plan: { status: "idle" },
+      classes: { status: "idle" },
+      roster: { status: "idle" },
+      selectedClassId: null,
+      selectedEnrollmentId: null,
+      rosterQuery: "",
       sessionRoles: [],
       activeRole: null,
       resourceName: null,
@@ -183,13 +215,27 @@ export const useShellStore = create<ShellState>()(
       setSidebarVisible: (sidebarVisible) => set({ sidebarVisible }),
       setQuery: (query) => set({ query }),
       setSessionRoles: (sessionRoles) => {
-        const activeRole = get().activeRole;
+        const { activeRole, section } = get();
+        // A section the new roles can't see falls back to Workspace, and
+        // classroom data from the previous session is dropped.
+        const classroomsVisible = isCommandVisible("view.section.classrooms", sessionRoles);
+        // Reads already in flight would refill the state reset below.
+        if (!classroomsVisible) invalidateClassrooms();
         set({
           sessionRoles,
           activeRole: activeRole && sessionRoles.includes(activeRole) ? activeRole : (sessionRoles[0] ?? null),
+          section: section === "classrooms" && !classroomsVisible ? "workspace" : section,
+          ...(classroomsVisible
+            ? {}
+            : { classes: { status: "idle" }, roster: { status: "idle" }, selectedClassId: null, selectedEnrollmentId: null, rosterQuery: "" }),
         });
       },
       setAuth: (auth) => set({ auth }),
+      setClasses: (classes) => set({ classes }),
+      setRoster: (roster) => set({ roster }),
+      selectClass: (selectedClassId) => set({ selectedClassId, selectedEnrollmentId: null, rosterQuery: "" }),
+      selectEnrollment: (selectedEnrollmentId) => set({ selectedEnrollmentId }),
+      setRosterQuery: (rosterQuery) => set({ rosterQuery }),
       setPlan: (plan) => set({ plan }),
       setActiveRole: (role) => {
         if (get().sessionRoles.includes(role)) set({ activeRole: role });

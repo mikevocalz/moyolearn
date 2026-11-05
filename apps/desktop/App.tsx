@@ -23,6 +23,7 @@ import { sectionById, type DesktopSection } from "./src/layout";
 import { DesktopShellControllers } from "./src/native-menus";
 import { SidebarPane } from "./src/sidebar";
 import { SignInPane } from "./src/sign-in-pane";
+import { ClassroomsPane } from "./src/classrooms/classrooms-pane";
 import { ROLE_LABELS } from "./src/commands";
 import { useShellStore } from "./src/store";
 import { WorkspaceToolbar } from "./src/toolbar";
@@ -138,6 +139,7 @@ function ResourcesPanel({ scheme }: { scheme: Scheme }) {
 
 function SectionBody({ section, scheme }: { section: DesktopSection; scheme: Scheme }) {
   if (section === "resources") return <ResourcesPanel scheme={scheme} />;
+  if (section === "classrooms") return <ClassroomsPane scheme={scheme} />;
   return <WorkspaceEmpty scheme={scheme} />;
 }
 

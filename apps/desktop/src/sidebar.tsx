@@ -13,13 +13,14 @@ import { Image, StyleSheet, Text, View } from "react-native";
 import { getContextMenuAvailability, showContextMenu, type MenuItem as ContextMenuItem } from "@legendapp/spark/context-menu";
 import { Sidebar, SidebarItem, type SidebarContextMenuEvent } from "@legendapp/spark/ui/sidebar";
 import { runCommandItem } from "./command-actions";
-import { COMMANDS, type CommandId } from "./commands";
+import { COMMANDS, isCommandVisible, type CommandId } from "./commands";
 import { DESKTOP_SECTIONS, isSection, type DesktopSection } from "./layout";
 import { useShellStore } from "./store";
 import { color, space, target, textStyle, type Scheme } from "./theme";
 
 const SECTION_COMMAND = {
   workspace: "view.section.workspace",
+  classrooms: "view.section.classrooms",
   resources: "view.section.resources",
 } as const satisfies Record<DesktopSection, CommandId>;
 
@@ -63,6 +64,8 @@ export function SidebarPane({ scheme }: { scheme: Scheme }) {
   const section = useShellStore((state) => state.section);
   const setSection = useShellStore((state) => state.setSection);
   const reportError = useShellStore((state) => state.reportError);
+  const sessionRoles = useShellStore((state) => state.sessionRoles);
+  const sections = DESKTOP_SECTIONS.filter((item) => isCommandVisible(SECTION_COMMAND[item.id], sessionRoles));
   const styles = sidebarStyles(scheme);
   return (
     <View style={styles.pane}>
@@ -79,7 +82,7 @@ export function SidebarPane({ scheme }: { scheme: Scheme }) {
         }}
         onError={(cause) => reportError("Sidebar", cause)}
       >
-        {DESKTOP_SECTIONS.map((item) => (
+        {sections.map((item) => (
           <SidebarItem
             key={item.id}
             id={item.id}

@@ -5,13 +5,18 @@
  * tablet, headset and Expo Router contracts live in apps/mobile and are not
  * touched by this file.
  *
- * Strikes recorded 2026-11-04 (PR-D01), carried from draft #137:
- * - "AI Tutor", "Lesson Planner" and "Classrooms" are struck from the nav.
- *   Their precondition is a signed-in session and role guard (PR-D04) plus the
- *   learning-surface port (PR-D05). #137 rendered them as "integration gate"
- *   cards and a scratchpad whose notes vanished on quit; both were dead ends.
- *   Each returns when its PR lands, in the same change as its route.
- * SOT: docs/desktop/seams/SEAMS.md · Moyo Learn Desktop PR pack §PR-D01
+ * Section decisions (PR-D01 strikes, revisited 2026-11-04 in PR-D05):
+ * - "Classrooms" returns (PR-D05): GET /api/teacher/classes and
+ *   /api/teacher/classes/:id/roster are a real read path with the desktop
+ *   session cookie. Shown to Tutor, Organization and District workspaces.
+ * - "AI Tutor" stays struck (DEFER): packages/app/features/tutor is the shared
+ *   feature, but its entry reaches Nitro v1 (stream-fetch), react-native-executorch,
+ *   react-native-audio-api and react-native-webgpu, none of which run on Spark's
+ *   RN 0.83 runtime. It returns when the feature exposes a `desktop` entry;
+ *   forking it here is not allowed (PR pack §PR-D05 "zero forked feature code").
+ * - "Lesson Planner" stays struck (STRIKE): main has no lesson-planning
+ *   feature or API (packages/app/features has none; apps/web/app/api has none).
+ * SOT: docs/desktop/seams/SEAMS.md · docs/desktop/seams/D05.md · Moyo Learn Desktop PR pack §PR-D05
  * The window's 900×600 minimum and 1280×800 default (PR pack design handoff)
  * live in desktop.config.json `window`; at 900pt the 240pt sidebar leaves
  * 660pt of content, so the sidebar does not collapse in D01.
@@ -22,6 +27,11 @@ export const DESKTOP_SECTIONS = [
     id: "workspace",
     label: "Workspace",
     description: "Your desktop workspace",
+  },
+  {
+    id: "classrooms",
+    label: "Classrooms",
+    description: "Your classes and their rosters",
   },
   {
     id: "resources",
