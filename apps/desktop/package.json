@@ -13,7 +13,8 @@
     "postinstall": "node scripts/apply-spark-patches.mjs && node node_modules/@legendapp/spark/init-template.cjs",
     "typecheck": "tsc --noEmit",
     "analyze": "spark analyze",
-    "test": "node --test scripts/commands.test.mjs scripts/auth.test.mjs scripts/classrooms.test.mjs"
+    "test": "node --test scripts/commands.test.mjs scripts/auth.test.mjs scripts/classrooms.test.mjs scripts/production-modules.test.mjs",
+    "modules": "node scripts/production-modules.mjs"
   },
   "dependencies": {
     "@legendapp/list": "3.7.1",
