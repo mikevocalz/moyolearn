@@ -47,6 +47,7 @@ import {
   loadSummaryBySession,
   saveSummaryReport,
 } from './summary.repository';
+import { loadSubmissionByTutorSession } from './homework.repository';
 import { budgetedGateway } from './inference';
 import { reportRouteError } from './report-error';
 
@@ -191,6 +192,7 @@ export function jobHandlers(): JobHandlers {
         loadBand: loadGradeBand,
         narrativeModel: summaryNarrativeModel,
         saveSummary: saveSummaryReport,
+        loadHomeworkForSession: loadSubmissionByTutorSession,
       });
     },
     /*

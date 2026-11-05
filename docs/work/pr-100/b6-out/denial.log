@@ -1,0 +1,17 @@
+B GET submission: 404 {"error":"Not found"}
+B list ?learner=L: 404 {"error":"Not found"}
+B print key: 404 {"error":"Not found"}
+B print sheet: 404 {"error":"Not found"}
+B approve: 404 {"error":"Not found"}
+B create practice set: 404 {"error":"Not found"}
+B report print: 404 {"error":"Not found"}
+B advance: 404 {"error":"Not found"}
+learner print key: 404 {"error":"Not found"}
+A GET submission: 200 {"submissionId":"00000000-0000-4000-8000-000000000010","lear
+A wards: 200 [{"learnerAuthId":"auth_test_learner","displayName":"B6 learner-l","gradeBand":"9-12"}]
+B wards: 200 []
+anon GET submission: 401 {"error":"unauthenticated"}
+guardian-a create for L: 500 {"error":"Server error"}
+guardian-b create for L: 404 {"error":"Not found"}
+{"error":"Server error"} [500]
+guardian-a create for L (after fix): 201 {"submissionId":"00000000-0000-4000-8000-000000000021","learnerAuthId":"auth_test_learner","createdByAuthId":"auth_test_guardian","
