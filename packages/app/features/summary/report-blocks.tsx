@@ -22,7 +22,7 @@
 //   headline block sits above collapsible detail sections). Structure only.
 // SOT: docs/pack/34-session-summary-reports.md §2 §5 · docs/pack/08-visual-hierarchy-spacing-spec.md
 // SOT-KEYWORDS: report body eight blocks fixed order accordion problems mastery movement position axes facts strip redpen underline
-import { Badge, Heading, Image, InspectorSection, MasteryBar, Text } from '@acme/ui';
+import { Badge, Heading, Image, InspectorSection, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import type {
   GuardianSummaryView,
@@ -30,6 +30,7 @@ import type {
   SubjectGroup,
 } from './summary.service.ts';
 import type { MasteryLevel, ProblemStatus } from './summary.types.ts';
+import { MovementMeter } from './movement-meter';
 
 /** The four rungs in parent words — shared by the feed card, report and queue. */
 export const LEVEL_LABEL: Record<MasteryLevel, string> = {
@@ -192,17 +193,17 @@ export function ReportBody({
           <Text variant="body" tone="muted">No mastery movement was measured this session.</Text>
         ) : (
           mastery.map((row) => (
-            <View key={row.skillId} className="gap-element">
-              <MasteryBar
-                label={row.parentLabel}
-                value={row.afterP * 100}
-                state={row.afterP < 0.5 ? 'needs-attention' : 'steady'}
-              />
-              <Text variant="data" className="font-mono text-text">
-                {LEVEL_LABEL[row.before]} → {LEVEL_LABEL[row.after]}
-              </Text>
-              <Text variant="body" tone="muted">{row.positionCopy}</Text>
-            </View>
+            // Signature S1 (DIRECTION.md §Signatures): the gain fills from the
+            // before edge, then the position line settles. Still two lines.
+            <MovementMeter
+              key={row.skillId}
+              label={row.parentLabel}
+              beforeP={row.beforeP}
+              afterP={row.afterP}
+              state={row.afterP < 0.5 ? 'needs-attention' : 'steady'}
+              levelLine={`${LEVEL_LABEL[row.before]} → ${LEVEL_LABEL[row.after]}`}
+              positionCopy={row.positionCopy}
+            />
           ))
         )}
       </View>

@@ -1,1 +1,43 @@
-{}
+{
+  "signature.movement-bar": [
+    {
+      "name": "start",
+      "timeMs": 0,
+      "state": {
+        "gain": {
+          "scaleX": 0
+        },
+        "position": {
+          "opacity": 0,
+          "y": 6
+        }
+      }
+    },
+    {
+      "name": "filled",
+      "timeMs": 500,
+      "state": {
+        "gain": {
+          "scaleX": 1
+        },
+        "position": {
+          "opacity": 0,
+          "y": 6
+        }
+      }
+    },
+    {
+      "name": "settled",
+      "timeMs": 800,
+      "state": {
+        "gain": {
+          "scaleX": 1
+        },
+        "position": {
+          "opacity": 1,
+          "y": 0
+        }
+      }
+    }
+  ]
+}
