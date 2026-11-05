@@ -3,6 +3,8 @@
 - Status: Accepted (PR-D01)
 - Date: 2026-11-04
 - Supersedes: draft PR #137 (`feat/moyo-legend-spark-desktop-preview`)
+- Amended by: ADR 0002 (desktop Nitro is v1 nightly.100, Mike's ruling of
+  2026-11-04; the 0.37.0 row and paragraph below describe what Spark ships)
 - SOT-KEYWORDS: desktop adr spark workspace isolation expo-sdk nitro lockfile
 
 ## Context

@@ -12,8 +12,9 @@ import { openFileDialog, showMessage } from "@legendapp/spark/dialogs";
 import { openURL } from "@legendapp/spark/links";
 import { COMMANDS, isCommandId, type CommandId, type WorkspaceRole } from "./commands";
 import { focusCommandSearch } from "./command-search-focus";
+import { describePlatformInfo, loadDesktopCore } from "./desktop-core";
 import { describeNitroProbe, probeNitro } from "./nitro-readiness";
-import { useShellStore } from "./store";
+import { useShellStore, type ResourceFingerprint } from "./store";
 import { openSettingsWindow } from "./windows";
 
 /** Public FAQ on the marketing site (apps/web-vite/src/routes/faq.tsx on main). */
@@ -30,25 +31,65 @@ function report(source: string) {
   return (cause: unknown) => useShellStore.getState().reportError(source, cause);
 }
 
+/**
+ * The current pick. Every pick and every Clear Resource bumps it, and a hash
+ * result is applied only while its id is still current, so a slow hash of an
+ * earlier file (or of a cleared one) can never reappear.
+ */
+let fingerprintRequest = 0;
+
+/** Hashes on MoyoDesktopCore's queue; the path lives only for this call. */
+async function fingerprint(path: string, requestId: number): Promise<void> {
+  const apply = (value: ResourceFingerprint) => {
+    if (requestId === fingerprintRequest) useShellStore.getState().setResourceFingerprint(value);
+  };
+  const probe = loadDesktopCore();
+  if (!probe.available) {
+    apply({ status: "failed", message: `MoyoDesktopCore is not in this runtime. ${probe.detail}` });
+    return;
+  }
+  try {
+    apply({ status: "ready", sha256: await probe.core.hashFile(path) });
+  } catch (cause) {
+    apply({ status: "failed", message: cause instanceof Error ? cause.message : String(cause) });
+  }
+}
+
 export async function chooseResource(): Promise<void> {
   const store = useShellStore.getState();
   try {
     const result = await openFileDialog({ title: "Choose a Resource", multiple: false, filters: RESOURCE_FILTERS });
     if (result.canceled) return;
-    // Keep the base name only. No path is persisted and the file is never read.
-    const name = result.paths[0]?.split(/[\\/]/).pop();
-    if (!name) return;
+    const path = result.paths[0];
+    // Keep the base name only. The path is used once to hash and is never stored or uploaded.
+    const name = path?.split(/[\\/]/).pop();
+    if (!path || !name) return;
+    // Name, pending state and request id change in one synchronous step.
+    const requestId = ++fingerprintRequest;
     store.setResourceName(name);
+    store.setResourceFingerprint({ status: "pending" });
     store.setSection("resources");
     store.dismissError();
+    await fingerprint(path, requestId);
   } catch (cause) {
     report(COMMANDS["file.chooseResource"].label)(cause);
   }
 }
 
+function clearResource(): void {
+  fingerprintRequest += 1;
+  const store = useShellStore.getState();
+  store.setResourceName(null);
+  store.setResourceFingerprint(null);
+}
+
 async function showRuntimeDiagnostics(): Promise<void> {
   try {
-    await showMessage({ title: "Runtime Diagnostics", message: describeNitroProbe(probeNitro()), kind: "info" });
+    const core = loadDesktopCore();
+    const platform = core.available
+      ? describePlatformInfo(core.core.getPlatformInfo())
+      : `MoyoDesktopCore is not in this runtime.\n${core.detail}`;
+    await showMessage({ title: "Runtime Diagnostics", message: `${describeNitroProbe(probeNitro())}\n\n${platform}`, kind: "info" });
   } catch (cause) {
     report("Runtime Diagnostics")(cause);
   }
@@ -61,7 +102,7 @@ function switchWorkspace(role: WorkspaceRole): void {
 const HANDLERS = {
   "app.settings": () => void openSettingsWindow().catch(report("Settings")),
   "file.chooseResource": () => void chooseResource(),
-  "file.clearResource": () => useShellStore.getState().setResourceName(null),
+  "file.clearResource": () => clearResource(),
   "view.toggleSidebar": () => useShellStore.getState().toggleSidebar(),
   "view.toggleCompact": () => {
     const store = useShellStore.getState();

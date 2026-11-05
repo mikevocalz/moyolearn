@@ -10,7 +10,7 @@
     "build": "spark build",
     "package": "spark package",
     "doctor": "spark doctor",
-    "postinstall": "node node_modules/@legendapp/spark/init-template.cjs",
+    "postinstall": "node scripts/apply-spark-patches.mjs && node node_modules/@legendapp/spark/init-template.cjs",
     "typecheck": "tsc --noEmit",
     "analyze": "spark analyze",
     "test": "node --test scripts/commands.test.mjs"
@@ -26,11 +26,13 @@
     "expo-desktop-metro-config": "55.83.3",
     "expo-desktop-prebuild-config": "1.1.3",
     "expo-desktop-template-bare-minimum": "55.83.10",
+    "moyo-desktop-core": "file:../../packages/desktop-native/moyo-desktop-core",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "react-native": "0.83.10",
     "react-native-macos": "0.83.0",
-    "react-native-nitro-modules": "file:./spark-packages/react-native-nitro-modules-5df8774796c48ed54d238f3fada01b64d710b14077983c37f639607eb805e066.tgz",
+    "react-native-nitro-modules": "file:./vendors/react-native-nitro-modules-1.0.0-alpha.nightly.100.g107f6fc66597-spark-macos.tgz",
+    "simdutf-swift": "file:./vendors/simdutf-swift-1.0.1-spark-macos.tgz",
     "typescript": "5.9.3",
     "zustand": "5.0.16"
   },
@@ -45,17 +47,7 @@
     "autolinking": {
       "exclude": [
         "react-native-windows",
-        "@legendapp/spark-audio",
-        "@legendapp/spark-clipboard",
         "@legendapp/spark-codex",
-        "@legendapp/spark-drag-drop",
-        "@legendapp/spark-global-shortcuts",
-        "@legendapp/spark-notifications",
-        "@legendapp/spark-processes",
-        "@legendapp/spark-secure-storage",
-        "@legendapp/spark-system",
-        "@legendapp/spark-tray",
-        "@legendapp/spark-updates",
         "@react-native-runtimes/core"
       ]
     }
@@ -80,7 +72,7 @@
   "overrides": {
     "expo": "55.0.32",
     "@expo/cli": "55.0.37",
-    "react-native-nitro-modules": "file:./spark-packages/react-native-nitro-modules-5df8774796c48ed54d238f3fada01b64d710b14077983c37f639607eb805e066.tgz",
+    "react-native-nitro-modules": "file:./vendors/react-native-nitro-modules-1.0.0-alpha.nightly.100.g107f6fc66597-spark-macos.tgz",
     "react-native-webview": "file:./spark-packages/react-native-webview-333e421ad38b0da2b1dc7b3306de019f257e31bfd6cdb0272d97b1bb2b129354.tgz",
     "@op-engineering/op-sqlite": "file:./spark-packages/op-engineering-op-sqlite-a14b99ecf4911b55f586b2c5d1f58ac48b0a9d8fe4b84fa6edef1a167630646b.tgz",
     "expo-asset": "55.0.20",
@@ -125,6 +117,14 @@
     "@react-native-runtimes/core": "file:./spark-packages/react-native-runtimes-core-3a04e0455ac44b0bc11cfa315943ad84509c445111a2b3974ca85c8ed489827c.tgz",
     "expo-audio": "file:./spark-packages/expo-audio-a8d70b5b39bd3b69d95528011f14aa93a0fdf7ff1e6c89e0f7489329230be060.tgz",
     "@legendapp/spark": "0.0.2"
+  },
+  "sparkNativePatchOverrides": {
+    "react-native-nitro-modules": {
+      "version": "1.0.0-alpha.nightly.100.g107f6fc66597",
+      "patchHash": "f53e378dc03a02ac0f5c58ca70aac70b29820f5f30c9377f423a8866e5ed061e",
+      "upstreamIntegrity": "sha512-zcPVSeq49HZDuuxBZmVsHT1urwx7mU5MzPKOb6ytVqKsnzTcpT1Y1F/UeJAOkwvlrxLIUrVTrEqyJr8IQ7c1JA==",
+      "reason": "Moyo pins Nitro v1 nightly.100 on every platform (ruling 2026-11-04). Port and patch: apps/desktop/vendors/README.md."
+    }
   },
   "description": "Moyo Learn for macOS on Legend Spark. Separate npm graph from the root pnpm workspace.",
   "engines": {

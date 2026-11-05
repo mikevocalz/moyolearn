@@ -15,7 +15,7 @@ SOT-KEYWORDS: desktop seams spark nitro theme boundary imports
 | `packages/theme/tokens.ts` | shared → desktop | Relative import `../../packages/theme/tokens`; Metro `watchFolders` adds `packages/theme` | Only `tokens.ts`. It has no imports. `index.ts` and `tenant.ts` are not imported. |
 | `@acme/ui` | none (DEFER) | — | Reaches Nitro v1, `@expo/ui`, `expo-router` and Viro across 37 non-story files (2026-11-04 dispositions). Returns when a desktop-safe subpath exists. |
 | `@acme/auth` client types | none in D01 | — | PR-D04 owns this seam. |
-| Nitro | desktop only | Spark's patched `react-native-nitro-modules` 0.37.0 tarball, pinned in `overrides` and `dependencies` | Never the root's v1 nightly. One copy in the graph (`npm ls react-native-nitro-modules` shows one, deduped). |
+| Nitro | desktop only | Nitro v1 `1.0.0-alpha.nightly.100.g107f6fc66597` (mobile's version) as Moyo's Spark macOS port, `vendors/react-native-nitro-modules-…-spark-macos.tgz`, pinned in `overrides` and `dependencies` (ADR 0002) | Never the root's upstream copy, which builds through SwiftPM on React Native 0.88. One copy in the graph (`npm ls react-native-nitro-modules` shows one, deduped). |
 | Mobile app (`apps/mobile`) | none | — | Desktop reads `apps/mobile/eas.json` only as the documented source for `https://app.moyolearn.com`. |
 
 ## 2. Token mapping (`apps/desktop/src/theme.ts`)
@@ -71,7 +71,7 @@ in `@legendapp/spark/package.json` has `./dialogs`, which re-exports both
 
 | Import | Symbol | Defined at |
 | --- | --- | --- |
-| `react-native-nitro-modules` 0.37.0 (lazy `require`) | `NitroModules` | `react-native-nitro-modules/lib/typescript/turbomodule/NativeNitroModules.d.ts:2` |
+| `react-native-nitro-modules` v1 nightly.100 (lazy `require`) | `NitroModules`, type `NitroModulesProxy` (re-exported from `nitro-core`) | `nitro-core/js/lib/typescript/module/NitroModulesProxy.d.ts` |
 | same | `.version`, `.buildType`, `.getAllHybridObjectNames()` | `react-native-nitro-modules/lib/typescript/NitroModulesProxy.d.ts:46, 40, 35` |
 | `zustand` 5.0.16 | `create` | `zustand/react.d.ts:13` |
 | `expo` 55.0.32 (`index.ts`) | `registerRootComponent` | `expo` package root |

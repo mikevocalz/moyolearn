@@ -1,0 +1,43 @@
+{
+  "name": "moyo-desktop-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moyo Learn for macOS native core: the first Nitro v1 HybridObject on Legend Spark.",
+  "main": "src/index.ts",
+  "react-native": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "src",
+    "apple",
+    "nitrogen/generated",
+    "nitro.json",
+    "MoyoDesktopCore.podspec"
+  ],
+  "scripts": {
+    "specs": "nitrogen --log-level warning",
+    "specs:check": "node scripts/check-nitrogen.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "nitro-core": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "react-native-nitro-modules": "1.0.0-alpha.nightly.100.g107f6fc66597"
+  },
+  "devDependencies": {
+    "nitro-core": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "nitrogen": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "react": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-nitro-modules": "file:../../../apps/desktop/vendors/react-native-nitro-modules-1.0.0-alpha.nightly.100.g107f6fc66597-spark-macos.tgz",
+    "simdutf-swift": "file:../../../apps/desktop/vendors/simdutf-swift-1.0.1-spark-macos.tgz",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=24.19.0"
+  },
+  "imports": {
+    "#nitro/*": "./nitrogen/generated/shared/javascript/*.cjs"
+  },
+  "overrides": {
+    "react-native-nitro-modules": "file:../../../apps/desktop/vendors/react-native-nitro-modules-1.0.0-alpha.nightly.100.g107f6fc66597-spark-macos.tgz"
+  }
+}

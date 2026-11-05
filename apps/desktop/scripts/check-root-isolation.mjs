@@ -1,9 +1,9 @@
 // Fails when apps/desktop leaks into the root pnpm workspace.
 //
-// apps/desktop runs Expo SDK 55 / RN 0.83.10 / Nitro 0.37.0 under Spark 0.0.2;
-// the root runs SDK 58 / RN 0.88 / Nitro v1. If pnpm ever adopts apps/desktop,
-// one graph gets both Nitro builds ("Nitro was installed twice") and the root
-// overrides rewrite Spark's pins. Three checks, all against committed files:
+// apps/desktop runs Expo SDK 55 / RN 0.83.10 under Spark 0.0.2, with Moyo's
+// CocoaPods port of Nitro v1; the root runs SDK 58 / RN 0.88 with upstream
+// Nitro v1 through SwiftPM. If pnpm ever adopts apps/desktop, one graph gets
+// both Nitro builds and the root overrides rewrite Spark's pins. Three checks, all against committed files:
 //   1. pnpm-workspace.yaml still carries the "!apps/desktop" exclusion.
 //   2. pnpm-lock.yaml has no `apps/desktop` importer.
 //   3. pnpm-lock.yaml names none of the packages only desktop installs.
@@ -26,6 +26,9 @@ const DESKTOP_ONLY = [
   "expo-desktop-prebuild-config",
   "expo-desktop-template-bare-minimum",
   "react-native-macos",
+  // The CocoaPods packaging of simdutf-swift exists only for desktop's Nitro
+  // port; mobile gets simdutf-swift through SwiftPM.
+  "simdutf-swift",
 ];
 
 const failures = [];

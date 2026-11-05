@@ -1,29 +1,27 @@
 /**
  * Probe for the Nitro runtime inside the desktop Hermes runtime.
  *
- * Desktop runs Spark's patched react-native-nitro-modules 0.37.0 (the tarball in
- * spark-packages/, pinned through `overrides`). Mobile runs Nitro v1
- * 1.0.0-alpha.nightly.100; the two cannot share one dependency graph, which is
- * one reason apps/desktop has its own lockfile. #137 checked for the v1
- * nightly here; that was the wrong runtime for Spark 0.0.2.
+ * Desktop runs Nitro v1, the same 1.0.0-alpha.nightly.100 that mobile pins
+ * (Mike's ruling, 2026-11-04), as Moyo's Legend Spark macOS port of
+ * react-native-nitro-modules (apps/desktop/vendors/, pinned through
+ * `overrides`). Spark 0.0.2's own patched 0.37.0 is not used. apps/desktop
+ * keeps its own lockfile because Spark pins React Native macOS 0.83 while the
+ * root workspace is on React Native 0.88.
  *
  * The module is required lazily because importing react-native-nitro-modules
  * throws `ModuleNotFoundError` when the host has not installed the NitroModules
- * TurboModule (lib/.../turbomodule/NativeNitroModules.ts). A throw at import
- * would take the whole shell down; a failed probe is reported instead.
+ * TurboModule (src/turbomodule/NativeNitroModules.ts in the package). A throw
+ * at import would take the whole shell down; a failed probe is reported instead.
  *
- * "available" means the Nitro core proxy is installed and its native version
- * matches the JS package. It says nothing about Moyo HybridObjects: none exist
- * until PR-D03, and `hybridObjects` lists what the host actually registered.
- * SOT: apps/desktop/package.json (overrides) · docs/desktop/seams/SEAMS.md
- * SOT-KEYWORDS: desktop nitro readiness probe hybrid-object spark 0.37
+ * "available" means the Nitro proxy is installed and its native version
+ * matches the JS package. `hybridClasses` lists the HybridObject classes the
+ * host registered (v1 names them `<cxxNamespace>.<Class>`).
+ * SOT: apps/desktop/package.json (overrides) · docs/desktop/adr/0002-nitro-desktop-adapter.md
+ * SOT-KEYWORDS: desktop nitro readiness probe hybrid-object spark v1 nightly
  */
-import type { NitroModules } from "react-native-nitro-modules";
+import type { NitroModulesProxy } from "react-native-nitro-modules";
 
-// 0.37.0's index re-exports the `NitroModules` value but not its interface.
-type NitroModulesProxy = typeof NitroModules;
-
-export const EXPECTED_NITRO_VERSION = "0.37.0" as const;
+export const EXPECTED_NITRO_VERSION = "1.0.0-alpha.nightly.100.g107f6fc66597" as const;
 
 export type NitroProbe =
   | { readonly available: false; readonly reason: "not-installed"; readonly detail: string }
@@ -32,7 +30,7 @@ export type NitroProbe =
       readonly available: true;
       readonly version: typeof EXPECTED_NITRO_VERSION;
       readonly buildType: NitroModulesProxy["buildType"];
-      readonly hybridObjects: readonly string[];
+      readonly hybridClasses: readonly string[];
     };
 
 type NitroModule = { NitroModules: NitroModulesProxy };
@@ -53,7 +51,7 @@ export function probeNitro(): NitroProbe {
     available: true,
     version: EXPECTED_NITRO_VERSION,
     buildType: proxy.buildType,
-    hybridObjects: proxy.getAllHybridObjectNames(),
+    hybridClasses: proxy.getAllHybridClassNames(),
   };
 }
 
@@ -65,6 +63,6 @@ export function describeNitroProbe(probe: NitroProbe): string {
   if (!probe.available) {
     return `Nitro native version ${probe.nativeVersion} does not match JS ${EXPECTED_NITRO_VERSION}.`;
   }
-  const objects = probe.hybridObjects.length > 0 ? probe.hybridObjects.join(", ") : "none";
-  return `Nitro ${probe.version} (${probe.buildType}). Registered HybridObjects: ${objects}.`;
+  const classes = probe.hybridClasses.length > 0 ? probe.hybridClasses.join(", ") : "none";
+  return `Nitro ${probe.version} (${probe.buildType}). Registered HybridObject classes: ${classes}.`;
 }
