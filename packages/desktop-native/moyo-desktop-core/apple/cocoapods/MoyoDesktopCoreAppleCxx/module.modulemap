@@ -1,0 +1,11 @@
+// The MoyoDesktopCoreAppleCxx clang module that nitrogen's generated Swift
+// imports. SwiftPM derives it from the generated AppleCxx target; CocoaPods
+// builds one target per pod, so it is declared here. apple/cocoapods is a
+// header search path, where clang finds <ModuleName>/module.modulemap
+// (NitroCocoaPods.add_nitrogen_module in the Nitro port).
+// SOT-KEYWORDS: desktop nitro cocoapods modulemap applecxx
+module MoyoDesktopCoreAppleCxx {
+  requires cplusplus
+  header "../../../nitrogen/generated/apple/MoyoDesktopCoreAppleCxx/include/MoyoDesktopCoreAppleCxx/MoyoDesktopCoreAppleCxx.h"
+  export *
+}

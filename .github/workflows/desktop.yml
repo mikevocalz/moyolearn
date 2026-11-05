@@ -9,6 +9,7 @@ on:
   pull_request:
     paths:
       - "apps/desktop/**"
+      - "packages/desktop-native/**"
       - "packages/theme/tokens.ts"
       - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
@@ -19,6 +20,7 @@ on:
     branches: [main]
     paths:
       - "apps/desktop/**"
+      - "packages/desktop-native/**"
       - "packages/theme/tokens.ts"
       - "pnpm-workspace.yaml"
       - "pnpm-lock.yaml"
@@ -57,6 +59,14 @@ jobs:
           node --version
           xcodebuild -version
           pod --version
+      # Nitro packages own their codegen graph. specs:check regenerates into a temp
+      # directory and fails on any drift or hand edit in nitrogen/generated.
+      - name: moyo-desktop-core (typecheck, nitrogen drift)
+        working-directory: packages/desktop-native/moyo-desktop-core
+        run: |
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm run specs:check
       # npm ci runs the postinstall (init-template.cjs), which Spark needs to
       # prepare its patched native inputs. Do not pass --ignore-scripts.
       - run: npm ci

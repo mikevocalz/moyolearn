@@ -79,6 +79,25 @@ function WorkspaceEmpty({ scheme }: { scheme: Scheme }) {
   );
 }
 
+function FingerprintLine({ scheme }: { scheme: Scheme }) {
+  const fingerprint = useShellStore((state) => state.resourceFingerprint);
+  const styles = contentStyles(scheme);
+  if (!fingerprint) return null;
+  if (fingerprint.status === "pending") return <Text style={styles.body}>Computing SHA-256…</Text>;
+  if (fingerprint.status === "failed") {
+    return (
+      <Text style={styles.body} selectable>
+        Couldn’t compute the fingerprint: {fingerprint.message}
+      </Text>
+    );
+  }
+  return (
+    <Text style={[styles.body, styles.mono]} selectable accessibilityLabel="SHA-256 fingerprint, 64 characters. Select to copy.">
+      SHA-256 {fingerprint.sha256}
+    </Text>
+  );
+}
+
 function ResourcesPanel({ scheme }: { scheme: Scheme }) {
   const resourceName = useShellStore((state) => state.resourceName);
   const styles = contentStyles(scheme);
@@ -87,8 +106,9 @@ function ResourcesPanel({ scheme }: { scheme: Scheme }) {
       <Text style={styles.heading} selectable>
         {resourceName ?? "No file chosen"}
       </Text>
+      <FingerprintLine scheme={scheme} />
       <Text style={styles.body}>
-        Moyo Learn shows the file name only. It does not open, read or upload the file.
+        Moyo Learn reads the file on this Mac only to compute its fingerprint. It keeps the name, not the location, and never uploads the file.
       </Text>
       <NativeButton
         variant="bordered"
@@ -176,6 +196,7 @@ function contentStyles(scheme: Scheme) {
       backgroundColor: color("surface-raised", scheme),
     },
     heading: { ...textStyle("title"), color: color("text", scheme) },
+    mono: { fontVariant: ["tabular-nums"] },
     body: { ...textStyle("body"), color: color("text-muted", scheme), maxWidth: toPoints(contentWidths["content-feed"]) },
     notice: {
       flexDirection: "row",

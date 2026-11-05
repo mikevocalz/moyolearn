@@ -6,6 +6,7 @@
  *   useMenu          -> NSApplication main menu (spark-native-menu RNNativeMenu.mm)
  *   registerShortcut -> focused-app key monitor (spark-desktop-shortcuts)
  *   Appearance.setColorScheme -> NSApp.appearance (react-native-macos RCTAppearance.mm)
+ *   addThermalStateListener   -> ProcessInfo thermal notification (moyo-desktop-core, Nitro)
  *
  * Existing host items are re-bound rather than duplicated: Settings… takes the
  * storyboard's ⌘, item (`target: { role: "settings" }`) and Choose Resource…
@@ -21,6 +22,7 @@ import { Appearance } from "react-native";
 import { useMenu, type MenuItem, type MenuRootItem } from "@legendapp/spark/menus";
 import { getShortcutAvailability, registerShortcut } from "@legendapp/spark/shortcuts";
 import { runCommand, runCommandItem } from "./command-actions";
+import { loadDesktopCore } from "./desktop-core";
 import {
   COMMANDS,
   WORKSPACE_COMMANDS,
@@ -127,6 +129,30 @@ export function DesktopShellControllers() {
   useEffect(() => {
     Appearance.setColorScheme(appearance === "system" ? "unspecified" : appearance);
   }, [appearance]);
+
+  // Thermal pressure feeds the store for PR-D05 surfaces (docs/desktop/handoff/D03.md).
+  // A missing HybridObject leaves `thermalState` null; Runtime Diagnostics says why.
+  useEffect(() => {
+    const probe = loadDesktopCore();
+    if (!probe.available) return;
+    const store = useShellStore.getState();
+    try {
+      // The listener also delivers the current state first; this read only
+      // fills the store before that first callback crosses to the JS thread.
+      store.setThermalState(probe.core.getPlatformInfo().thermalState);
+      const subscription = probe.core.addThermalStateListener((state) => useShellStore.getState().setThermalState(state));
+      return () => {
+        try {
+          subscription.remove();
+        } catch (cause) {
+          useShellStore.getState().reportError("Thermal state", cause);
+        }
+      };
+    } catch (cause) {
+      store.reportError("Thermal state", cause);
+      return undefined;
+    }
+  }, []);
 
   useEffect(() => {
     if (!getShortcutAvailability().available) return;

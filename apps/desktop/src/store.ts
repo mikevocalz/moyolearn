@@ -3,7 +3,8 @@
  *
  * Holds view state for the windows: active section, layout density, sidebar
  * visibility, appearance, the command-search query, the session's workspace
- * roles, the name of a file the user picked, and the last native-control error.
+ * roles, the name and SHA-256 of a file the user picked, the macOS thermal
+ * state, and the last native-control error.
  * Every Spark window renders from this one JS runtime, so the Settings window
  * and the main window read the same store.
  *
@@ -20,11 +21,20 @@
 import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { settings } from "@legendapp/spark/settings";
+import type { ThermalState } from "moyo-desktop-core";
 import type { WorkspaceRole } from "./commands";
 import { isDensity, type DesktopDensity, type DesktopSection } from "./layout";
 
 export type ShellError = { readonly source: string; readonly message: string };
 export type AppearancePreference = "system" | "light" | "dark";
+/**
+ * SHA-256 of the chosen resource, computed on this Mac by MoyoDesktopCore.
+ * command-actions.ts drops results from superseded picks before they get here.
+ */
+export type ResourceFingerprint =
+  | { readonly status: "pending" }
+  | { readonly status: "ready"; readonly sha256: string }
+  | { readonly status: "failed"; readonly message: string };
 
 interface ShellState {
   section: DesktopSection;
@@ -38,6 +48,9 @@ interface ShellState {
   activeRole: WorkspaceRole | null;
   /** Base name only. The absolute path is never stored, read or uploaded. */
   resourceName: string | null;
+  resourceFingerprint: ResourceFingerprint | null;
+  /** Last value from MoyoDesktopCore's thermal listener; null until the first read. */
+  thermalState: ThermalState | null;
   error: ShellError | null;
   /** Persisted settings have been read (or the read failed and defaults stand). */
   hydrated: boolean;
@@ -50,6 +63,8 @@ interface ShellState {
   setSessionRoles: (roles: readonly WorkspaceRole[]) => void;
   setActiveRole: (role: WorkspaceRole) => void;
   setResourceName: (name: string | null) => void;
+  setResourceFingerprint: (fingerprint: ResourceFingerprint | null) => void;
+  setThermalState: (state: ThermalState) => void;
   reportError: (source: string, cause: unknown) => void;
   dismissError: () => void;
 }
@@ -120,6 +135,8 @@ export const useShellStore = create<ShellState>()(
       sessionRoles: [],
       activeRole: null,
       resourceName: null,
+      resourceFingerprint: null,
+      thermalState: null,
       error: null,
       hydrated: false,
       setSection: (section) => set({ section }),
@@ -139,6 +156,8 @@ export const useShellStore = create<ShellState>()(
         if (get().sessionRoles.includes(role)) set({ activeRole: role });
       },
       setResourceName: (resourceName) => set({ resourceName }),
+      setResourceFingerprint: (resourceFingerprint) => set({ resourceFingerprint }),
+      setThermalState: (thermalState) => set({ thermalState }),
       reportError: (source, cause) => set({ error: { source, message: messageOf(cause) } }),
       dismissError: () => set({ error: null }),
     }),

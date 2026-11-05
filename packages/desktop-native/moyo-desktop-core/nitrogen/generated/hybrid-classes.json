@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "classes": {
+    "MoyoDesktopCore": {
+      "apple": {
+        "implementation": {
+          "className": "HybridMoyoDesktopCore"
+        },
+        "language": "swift"
+      }
+    }
+  }
+}

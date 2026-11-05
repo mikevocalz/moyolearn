@@ -1,0 +1,60 @@
+--- a/vendor/node_modules/@legendapp/spark-cli/dist/native-patch-preflight.js	2026-11-04 19:52:54
++++ b/vendor/node_modules/@legendapp/spark-cli/dist/native-patch-preflight.js	2026-11-04 19:53:15
+@@ -7,7 +7,7 @@
+ import { installedPackages, readJson, VERSION } from "./project.js";
+ const required = ["@react-native-runtimes/core", "react-native-nitro-modules"];
+ const optional = ["@op-engineering/op-sqlite", "react-native-webview", "expo-audio"];
+-export function validatePackedNativePatches(packages, requirements, frameworkVersion = VERSION) {
++export function validatePackedNativePatches(packages, requirements, frameworkVersion = VERSION, overrides = {}) {
+     if (!requirements || requirements.schema !== 1 || requirements.frameworkVersion !== frameworkVersion || !requirements.packages || typeof requirements.packages !== "object")
+         return [`The installed @legendapp/spark SDK does not include native patch provenance for ${frameworkVersion}. Run spark add desktop to install the matching SDK packages, then retry.`];
+     const installed = new Map(packages.map(pkg => [pkg.name, pkg.json]));
+@@ -19,7 +19,7 @@
+         const actual = installed.get(name);
+         if (!actual)
+             continue;
+-        const expected = requirements.packages[name];
++        const expected = overrides[name] ?? requirements.packages[name];
+         const spark = actual.spark;
+         if (!expected || typeof expected.version !== "string" || !/^[a-f0-9]{64}$/.test(expected.patchHash) ||
+             (!expected.upstreamIntegrity && !expected.upstreamRevision) || actual.version !== expected.version || spark?.sdk !== true || spark.patchHash !== expected.patchHash ||
+@@ -68,6 +68,30 @@
+     }
+     return errors;
+ }
++// Moyo Learn patch (apps/desktop/patches/legendapp-spark-0.0.2-native-patch-overrides.patch):
++// an app may replace Spark's expected stamp for a package Spark already requires,
++// through package.json "sparkNativePatchOverrides". The installed package must
++// still carry that exact version, patchHash and upstream source, and every
++// override is printed on every run.
++export function readNativePatchOverrides(root, requirements) {
++    const declared = readJson(path.join(root, "package.json")).sparkNativePatchOverrides;
++    if (declared === undefined)
++        return {};
++    if (!declared || typeof declared !== "object" || Array.isArray(declared))
++        throw new Error("package.json sparkNativePatchOverrides must be an object keyed by package name.");
++    const overrides = {};
++    for (const [name, value] of Object.entries(declared)) {
++        const spark = requirements?.packages?.[name];
++        if (!spark)
++            throw new Error(`package.json sparkNativePatchOverrides.${name}: Spark ${VERSION} has no native patch requirement for ${name}.`);
++        if (!value || typeof value.version !== "string" || !/^[a-f0-9]{64}$/.test(value.patchHash ?? "") ||
++            (!value.upstreamIntegrity && !value.upstreamRevision) || typeof value.reason !== "string" || !value.reason.trim())
++            throw new Error(`package.json sparkNativePatchOverrides.${name} needs version, a 64-character hex patchHash, upstreamIntegrity or upstreamRevision, and reason.`);
++        overrides[name] = { version: value.version, patchHash: value.patchHash, upstreamIntegrity: value.upstreamIntegrity, upstreamRevision: value.upstreamRevision };
++        console.warn(`Spark native patch override: ${name}@${value.version} (patch ${value.patchHash.slice(0, 12)}) replaces Spark's ${name}@${spark.version}. ${value.reason}`);
++    }
++    return overrides;
++}
+ export function assertNativePatchPreflight(root) {
+     assertEnrichedHtmlPins(root);
+     const packages = installedPackages(root);
+@@ -77,7 +101,7 @@
+     const spark = packages.find(pkg => pkg.name === "@legendapp/spark");
+     const requirements = spark?.json.spark?.nativePatchRequirements;
+     if (requirements)
+-        errors = validatePackedNativePatches(packages, requirements);
++        errors = validatePackedNativePatches(packages, requirements, VERSION, readNativePatchOverrides(root, requirements));
+     else if (framework)
+         errors = validateWorkspaceNativePatches(root, packages);
+     else {

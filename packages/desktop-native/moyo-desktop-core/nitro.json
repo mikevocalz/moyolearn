@@ -1,0 +1,8 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "environment": "react-native",
+  "cxxNamespace": ["moyo", "desktopcore"],
+  "apple": { "moduleName": "MoyoDesktopCore" },
+  "android": { "namespace": ["moyo", "desktopcore"], "cxxLibName": "MoyoDesktopCore" },
+  "ignorePaths": ["**/node_modules"]
+}

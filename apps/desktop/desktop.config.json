@@ -60,6 +60,12 @@
     "experiments": {
       "outOfTreePlatforms": true,
       "autolinkingModuleResolution": false
+    },
+    "autolinking": {
+      "exclude": [
+        "@legendapp/spark-codex",
+        "@react-native-runtimes/core"
+      ]
     }
   },
   "projectId": "3e9cc7ca-114f-4ae5-ae40-ed5163ca59bd"
