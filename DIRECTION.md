@@ -214,4 +214,79 @@ governing voice in `docs/site/copy-deck.md:5`).
 
 ## Signatures
 
-Storyboards for the four motion signatures land with PR-M03.
+The four motion signatures from PR-M03 of the desktop PR pack. Each is
+storyboarded here before code (web-designer-pro `references/motion.md` §3).
+Timings name `@acme/motion` presets, never milliseconds; the numbers in
+brackets are what the presets resolve to today (`docs/motion/README.md`).
+Disposition per `product-decisions`: BUILD when the surface and its data exist,
+STRIKE when the surface's precondition is missing, DEFER when a decision blocks it.
+
+### S1. Session-report movement bar (BUILD)
+
+- **Concept.** Doc 34 keeps movement and position as two separate axes
+  (`docs/pack/34-session-summary-reports.md`, "Movement vs Position"). The bar
+  shows movement: how far this session took the skill. Position (where that sits
+  against grade expectations) is a sentence, and it arrives only after the
+  movement has been shown, so the two are never read as one claim.
+- **Where.** Block 4 of the session report, `ReportBody` in
+  `packages/app/features/summary/report-blocks.tsx`: guardian report, teacher
+  share link (`apps/web` `/share/report/[token]`) and, later, the desktop report
+  window. Data: `MasteryMovement.beforeP`, `.afterP`, `.positionCopy`.
+- **Who and how often.** A guardian reads a report once, after a session; a
+  teacher opens a share link a few times a week. Seen rarely, so it may take a
+  cinematic beat, once per mount. It never loops.
+- **Trigger.** The block mounts with data.
+- **Frames.**
+  1. `start`: the track shows the `before` fill solid; the gain segment
+     (`before` to `after`) is present at zero width; the position line is
+     invisible and 6 px low.
+  2. `filled` (after `cinematic` [500 ms], ease `cubic.out`): the gain
+     segment has grown from the before edge to the after edge, the way a dial
+     needle comes to rest. Nothing else has moved.
+  3. `settled` (after `entrance` [300 ms] more, ease `cubic.out`): the position
+     line has faded in and risen 6 px into place.
+- **Reduced motion.** Frame 3 on first paint: full bar, position line in place.
+  `reducedMotionDestination` 'finish'.
+- **Accessibility.** The meter is a `progressbar` with the after value from the
+  first render, so a screen reader announces the end state; the motion is
+  `aria-hidden` decoration on the gain segment. Focus is never inside it.
+- **Not.** No count-up number, no colour flash, no confetti: movement is shown,
+  not celebrated with pressure (CONTRIBUTING §Children's surfaces).
+
+### S2. Front-door reveal (DEFER)
+
+- **Concept.** The open-book M of the mark (`packages/ui/MoyoMark.tsx`; path
+  data in `apps/mobile/components/splash/moyo-paths.ts`) folds open into the
+  welcome's two panes.
+- **Blocker.** The welcome has no two panes. `PublicEntryContent`
+  (`packages/app/features/onboarding/public-entry-content.tsx`) is one column
+  with the wordmark, and the web-vite hero renders no mark at all. The two-pane
+  welcome is a front-door layout decision governed by doc 38, and the pack
+  requires three explorations and a scored critique for this piece. Until that
+  layout exists there is nothing for the M to open into.
+- **Storyboard to build against.** Trigger: first paint of the welcome after the
+  splash. Frames: the mark centred (`start`); the two page paths rotate apart on
+  the spine (`open`, `cinematic`); the panes slide out from the page edges
+  (`panes`, `transition`, overlapping the open by a third). Reduced motion: the
+  two panes, mark small in the left pane.
+
+### S3. Plan dial on the paywall (STRIKE, 2026-11-04)
+
+- **Concept.** Plan cards fan from a stack as the learner count changes (doc 38
+  PW-01/PW-05).
+- **Precondition missing.** There is no learner count and no per-child price.
+  `PaywallContent` maps two flat family plans (`paywall.data.ts`); no web
+  billing route exists. A fan that reacts to a control that does not exist is a
+  dead control.
+- **Returns when** per-child pricing ships with its count control.
+
+### S4. Lesson-card tilt (STRIKE, 2026-11-04)
+
+- **Concept.** The homework photo card tilts toward the pointer or finger with
+  a lit edge and settles on release (Tactile Learning).
+- **Precondition missing.** No homework photo card exists on learner home
+  (`learner-hub-content.tsx` has an icon tile) or in the tutor queue
+  (`draft-queue-content.tsx` is a table without photos).
+- **Returns when** a photo card ships on either surface. The tutor sees the queue
+  many times a day, so when it returns the tilt is clamped small and pauses
+  off-screen.

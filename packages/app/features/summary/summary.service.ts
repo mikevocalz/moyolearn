@@ -33,7 +33,9 @@ import { protectedOperation, type ProtectedCtx } from '../../core/protected-oper
 import { coachClassifier } from '../tutor/tutor-safety.ts';
 import type { StoredMessage } from '../tutor/session.types.ts';
 import type { LoadPriorFacts } from '../tutor/tutor.service.ts';
+import type { HomeworkSubmissionView } from '../homework/homework.types.ts';
 import { extractEvidence, type EvidencedTurn, type ExtractedEvidence } from './evidence.ts';
+import { homeworkHeadline, homeworkNextStep, narrativeEvidence } from './homework-rows.ts';
 import { lintNarrative, type NarrativeCandidate } from './honesty.ts';
 import { homeSupportFor } from './home-support.ts';
 import {
@@ -45,6 +47,7 @@ import {
   SCHEMA_VERSION,
 } from './narrative.ts';
 import type {
+  HomeworkProblemDetail,
   MasteryMovement,
   ProblemRow,
   SessionSummaryReport,
@@ -126,6 +129,15 @@ export type NarrativeModel = (payload: {
   readonly message: string;
 }) => Promise<{ readonly text: string; readonly model: string }>;
 
+/**
+ * The worksheet a tutor session was started on, or null for a session with
+ * none. Scoped by `ctx.learnerId`, which the job builds from the session row.
+ */
+export type LoadHomeworkForSession = (
+  ctx: ProtectedCtx,
+  sessionId: string,
+) => Promise<HomeworkSubmissionView | null>;
+
 export interface GenerateSummaryPorts {
   readonly loadSession: LoadSessionForSummary;
   readonly loadSummary: LoadSummaryBySession;
@@ -134,6 +146,11 @@ export interface GenerateSummaryPorts {
   readonly loadBand: LoadBand;
   readonly narrativeModel: NarrativeModel;
   readonly saveSummary: SaveSummaryReport;
+  /**
+   * Optional so a composition root that predates worksheets keeps compiling;
+   * without it every session reports from chat evidence alone.
+   */
+  readonly loadHomeworkForSession?: LoadHomeworkForSession;
 }
 
 // ── §4: the pipeline ─────────────────────────────────────────────────────────
@@ -169,13 +186,14 @@ export async function generateSessionSummary(
   // Identity from the ROW, never from the queue payload — the distill rule.
   const ctx: ProtectedCtx = { learnerId: session.learnerAuthId, isLearner: true };
 
-  const [turns, priorFacts, band] = await Promise.all([
+  const [turns, priorFacts, band, submission] = await Promise.all([
     ports.loadEvidenceTurns(ctx, session.openedAt, session.closedAt),
     ports.loadPriorFacts(ctx),
     ports.loadBand(ctx),
+    ports.loadHomeworkForSession?.(ctx, sessionId) ?? Promise.resolve(null),
   ]);
 
-  const evidence = extractEvidence({
+  const chatEvidence = extractEvidence({
     sessionId,
     problem: session.problem,
     openedAt: session.openedAt,
@@ -186,8 +204,10 @@ export async function generateSessionSummary(
       fact.kind === 'mastery' ? [{ skillId: fact.skillId, p: fact.p, attempts: fact.attempts }] : [],
     ),
   });
+  // A worksheet session reports its questions, never the chat's guesses at them.
+  const evidence = submission === null ? chatEvidence : narrativeEvidence(chatEvidence, submission);
 
-  const candidate = await narrativeFor(evidence, ports.narrativeModel);
+  const candidate = await narrativeFor(evidence, submission, ports.narrativeModel);
 
   // §4 step 4 — the safety screen, over the narrative AND the verbatim answers.
   let screened = await screenSummary(candidate.narrative, evidence.problems, ctx, band);
@@ -203,7 +223,7 @@ export async function generateSessionSummary(
     re-screening identical text cannot change the verdict.
   */
   if (!screened.narrativeSafe && model !== 'deterministic') {
-    screened = await screenSummary(deterministicNarrative(evidence), evidence.problems, ctx, band);
+    screened = await screenSummary(deterministicFor(evidence, submission), evidence.problems, ctx, band);
     model = 'deterministic';
   }
 
@@ -251,13 +271,14 @@ export async function generateSessionSummary(
 /** Model first, deterministic on ANY failure — and the lint judges both. */
 async function narrativeFor(
   evidence: ExtractedEvidence,
+  submission: HomeworkSubmissionView | null,
   narrativeModel: NarrativeModel,
 ): Promise<{ narrative: NarrativeCandidate; model: string }> {
   try {
     const completion = await narrativeModel(narrativePayload(evidence));
     const copy = parseModelCopy(completion.text);
     if (copy !== null) {
-      const assembled = assembleNarrative(evidence, copy);
+      const assembled = withWorksheet(assembleNarrative(evidence, copy), evidence, submission);
       if (lintNarrative(assembled, evidence).length === 0) {
         return { narrative: assembled, model: completion.model };
       }
@@ -270,7 +291,28 @@ async function narrativeFor(
       a narrative failure is not a job failure.
     */
   }
-  return { narrative: deterministicNarrative(evidence), model: 'deterministic' };
+  return { narrative: deterministicFor(evidence, submission), model: 'deterministic' };
+}
+
+const deterministicFor = (
+  evidence: ExtractedEvidence,
+  submission: HomeworkSubmissionView | null,
+): NarrativeCandidate => withWorksheet(deterministicNarrative(evidence), evidence, submission);
+
+/**
+ * A worksheet session's block 6 comes from tags and outcome counts, whoever
+ * wrote the rest, and block 1 states the worksheet counts when no graded turn
+ * gave the narrative a skill to headline. The lint still judges the result.
+ */
+function withWorksheet(
+  candidate: NarrativeCandidate,
+  evidence: ExtractedEvidence,
+  submission: HomeworkSubmissionView | null,
+): NarrativeCandidate {
+  if (submission === null) return candidate;
+  const headline = evidence.skills.length === 0 ? homeworkHeadline(evidence.facts) : candidate.headline;
+  const headed = { ...candidate, headline };
+  return { ...headed, nextUp: homeworkNextStep(submission, evidence, headed) };
 }
 
 /**
@@ -375,6 +417,8 @@ export interface ResolvedProblemRow {
   readonly status: ProblemRow['status'];
   readonly submittedIncorrect: boolean;
   readonly orderInSession: number;
+  /** Worksheet facts for the print sheet; null on chat-derived rows. */
+  readonly homework: HomeworkProblemDetail | null;
 }
 
 /** Block 3 grouped for the accordion: one section per subject, rows in order. */
@@ -528,6 +572,7 @@ async function resolveProblems(
       status: row.status,
       submittedIncorrect: row.submittedIncorrect,
       orderInSession: row.orderInSession,
+      homework: row.homework ?? null,
     });
   }
 
@@ -544,7 +589,7 @@ async function resolveQuestion(
   row: ProblemRow,
   resolveCaptureCrop: ResolveCaptureCrop,
 ): Promise<ResolvedProblemRow['question']> {
-  if (row.questionRef.kind === 'problem-text') {
+  if (row.questionRef.kind === 'problem-text' || row.questionRef.kind === 'homework-question') {
     return { kind: 'text', text: row.questionRef.text };
   }
   const url = await resolveCaptureCrop(row.questionRef.messageId, row.questionRef.attachmentId);

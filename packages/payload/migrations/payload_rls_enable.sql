@@ -48,3 +48,6 @@ ALTER TABLE "payload"."families" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."families_contacts" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."families_learner_refs" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "payload"."sessions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "payload"."homework_submissions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "payload"."homework_questions" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "payload"."homework_practice_sets" ENABLE ROW LEVEL SECURITY;

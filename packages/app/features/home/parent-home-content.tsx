@@ -76,15 +76,11 @@ export function ParentHomeContent() {
       </FadeIn>
 
       {/*
-        The child-switcher chips are doc 36 §3.2's, and they are not rendered
-        here yet, because they would name the same fixture children the cards
-        below used to. `guardian.home/contract.md` records why: "Child switching
-        does not exist (G-8): `ActiveContext.learnerId` is never set", and
-        `family.store` is marked `[add]`. Chips that switch nothing, labelled
-        with names nobody has, are two fictions rather than one.
-
-        `ChildSwitcher` itself is fine and stays in the kit with its stories.
-        It returns here when `family.store` is fed by a real children read.
+        The child-switcher chips (doc 36 §3.2) render ABOVE this content, in
+        `GuardianHomeScreen`'s FamilyHeader, fed by the real wards read
+        (`useGuardianWardsSync` over GET /api/guardian/wards). They are not
+        repeated here: this content is also mounted by the shared home dispatch,
+        and a second switcher would be two controls for one selection.
       */}
 
       <FadeIn delay={80}>
@@ -96,10 +92,11 @@ export function ParentHomeContent() {
 
         This section used to render a card per child with a name, a grade band
         and a status string, all of it from the CHILDREN fixture in
-        parent-home.data.ts — `setChildren` is never called from anywhere, so
-        nothing real ever reached it. A parent reading their own child's name
-        and "status" off a fixture is being told something about their child
-        that is not true, which is worse than a screen that says less.
+        parent-home.data.ts. The names now come from the wards read and live in
+        the switcher above; the invented "status" string has no server source
+        and stays gone. A parent reading their own child's name and "status"
+        off a fixture is being told something about their child that is not
+        true, which is worse than a screen that says less.
 
         Two more sections went with it for the same reason: "This week" showed
         THIS_WEEK's session, assignment and AI-practice counts, and "Upcoming"
@@ -108,9 +105,9 @@ export function ParentHomeContent() {
 
         The exits survive because they are real routes with real screens behind
         them. What is gone is the fabricated summary in front of them. Each
-        section returns when it has a read: per-child status needs a guardian
-        learner read (`/api/family/learners` is POST-only today), and the week
-        counts need an aggregate nobody exposes.
+        section returns when it has a read: per-child status needs a source
+        that is not a fixture (the wards read carries names and bands, not
+        status), and the week counts need an aggregate nobody exposes.
       */}
       <FadeIn delay={160}>
         <Section className="gap-stack">
