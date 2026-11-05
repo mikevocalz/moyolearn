@@ -331,7 +331,18 @@ export interface WhiteboardPointerSample {
   pressure?: number;
 }
 
+/** Session-owned history commands; optional gesture boundaries keep a long stroke atomic. */
+export interface WhiteboardHistoryOwner {
+  undo(): void;
+  redo(): void;
+  beginGesture?(): void;
+  endGesture?(): void;
+  stopCapturing?(): void;
+}
+
 export interface WhiteboardBoardProps {
+  /** Session-owned history for keyboard and imperative commands. */
+  history?: WhiteboardHistoryOwner;
   /** A document to restore at mount. Read once; later changes are ignored. */
   snapshot?: WhiteboardSnapshot;
   /**

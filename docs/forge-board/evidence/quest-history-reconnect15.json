@@ -1,0 +1,54 @@
+{
+  "scope": "Physical Quest3S API34; installed artifact15 and portable9 explicit association-history reconnect",
+  "installation": {
+    "status": "success",
+    "replaceExisting": true,
+    "apkSha256Prefix": "780f0d20",
+    "applicationDataPreserved": true
+  },
+  "portableArtifact": 9,
+  "history": {
+    "stateKind": "found",
+    "source": "association-history",
+    "records": [
+      {
+        "associationId": 3,
+        "bonded": true,
+        "name": "Logitech Muse",
+        "selectionSource": "association-history"
+      },
+      {
+        "associationId": 2,
+        "bonded": false,
+        "name": "Logitech Muse",
+        "selectionSource": "association-history"
+      }
+    ],
+    "deduplication": "Three owned OS associations produced two device rows",
+    "noRssiInAnyRow": true,
+    "systemChooser": null
+  },
+  "reconnect": {
+    "userAction": "Explicit controller.connect of the actual selected current bonded association3",
+    "selectedAssociationId": 3,
+    "selectedBonded": true,
+    "stateKind": "linked",
+    "detail": "awaiting-native-input",
+    "nativeConnected": true,
+    "connectionGeneration": 1,
+    "systemChooser": null,
+    "readinessVerified": false
+  },
+  "result": "Installed history selection and explicit GATT reconnect passed; pen input remains unverified",
+  "cleanup": {
+    "separateTestOnlyDescriptorApkRemoved": true,
+    "inspectionServiceKeptAlivePerUser": true,
+    "descriptorBytesObtained": false
+  },
+  "sourceHashes": {
+    "historyStateSha256": "5cf32698efb0372a519d42695ca86de38a8954ba56afff68373165d61e1f2a5b",
+    "reconnectedStateSha256": "c705283c55c7cfb9bd3b4d53d848d81b4e6e50ff551b2e9353fc36ebebd3456e",
+    "accessibilitySnapshotSha256": "0974913609ca8200f83c9d5be9943bdfdca8f36d459d2f857c9fbc2e5b8ad10b"
+  },
+  "privacy": "Bluetooth addresses, logical device IDs and unrelated devices omitted; association IDs are application-owned OS record IDs"
+}

@@ -237,7 +237,7 @@ export {
 export { extractEvidence, type EvidencedTurn, type MasteryFactEvidence } from './features/summary/evidence';
 
 /*
-  ADR-124 — server-owned homework. Beside the summaries because both share
+  ADR-125 — server-owned homework. Beside the summaries because both share
   `LoadGuardianWards` and the report reads these rows. Port types travel with
   the values so `apps/web/lib/homework.repository.ts` binds them by name.
 */

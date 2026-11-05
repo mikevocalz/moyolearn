@@ -35,6 +35,10 @@ module.exports = {
     'react-native-audio-api': visionOS ? { platforms: { ios: null } } : {},
     'react-native-enriched-html': visionOS ? { platforms: { ios: null } } : {},
     '@react-native-masked-view/masked-view': visionOS ? { platforms: { ios: null } } : {},
+    // Forge uses generated Nitro v1 bindings matched to this host. Its Android
+    // XR backend requires CanvasSurfaces in Viro; keep the learner fallback
+    // until that backend is deliberately built and validated.
+    '@nitro-forge/board': process.env.MOYO_FORGE_BOARD === '1' ? {} : { platforms: { android: null, ios: null } },
     '@viro-external/native-panels': nativePanels ? {} : { platforms: { android: null, ios: null } },
   },
 };

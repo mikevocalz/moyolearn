@@ -203,7 +203,7 @@ function MembershipMenu({ user }: { user: AppUser | null }) {
       <Link
         href={PROFILE.href}
         aria-label="Your profile and settings"
-        className="rounded-full transition-shadow duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 hover:ring-2 hover:ring-border-strong"
+        className="rounded-full transition-shadow duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus hover:ring-2 hover:ring-border-strong"
       >
         <Avatar name={name} size="md" />
       </Link>
@@ -232,7 +232,7 @@ function MembershipMenu({ user }: { user: AppUser | null }) {
         }
       }}
     >
-      <View className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 hover:ring-2 hover:ring-border-strong">
+      <View className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus hover:ring-2 hover:ring-border-strong">
         <Avatar name={name} size="md" />
       </View>
     </Menu>
@@ -320,7 +320,7 @@ function HotShell({
             href="/"
             onClick={close}
             aria-label="Home"
-            className="h-9 w-34 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+            className="h-9 w-34 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </Link>

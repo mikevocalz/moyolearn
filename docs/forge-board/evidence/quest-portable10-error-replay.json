@@ -1,0 +1,79 @@
+{
+  "scope": "Physical Quest accessibility inspection of portable10 development UI error replay, not a new hardware-input or OS-timeout trial",
+  "nativeArtifact": 15,
+  "portableArtifact": 10,
+  "replay": {
+    "input": "Previously captured actual Java discovery_timeout error replayed into the isolated development connection controller",
+    "newOsTimeoutGenerated": false,
+    "hardwareInputInjected": false,
+    "nativeDiagnosticReceiptModified": false
+  },
+  "observedMessage": "Muse was not found before the search ended. Check pairing mode, try again, or choose Previously associated Muse.",
+  "rawJavaStackVisibleInDialog": false,
+  "scrollBodyPresent": true,
+  "visibleRecoveryControls": [
+    {
+      "label": "Close pen connection dialog",
+      "clickable": true,
+      "normalizedFrame": [
+        0.232,
+        0.082,
+        0.018,
+        0.029
+      ],
+      "withinViewport": true
+    },
+    {
+      "label": "Previously associated Muse",
+      "clickable": true,
+      "normalizedFrame": [
+        0.1,
+        0.226,
+        0.15,
+        0.031
+      ],
+      "withinViewport": true
+    },
+    {
+      "label": "Choose Muse with Quest",
+      "clickable": true,
+      "normalizedFrame": [
+        0.1,
+        0.262,
+        0.15,
+        0.031
+      ],
+      "withinViewport": true
+    },
+    {
+      "label": "Try again",
+      "clickable": true,
+      "normalizedFrame": [
+        0.1,
+        0.298,
+        0.15,
+        0.031
+      ],
+      "withinViewport": true
+    }
+  ],
+  "postReplay": {
+    "fixtureStateReplacedByActualLoadAssociatedDevices": true,
+    "actualHistoricalAssociationRows": [
+      {
+        "associationId": 3,
+        "bonded": false
+      },
+      {
+        "associationId": 2,
+        "bonded": false
+      }
+    ],
+    "historicalAvailabilityVerified": false,
+    "staleHistoricalAddressConnected": false,
+    "note": "The real association-history operation replaced replay state; no connection was attempted from these now-unbonded historical rows."
+  },
+  "result": "Bounded copy and reachable recovery controls passed physical UI replay inspection; pen input remains unverified.",
+  "sourceSha256": "1a63fc784f9a6a4cc0ccb301c8ea58a727a796cf59360ccfad3dc03b82d08a07",
+  "privacy": "Only relevant own-app error/recovery controls retained; unrelated navigation, addresses and device IDs omitted"
+}

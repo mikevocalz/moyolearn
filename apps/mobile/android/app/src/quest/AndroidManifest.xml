@@ -122,5 +122,12 @@
     <activity android:name=".MainActivity">
       <layout android:defaultHeight="640dp" android:defaultWidth="1024dp"/>
     </activity>
+    <activity android:name=".VRActivity">
+      <intent-filter>
+        <action android:name="com.moyolearn.app.action.IMMERSIVE_VR"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+        <category android:name="com.oculus.intent.category.VR"/>
+      </intent-filter>
+    </activity>
   </application>
 </manifest>

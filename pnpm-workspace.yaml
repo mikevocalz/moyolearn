@@ -204,6 +204,11 @@ catalog:
   # (expo-gl, react-native, expo-file-system) because it ships a native
   # renderer; this app is web-only, so those peers are intentionally unmet.
   gsap: 3.15.0
+  # Kinetrell's web entry (`kinetrell/web/gsap`, re-exported by @acme/motion/web)
+  # imports `useGSAP` from here at module top, so any bundle reaching the
+  # motion web wrapper needs it. 2.1.2 is npm latest (2026-11-04) and sits in
+  # Kinetrell's `>=2.1.2 <3` peer range.
+  "@gsap/react": 2.1.2
   lenis: 1.3.26
   "@react-three/fiber": 9.7.0
   "@react-three/drei": 10.7.8
@@ -301,6 +306,11 @@ catalog:
   esbuild: 0.28.2
   jsdom: 30.1.2
   playwright: 1.63.0
+  # Same version playwright 1.63.0 depends on, so this installs nothing new. Named
+  # because tooling/web-designer-pro (shoot, matrix, filmstrip, fallback) and
+  # tooling/check-font-fallbacks.mjs require it from the repo root; relying on
+  # the hoisted transitive copy would be a phantom dependency.
+  playwright-core: 1.63.0
   "@types/react": ~19.3.0
   # Must stay on the Node major `engines.node` (>=24.15.0 <26) actually allows —
   # typing against 26 describes a runtime this repo refuses to start on.

@@ -1,0 +1,7 @@
+name: moyo_forge_icons
+main: ForgePen
+logs:
+  file: build/rive.log
+  problems: build/problems.log
+exclude:
+  - evidence

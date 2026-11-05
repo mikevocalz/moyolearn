@@ -146,7 +146,7 @@ DO $$ BEGIN
 END $$;
 
 /*
-  Homework source crops (ADR-124, PR #100 contract decision 4): an UPDATE, not a
+  Homework source crops (ADR-125, PR #100 contract decision 4): an UPDATE, not a
   DELETE, and the only statement in this file that keeps the row.
 
   `homework_questions.crop` is the photograph of the child's page the question

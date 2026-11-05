@@ -5,7 +5,7 @@ import type { CollectionConfig } from 'payload';
 // The first slice kept the worksheet in a device-local Zustand store keyed by
 // owner (`packages/app/features/capture/worksheet-session.ts`), which made
 // "resume Q4/10 on the family laptop" impossible by construction. This row is
-// the worksheet; the store becomes a cache of it (ADR-124). The questions live
+// the worksheet; the store becomes a cache of it (ADR-125). The questions live
 // one row each in `homeworkQuestions`, keyed back by `submissionId`, because a
 // question has its own append-only revision list and its own outcome, and the
 // report (doc 34) reads questions without the submission.
@@ -26,7 +26,7 @@ import type { CollectionConfig } from 'payload';
 // the convention every learner collection here follows (doc 13 §5).
 // `createdByAuthId` differs from `learnerAuthId` when a guardian uploads for a
 // ward; the service accepts that only against an ACTIVE guardianship.
-// SOT: docs/design/homework-end-to-end-2026.md · docs/work/pr-100/contract.md §Data · docs/decisions/adr-124-homework-submissions-persistence.md
+// SOT: docs/design/homework-end-to-end-2026.md · docs/work/pr-100/contract.md §Data · docs/decisions/adr-125-homework-submissions-persistence.md
 // SOT-KEYWORDS: homework submission worksheet cursor server-owned resume guardian upload pipeline status retention cascade
 
 export const HomeworkSubmissions: CollectionConfig = {

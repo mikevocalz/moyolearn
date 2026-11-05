@@ -100,7 +100,7 @@ const buildColumns = (
       <Pressable
         onPress={() => openLead(row.original.id)}
         aria-label={`Open lead: ${row.original.family}`}
-        className="rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+        className="rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         <View className="gap-0">
           <Text className="text-body font-semibold text-text underline decoration-border-strong underline-offset-2">
@@ -248,7 +248,7 @@ function FilterChip({ label, onRemove }: { label: string; onRemove?: () => void 
         <Pressable
           onPress={onRemove}
           aria-label={`Remove filter: ${label}`}
-          className="min-h-target-adult items-center justify-center px-element rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+          className="min-h-target-adult items-center justify-center px-element rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           <Text className="text-caption text-text-muted">×</Text>
         </Pressable>

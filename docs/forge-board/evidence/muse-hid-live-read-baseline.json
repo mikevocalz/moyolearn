@@ -1,0 +1,77 @@
+{
+  "scope": "Offline actual-descriptor decode plus bounded live input-report READ baseline under temporary test-only instrumentation authority",
+  "testOnly": true,
+  "productionAccess": false,
+  "inputProducer": false,
+  "descriptor": {
+    "sha256": "4708e62215883a297c88be41600d2ddea20345ecfbe41213db47f7d6778b3405",
+    "byteLength": 457,
+    "offlineDecodeFile": "muse-hid-decoded.json",
+    "offlineDecodeSourceSha256": "de5f431bf7f582537fbcfb17c88ef55130048a7da906c19b6c6e0cf95d60dcd3",
+    "reaEvidenceId": "ev_6ba8ab510b1b2882ceb21d237a1de97a01ff6b4957bbe5839a4883b695d11b88",
+    "topApplication": "Digitizer page0D usage0020 Stylus",
+    "inputReportId": 2,
+    "inputPayloadBytes": 65,
+    "offsetConvention": "payload bits excludes report-ID octet; HOGP value mapping requires Report Reference",
+    "fieldsSummary": {
+      "bytes0to3": "Button1 value/associated Force, Button4 value/associated Force",
+      "byte4": "Human touch states for Button4/Button3 and Button3/Button2 bits; upper four bits constant padding",
+      "bytes5to22": "Three signed16 XYZ acceleration groups",
+      "bytes23to40": "Three signed16 XYZ angular-velocity groups",
+      "bytes41to64": "Three vendorFF15/0005 64-bit fields; semantics unknown"
+    },
+    "tipPressureUsagePresent": false,
+    "physicalTipOrButtonMappingEstablished": false,
+    "trackedPoseEstablished": false
+  },
+  "liveRead": {
+    "reaEvidenceId": "ev_1ea45b1f2e68ed2e510528a7847a62158cdd3c2dc4c7a4774a8b9e335ff790d6",
+    "permissionScope": "UiAutomation named BLUETOOTH_CONNECT and BLUETOOTH_PRIVILEGED; temporary instrumentation only",
+    "operations": "connect,discover,verifyMapSHA,readReportReferences,readFeature2Once,pollReadInput2Only",
+    "completed": true,
+    "pollingStartWallTimeMs": 1793714907409,
+    "actualPollingWindowMs": 24855,
+    "maxRateHz": 4,
+    "sampleCount": 100,
+    "successfulStatus0Count": 100,
+    "payloadLength65Count": 100,
+    "distinctCompleteReportCount": 100,
+    "knownControlPrefix": {
+      "byteCount": 5,
+      "hex": "0000000005",
+      "matchingSampleCount": 100
+    },
+    "unknownVendorRawPayloadPublished": false,
+    "feature2Read": {
+      "gattStatus": 0,
+      "byteLength": 8,
+      "rawHex": "0000000000000000",
+      "expectedByteLength": 8,
+      "lengthMatches": true
+    },
+    "featureWritesPerformed": false,
+    "cccdOrVendorWritesPerformed": false,
+    "sourceSha256": "e8c83e06fd3e46ba35ed12a170b6908addfd72bcde491f9dc046907817ed278d"
+  },
+  "rawCaptureIntegrity": {
+    "evidenceId": "ev_1ea45b1f2e68ed2e510528a7847a62158cdd3c2dc4c7a4774a8b9e335ff790d6",
+    "extraction": "normalized_result.frames[].data joined; single INSTRUMENTATION_RESULT: resultJson= line",
+    "rawFrames": 50,
+    "extractedSamples": 100,
+    "deepEqualDeviceJSON": true,
+    "canonicalJSONSHA256REA": "58517911773fac97a729c573565d5d8dc828a4ca9e0bfa43b17c17575ce7034f",
+    "canonicalJSONSHA256Device": "58517911773fac97a729c573565d5d8dc828a4ca9e0bfa43b17c17575ce7034f",
+    "canonicalByteLength": 31283,
+    "renderedTruncationDoesNotTruncateThisRawJSON": true,
+    "compareReceiptSha256": "0b7b38222a38b3968df71266fb34668db49b9e03843931b163659266a7e16a3a",
+    "note": "Rendered display clipping does not truncate the raw REA frame data used for the exact 100-sample JSON comparison."
+  },
+  "trialInterpretation": {
+    "userPressConfirmationWithinCaptureWindow": false,
+    "negativeButtonTrialEstablished": false,
+    "note": "User confirmation arrived after this baseline window. Constant control bytes are not evidence that presses were ignored. A later controlled held-tip trial is recorded separately in muse-hid-held-tip-trial.json."
+  },
+  "inspectionRestored": true,
+  "restoredInspectionSha256": "473c6862d5159c84149292b68078ca5d0a8252b40e1cd210246ce4e6c503141e",
+  "privacy": "Only known five-byte aggregate prefix and descriptor definitions retained. Unknown vendor packet payloads, raw IMU sample values, addresses, serials, private paths and logical device IDs omitted."
+}

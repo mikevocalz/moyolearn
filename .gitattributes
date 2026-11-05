@@ -1,0 +1,3 @@
+# Binary assets: never diff, merge or normalise line endings.
+*.woff2 binary
+*.webp binary

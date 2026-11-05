@@ -1,0 +1,104 @@
+{
+  "sourceCommit": "3c79e3d4c2dbd0c42d7fdccea40eb0a7162b6c48",
+  "riveCli": "rive 1.6.0",
+  "renderer": "Rive CLI headless at 240x240; reference: sharp SVG renderer",
+  "nativeRuntime": "NOT RUN",
+  "sourceTests": "PASS 5/5 node --test probes/forge-icons/svg-path.test.mjs",
+  "comparisons": [
+    {
+      "glyph": "pen",
+      "variant": "outline",
+      "meanAbsoluteChannelError": 0.027674,
+      "channelFractionBeyond16": 0
+    },
+    {
+      "glyph": "pen",
+      "variant": "filled",
+      "meanAbsoluteChannelError": 0.099491,
+      "channelFractionBeyond16": 0.003194
+    },
+    {
+      "glyph": "highlighter",
+      "variant": "outline",
+      "meanAbsoluteChannelError": 0.028872,
+      "channelFractionBeyond16": 0
+    },
+    {
+      "glyph": "highlighter",
+      "variant": "filled",
+      "meanAbsoluteChannelError": 0.01048,
+      "channelFractionBeyond16": 0
+    },
+    {
+      "glyph": "eraser",
+      "variant": "outline",
+      "meanAbsoluteChannelError": 0.031302,
+      "channelFractionBeyond16": 0
+    },
+    {
+      "glyph": "eraser",
+      "variant": "filled",
+      "meanAbsoluteChannelError": 0.147847,
+      "channelFractionBeyond16": 0.005
+    },
+    {
+      "glyph": "undo",
+      "variant": "outline",
+      "meanAbsoluteChannelError": 0.016973,
+      "channelFractionBeyond16": 0
+    },
+    {
+      "glyph": "undo",
+      "variant": "filled",
+      "meanAbsoluteChannelError": 0.011707,
+      "channelFractionBeyond16": 0
+    },
+    {
+      "glyph": "redo",
+      "variant": "outline",
+      "meanAbsoluteChannelError": 0.016626,
+      "channelFractionBeyond16": 0
+    },
+    {
+      "glyph": "redo",
+      "variant": "filled",
+      "meanAbsoluteChannelError": 0.011065,
+      "channelFractionBeyond16": 0
+    }
+  ],
+  "selectionBlendAt33ms": {
+    "meanAbsoluteChannelError": 4.22298,
+    "channelFractionBeyond16": 0.028785
+  },
+  "reducedMotionThemeAt33ms": {
+    "meanAbsoluteChannelError": 0.11309,
+    "channelFractionBeyond16": 0.002269
+  },
+  "artboards": [
+    {
+      "name": "ForgePen",
+      "objects": 125
+    },
+    {
+      "name": "ForgeHighlighter",
+      "objects": 132
+    },
+    {
+      "name": "ForgeEraser",
+      "objects": 138
+    },
+    {
+      "name": "ForgeUndo",
+      "objects": 115
+    },
+    {
+      "name": "ForgeRedo",
+      "objects": 115
+    }
+  ],
+  "asset": {
+    "bytes": 7297,
+    "sha256": "547fd3eb05900568b46810dd12f12b535d0b164956d41ccd15182b70783f8018",
+    "signing": "unsigned --once; script-free vector file, nothing requires script signing"
+  }
+}

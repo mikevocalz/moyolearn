@@ -16,7 +16,8 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'core/**/*.server-test.ts' 'features/**/*.server-test.ts'"
+    "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'core/**/*.server-test.ts' 'features/**/*.server-test.ts'",
+    "test:forge": "tsx --test features/tutor/forge-board-binding.integration.ts features/tutor/forge-pen-connection.integration.ts"
   },
   "dependencies": {
     "@acme/auth": "workspace:*",
@@ -77,7 +78,10 @@
     "tesseract.js": "^7.0.0",
     "tus-js-client": "4.3.1",
     "yjs": "catalog:",
-    "zustand": "catalog:"
+    "zustand": "catalog:",
+    "@nitro-forge/board": "0.1.0-moyo.1",
+    "@nitro-forge/bluetooth-v1": "file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz",
+    "@nitro-forge/pen-connect": "file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.10.tgz"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
@@ -85,7 +89,8 @@
     "@types/react": "catalog:",
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "tsx": "4.22.4"
   },
   "peerDependencies": {
     "react": "*",

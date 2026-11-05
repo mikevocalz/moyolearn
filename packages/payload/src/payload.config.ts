@@ -142,7 +142,7 @@ export default buildConfig({
     */
     SessionSummaries,
     /*
-      ADR-124 — the captured worksheet, its questions and the guardian's
+      ADR-125 — the captured worksheet, its questions and the guardian's
       practice sets. Beside the summaries because they share the retention
       class (no `expiresAt`, erased by the account cascade) and because the
       report reads `homeworkQuestions` for its per-question rows. Learner data

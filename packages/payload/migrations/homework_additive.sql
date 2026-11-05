@@ -1,4 +1,4 @@
--- Additive migration for ADR-124 — the `homeworkSubmissions`, `homeworkQuestions`
+-- Additive migration for ADR-125 — the `homeworkSubmissions`, `homeworkQuestions`
 -- and `homeworkPracticeSets` collections.
 -- Apply with the Supabase MCP `apply_migration`, name: `homework_collections`.
 --
@@ -26,7 +26,7 @@
 --      entry, named as families_org_id_name_unique is): ten questions become exactly ten ordered rows, and a retried
 --      create that raced its first attempt collides here instead of putting an
 --      eleventh question in front of a child.
--- SOT: docs/decisions/adr-124-homework-submissions-persistence.md · docs/work/pr-100/contract.md §Data · packages/payload/src/collections/HomeworkSubmissions.ts · HomeworkQuestions.ts · HomeworkPracticeSets.ts
+-- SOT: docs/decisions/adr-125-homework-submissions-persistence.md · docs/work/pr-100/contract.md §Data · packages/payload/src/collections/HomeworkSubmissions.ts · HomeworkQuestions.ts · HomeworkPracticeSets.ts
 -- SOT-KEYWORDS: homework migration sql additive supabase submissions questions practice sets cursor revisions crop expiry unique order index
 
 DO $$ BEGIN

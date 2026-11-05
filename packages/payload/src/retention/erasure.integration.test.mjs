@@ -1673,7 +1673,7 @@ test(
 );
 
 /*
-  ADR-124 — HOMEWORK ROWS, both retention halves.
+  ADR-125 — HOMEWORK ROWS, both retention halves.
 
   1. THE CROP HAS A CLOCK AND THE TEXT DOES NOT. `sweep.sql` nulls
      `homework_questions.crop` once `crop_expires_at` passes and keeps the row;

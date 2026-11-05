@@ -1,0 +1,48 @@
+{
+  "scope": "Quest 3S Android API34; immersive activity classification repair",
+  "apkSha256": "830bcc164bbe3eef4175c01dace3599267dcf25a8ea09d4a60bff6c01a38407f",
+  "manifest": {
+    "questOnly": true,
+    "vrActivityExported": false,
+    "action": "com.moyolearn.app.action.IMMERSIVE_VR",
+    "categories": [
+      "android.intent.category.DEFAULT",
+      "com.oculus.intent.category.VR"
+    ],
+    "vrMainAction": false,
+    "vrLauncherCategory": false,
+    "declaredLauncherActivities": 1,
+    "mainWindowDp": [
+      1024,
+      640
+    ],
+    "mainOrientation": "unspecified"
+  },
+  "before": {
+    "vrIdentifierPresent": false,
+    "taskMode": "multi-window",
+    "xrState": "VISIBLE",
+    "shouldRender": false
+  },
+  "after": {
+    "install": "adb install -r returned Success (main agent)",
+    "pid": 12627,
+    "xrState": "FOCUSED",
+    "xrStateCode": 5,
+    "shouldRender": true,
+    "viewsValid": true,
+    "layerCount": 1,
+    "nativeCameraCallbackObservedByMainAgent": true
+  },
+  "unverified": [
+    "target visibility",
+    "controller profiles and input frames",
+    "Muse tip contact and pressure",
+    "Muse pose and haptics"
+  ],
+  "source": {
+    "runtimeLog": "/tmp/moyo-quest-vr-category-runtime.log",
+    "runtimeLogSha256": "59c4b28331031060f657a893839b5b736b39c39db0a433ed06d1914315231d6f",
+    "runtimeLogEvidence": "state=5 shouldRender=1 viewsValid=1 layerCount=1"
+  }
+}

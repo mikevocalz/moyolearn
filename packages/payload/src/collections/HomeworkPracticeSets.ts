@@ -16,7 +16,7 @@ import type { CollectionConfig } from 'payload';
 //
 // No `expiresAt`: a practice set is the guardian's artefact and goes with the
 // account cascade, like the submission it was built from.
-// SOT: docs/design/homework-end-to-end-2026.md · docs/work/pr-100/contract.md §Data §Practice sets · docs/decisions/adr-124-homework-submissions-persistence.md
+// SOT: docs/design/homework-end-to-end-2026.md · docs/work/pr-100/contract.md §Data §Practice sets · docs/decisions/adr-125-homework-submissions-persistence.md
 // SOT-KEYWORDS: homework practice set guardian approve draft answer key seed targeted tags items verified checker
 
 export const HomeworkPracticeSets: CollectionConfig = {

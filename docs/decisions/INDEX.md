@@ -16,6 +16,7 @@ hand — nothing regenerates it.
 | [`2026-09-22-migration-drift.md`](2026-09-22-migration-drift.md) | What is checked in but not applied, measured 2026-09-22 | — | — |
 | [`2026-09-22-pgboss-migration-analysis.md`](2026-09-22-pgboss-migration-analysis.md) | pg-boss schema 38 → 42: is running it against production reversible? | — | — |
 | [`2026-09-23-reset-password-contract.md`](2026-09-23-reset-password-contract.md) | The password-reset contract, read out of the installed better-auth | the sender is wired; findings 1 and 2 are open | — |
+| [`2026-11-04-skia-v3-defer.md`](2026-11-04-skia-v3-defer.md) | React Native Skia v3 deferred; #135 closed | DEFER. Revisit when visionOS has an answer, iPad/Android/PICO devices are available, and the npm gate TARGETS move to `react-native-skia` | 2026-11-04 |
 | [`adr-101-guardian-tab-set.md`](adr-101-guardian-tab-set.md) | ADR 101: Guardian mobile keeps doc 36's four tabs — Home · Reports · Alerts · Family | accepted | 2026-09-01 |
 | [`adr-102-teacher-shell-ia.md`](adr-102-teacher-shell-ia.md) | ADR 102: The teacher shell exists, with four tabs — Home · Classes · Assign · You | accepted | 2026-09-01 |
 | [`adr-103-school-admin-ia.md`](adr-103-school-admin-ia.md) | ADR 103: School admin is web-first; mobile parks at Overview-only; no More tab, ever | accepted | 2026-09-01 |
@@ -39,11 +40,13 @@ hand — nothing regenerates it.
 | [`adr-121-gpu-device-topology.md`](adr-121-gpu-device-topology.md) | ADR-121: one GPU device for Natalie, Skia and inference — or siblings | proposed. The decision needs Scenario J/K numb | 2026-09-17 |
 | [`adr-122-local-inference-router.md`](adr-122-local-inference-router.md) | ADR-122: local inference routes through the gateway that already exists | proposed. The shape is decided by what is alre | 2026-09-17 |
 | [`adr-123-pgboss-schema-42.md`](adr-123-pgboss-schema-42.md) | ADR-123 — Take the pg-boss schema to 42, and take `main` with it | decided, migration not yet applied | — |
-| [`adr-124-homework-submissions-persistence.md`](adr-124-homework-submissions-persistence.md) | ADR-124: a captured worksheet is a server row, and the device caches it | proposed. Migration `homework_additive.sql` scr | 2026-10-15 |
+| [`adr-124-kinetrell-by-git-tag.md`](adr-124-kinetrell-by-git-tag.md) | ADR-124 — Kinetrell is pinned to its git tag through a vendored tarball (the git dependency's install-time build failed on CI). Revisit when Kinetrell publishes to npm | accepted | 2026-11-04 |
+| [`2026-11-04-open-pr-dispositions.md`](2026-11-04-open-pr-dispositions.md) | Open PR dispositions, 2026-11-04 | decided | 2026-11-04 |
+| [`adr-125-homework-submissions-persistence.md`](adr-125-homework-submissions-persistence.md) | ADR-125: a captured worksheet is a server row, and the device caches it | proposed. Migration `homework_additive.sql` scr | 2026-10-15 |
 | [`adr-homework-exact-math.md`](adr-homework-exact-math.md) | Exact arithmetic for homework | implemented checker; production assessment evi | 2026-09-16 |
 | [`bunny-storage-presign-spike.md`](bunny-storage-presign-spike.md) | Spike: can a client PUT directly to Bunny Storage? | RESOLVED — yes, verified against a live zone | — |
 
-**28 decisions recorded.**
+**32 decisions recorded.**
 
 ## Toolchain candidates
 

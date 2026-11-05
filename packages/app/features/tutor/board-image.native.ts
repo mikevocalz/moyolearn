@@ -36,7 +36,7 @@ export async function boardImageUri(dataUrl: string): Promise<string | null> {
     // one is still referenced by the turn that sent it.
     const file = new File(directory, `board-${Date.now()}.png`);
     file.create({ overwrite: true });
-    file.write(dataUrl.replace(PNG_DATA_URL, ''), { encoding: 'base64' });
+    await file.write(dataUrl.replace(PNG_DATA_URL, ''), { encoding: 'base64' });
     return file.uri;
   } catch (error) {
     if (__DEV__) console.warn('[boardImageUri] could not write the board:', error);

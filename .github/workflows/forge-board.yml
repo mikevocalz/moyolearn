@@ -1,0 +1,56 @@
+name: Forge board document contract
+on:
+  pull_request:
+    paths:
+      - 'packages/app/features/tutor/*board*'
+      - 'packages/app/features/tutor/forge-pen*'
+      - 'packages/app/features/tutor/tutor-xr-screen.native.tsx'
+      - 'packages/ui/ForgeBoardIcon.tsx'
+      - 'packages/ui/Whiteboard.tsx'
+      - 'packages/ui/whiteboard-*'
+      - 'apps/mobile/app/forge-board-probe.tsx'
+      - 'apps/mobile/src/forge-board-probe/**'
+      - 'apps/mobile/src/spatial/MainContentFrame.tsx'
+      - 'apps/mobile/src/spatial/main-content-geometry*'
+      - 'apps/mobile/plugins/**'
+      - 'vendors/viro-renderer*'
+      - 'tooling/forge-pen-connect/**'
+      - 'tooling/vendor-forge-pen-connect.mjs'
+      - 'vendors/*forge*'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/forge-board.yml'
+permissions:
+  contents: read
+jobs:
+  document:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Existing document, history, storage and read-only source
+        run: node --test packages/app/features/tutor/board-doc.test.ts packages/app/features/tutor/board-session.test.ts packages/app/features/tutor/forge-board-source.test.ts packages/app/features/tutor/forge-board-session.test.ts packages/app/features/tutor/forge-board-storage.test.ts packages/app/features/tutor/forge-board-history.test.ts packages/app/features/tutor/forge-board-gesture-history.test.ts packages/app/features/tutor/forge-board-gesture-lifecycle.test.ts
+      - name: Actual pinned Forge encoder, binding and scene compiler
+        run: pnpm --filter @acme/app test:forge
+      - name: Pen input verification
+        run: node --test packages/app/features/tutor/forge-pen-verification.test.ts packages/app/features/tutor/forge-pen-diagnostics.test.ts
+      - name: Device PNG write, cancellation and verification
+        run: node --test packages/app/features/tutor/forge-board-export.test.ts
+      - name: Installed Bluetooth artifact contract
+        run: node --test tooling/forge-pen-connect/vendor.test.mjs
+      - name: System pen selection and cancellation
+        run: node --test tooling/forge-pen-connect/portable/tests/system-chooser.test.ts
+      - name: Keyboard history uses the same document
+        run: node --test packages/ui/whiteboard-history.test.ts
+      - name: Isolated fixture persistence
+        run: node --test apps/mobile/src/forge-board-probe/model.test.ts
+      - name: App and toolbar types
+        run: pnpm --filter @acme/app --filter @acme/ui --filter mobile typecheck
+      - name: Preserve headset window contract
+        run: node --test apps/mobile/plugins/__tests__/spatial-window-contract.test.cjs apps/mobile/plugins/__tests__/quest-immersive-activity.test.cjs apps/mobile/plugins/__tests__/renderer-pin.test.cjs
+      - name: Quest middle content fits resized hosts
+        run: node --test apps/mobile/src/spatial/main-content-geometry.test.ts

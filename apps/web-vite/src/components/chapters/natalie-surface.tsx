@@ -71,17 +71,6 @@ const VOICE_RESOLVE_TIMEOUT_MS = 8000;
  */
 const SURFACE_LABEL = 'Natalie preview';
 
-/**
- * The kit's focus ring is `ring-focus/50`, and at half alpha over the site's
- * near-white paper it measures about 2.96:1 — a hair under the 3:1 that WCAG
- * 1.4.11 asks of a focus indicator. Same token, full alpha, which on this
- * ground is roughly 13:1. The right home for this is `packages/ui/Button.tsx`,
- * where it would fix every surface at once; this branch is scoped to the site,
- * so the site pays for it here and the kit fix is filed in the note beside this
- * change.
- */
-const FOCUS_RING_CLASS = 'focus-visible:ring-focus';
-
 export interface VoiceClip {
   url: string;
   alignment?: BakedAlignment;
@@ -455,7 +444,6 @@ export function NatalieSurface() {
             size="sm"
             onPress={() => startAction(choice.id)}
             disabled={isBusy}
-            className={FOCUS_RING_CLASS}
           />
         ))}
         {/*
@@ -470,7 +458,6 @@ export function NatalieSurface() {
           variant="ghost"
           size="sm"
           onPress={() => setMuted((m) => !m)}
-          className={FOCUS_RING_CLASS}
         />
         {voiceStatus === 'error' && (
           <Text

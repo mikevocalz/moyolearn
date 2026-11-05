@@ -1,5 +1,5 @@
 import 'server-only';
-// The homework store (ADR-124), as a repository: the only code that reads or
+// The homework store (ADR-125), as a repository: the only code that reads or
 // writes `homeworkSubmissions`, `homeworkQuestions` and `homeworkPracticeSets`.
 //
 // SCOPED BY THE LEARNER THE SERVICE PROVED. `homework.service.ts` resolves a
@@ -18,7 +18,7 @@ import 'server-only';
 // The JSON columns come back as Payload's wide `json` union. This file is
 // their only writer, so the narrowing trusts the shapes it wrote and answers
 // anything else with the empty value, as summary.repository.ts does.
-// SOT: docs/decisions/adr-124-homework-submissions-persistence.md · docs/work/pr-100/contract.md §Data §Routes · apps/web/lib/summary.repository.ts
+// SOT: docs/decisions/adr-125-homework-submissions-persistence.md · docs/work/pr-100/contract.md §Data §Routes · apps/web/lib/summary.repository.ts
 // SOT-KEYWORDS: homework repository submission question revision cursor advance transaction lock stale practice set guardian scope evidence
 import { getPayload } from 'payload';
 import { sql } from '@payloadcms/db-postgres/drizzle';

@@ -1,0 +1,58 @@
+{
+  "source": "https://files.cocaine.trade/firmware/meta/Quest%203S/q3s_4069240007800610.zip",
+  "sourceTrust": "Third-party mirror; metadata and payload checks establish internal consistency, not authenticated Meta provenance",
+  "installedBuild": "4069240020600610",
+  "exactBuildMatch": false,
+  "fullOTADownloaded": false,
+  "partialZipBytes": 324349952,
+  "partialZipSha256": "061b2da19a0d13786e6fe61229c9e00e48871775ddb56c99625c0665760517e7",
+  "zipMetadataCrcVerified": true,
+  "odmImageBytes": 311242752,
+  "odmImageSha256": "b274253f91022545cb7de9e8bac01f7d99f8ae6a20ee581336476b51022e95ce",
+  "odmShaMatchesPayloadManifest": true,
+  "allOtherPartitionsExtracted": false,
+  "deviceWrites": false,
+  "currentInitRCByteIdentical": true,
+  "currentVintfByteIdenticalIgnoringTrailingNewlines": true,
+  "tools": {
+    "payloadDumperGo": "2.1.0 archiveSHA7f78ac6fe7f449c309ac82d85fa2303bb045fa729e0e975e3257c2ce4044715b verified against GitHub release API digest",
+    "7zip": "26.05 archiveSHA12ef6830317743cfd3f0ab1724bde43fcc270d8b6d8564f8c12c2a2b7f993570 verified against GitHub release API digest"
+  },
+  "files": {
+    "lib64/libxrcontrollertal.so": {
+      "bytes": 51136,
+      "sha256": "160e41c492c83d2d0b544d8a5c9473b79121e64694954f3838521bc0d5d0aecc"
+    },
+    "lib64/libdevicesensors.so": {
+      "bytes": 96304,
+      "sha256": "eba6351aed82e527a4f4d589c15f8cb6601ed19b0b5630e06a29461bc5c9e51d"
+    },
+    "etc/init/vendor.oculus.hardware.sensors@1.0-service.rc": {
+      "bytes": 1584,
+      "sha256": "acdd30cd1142035ea492aedfffacaca4c2922187b84798f15077d32807f37ffc"
+    },
+    "etc/vintf/manifest/vendor.oculus.hardware.sensors@1.0-service.xml": {
+      "bytes": 1551,
+      "sha256": "4a0ea08975af57972601c4a6e8aa39dfa85501e18f9a3b0ab3d2fc1b0004e334"
+    },
+    "bin/hw/vendor.oculus.hardware.sensors@1.0-service": {
+      "bytes": 2012592,
+      "sha256": "f346881a1456bb7bae375836f4d364ac279b3089292d5f39e4028dcf145491e3"
+    },
+    "lib64/libsyncboss.so": {
+      "bytes": 684920,
+      "sha256": "886d6fb3f2c635c7173bdf243e3a6c244e3ba69b5532c53bc21eeec0b4f441dc"
+    },
+    "lib64/libsyncbossmanager.so": {
+      "bytes": 180376,
+      "sha256": "3d09fdd6af9b845037fd5b9d949f5d27d3128fe4a868c1a474b4309c67328ea6"
+    }
+  },
+  "limitations": [
+    "No complete ZIP CRC verification or authenticated OTA signature verification",
+    "Matching init/VINTF does not prove matching native HAL implementation",
+    "Never flashed/executed downloaded device binaries"
+  ],
+  "archiveBuild": "4069240007800610",
+  "scope": "Offline data extraction and static analysis only; no downloaded device binary execution or device firmware changes."
+}

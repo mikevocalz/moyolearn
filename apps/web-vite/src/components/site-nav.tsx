@@ -95,7 +95,7 @@ const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult p
 /** The one filled object in the bar. */
 const CTA = `site-nav-cta ${CONTROL} rounded-moyo-card bg-moyo-primary text-moyo-on-primary text-site-body shadow-moyo-1 transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
 /** The secondary action in the bar — plain type, so the CTA is the only filled object. */
-const LOGIN = `site-nav-login ${CONTROL} text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50`;
+const LOGIN = `site-nav-login ${CONTROL} text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);
@@ -156,7 +156,7 @@ export function SiteNav() {
         <Link
           href="/"
           aria-label="Moyo Learn — home"
-          className="flex w-fit items-center rounded-moyo-card transition duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+          className="flex w-fit items-center rounded-moyo-card transition duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
           {/* 72px front-door mark, attribute-sized so the pre-CSS paint can
               never flash at intrinsic (viewport) width. */}
@@ -168,7 +168,7 @@ export function SiteNav() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-moyo-card px-inset-roomy py-inset text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+              className="rounded-moyo-card px-inset-roomy py-inset text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
             >
               {link.label}
             </Link>
@@ -236,7 +236,7 @@ export function SiteNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="site-nav-item rounded-moyo-card px-inset-roomy py-inset font-moyo-display text-site-title text-moyo-ink transition-colors duration-fast hover:bg-moyo-paper-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+                className="site-nav-item rounded-moyo-card px-inset-roomy py-inset font-moyo-display text-site-title text-moyo-ink transition-colors duration-fast hover:bg-moyo-paper-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 {link.label}
               </Link>

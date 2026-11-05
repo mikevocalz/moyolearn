@@ -77,7 +77,7 @@ export type { IncidentReport } from './src/payload-types';
 export type { SessionSummary } from './src/payload-types';
 
 /*
-  ADR-124's three rows. No domain-object collision: the app side speaks in
+  ADR-125's three rows. No domain-object collision: the app side speaks in
   `HomeworkSubmissionView`, `HomeworkQuestionView` and `PracticeSetView`
   (`packages/app/features/homework/homework.types.ts`), so the rows keep their
   generated names. `homework.repository.ts` is the one place that narrows their

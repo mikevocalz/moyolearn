@@ -1,0 +1,75 @@
+{
+  "scope": "Controlled physical held-tip then release trial using temporary test-only HID report reads on actual Muse; no production input-provider claim",
+  "testOnly": true,
+  "productionAccess": false,
+  "inputProducer": false,
+  "permissionScope": "UiAutomation named BLUETOOTH_CONNECT and BLUETOOTH_PRIVILEGED; temporary instrumentation only",
+  "instrumentationApkSha256": "753d9214a51cad2daeed4b90e21447564178e777fd97cc0fb15767c7283a54d3",
+  "descriptorSha256": "4708e62215883a297c88be41600d2ddea20345ecfbe41213db47f7d6778b3405",
+  "procedure": {
+    "tipHeldConfirmedBeforeCapture": true,
+    "releaseRequestedDuringCapture": true,
+    "userActionScope": "Physical tip hold and release; other controls are not assigned by this trial"
+  },
+  "capture": {
+    "completed": true,
+    "sampleCount": 100,
+    "allStatus0Length65": true,
+    "pollingStartWallTimeMs": 1793715431391,
+    "actualPollingWindowMs": 24872,
+    "knownControlPrefixBytes": 5,
+    "segments": [
+      {
+        "prefix": "6464000005",
+        "startSample": 0,
+        "endSample": 63,
+        "startElapsedMs": 97,
+        "firstWallTimeMs": 1793715431488,
+        "button1Raw": 100,
+        "button1ForceRaw": 100
+      },
+      {
+        "prefix": "0000000005",
+        "startSample": 64,
+        "endSample": 99,
+        "startElapsedMs": 16103,
+        "firstWallTimeMs": 1793715447494,
+        "button1Raw": 0,
+        "button1ForceRaw": 0
+      }
+    ],
+    "releaseFirstObservedElapsedMs": 16103
+  },
+  "descriptorCorrelation": {
+    "physicalTip": "Button page09 usage1 at input-report2 payload byte0, and its nested Sensors20/0494 force field at byte1",
+    "heldRaw": [
+      100,
+      100
+    ],
+    "releasedRaw": [
+      0,
+      0
+    ],
+    "calibratedForceEstablished": false,
+    "analogResolutionEstablished": false,
+    "trackedPoseEstablished": false,
+    "remainingControlsMapped": false
+  },
+  "rawIntegrity": {
+    "reaEvidenceId": "ev_47baa201883a0d12aa8adf2b9b3e2090aef0946d760e105d438983ca66581229",
+    "rawTerminalJSONDeepEqualDeviceJSON": true,
+    "canonicalJSONSHA256": "1141d4b515b2eeccf00d01e6dafcc5853a042b240992e401d2a49f61252708b3",
+    "deviceFileSHA256": "65c2d325b9c6c8f6880598a9e04773267c73872c1902c5526830308791f96a84",
+    "verificationReceiptSHA256": "df8c7b0a441a174c3e5597a28af670ecf2bc5acf0f04f81c778eb810c617bf6e"
+  },
+  "writes": {
+    "cccd": false,
+    "feature": false,
+    "vendor": false,
+    "firmware": false
+  },
+  "inspectionRestored": true,
+  "restoredInspectionSha256": "473c6862d5159c84149292b68078ca5d0a8252b40e1cd210246ce4e6c503141e",
+  "result": "Positive controlled correlation between physical tip hold/release and two descriptor-defined input fields under test-only read authority. Normal production HID access, drawing integration, calibrated force and pose remain unverified.",
+  "privacy": "Only descriptor-defined five-byte control prefixes and aggregate timing retained. Unknown vendor payloads, raw IMU sample values, addresses, serials and private paths omitted."
+}

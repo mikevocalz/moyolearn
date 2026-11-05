@@ -7,12 +7,17 @@ import { haptics } from './haptics';
 
 // Press feedback: §8 ladder rung 1 — simple active-state opacity/scale via
 // NW5 transitions; respects reduced motion (motion-reduce kills transitions).
+// The focus ring is the `focus` token at full alpha. At half alpha
+// (`ring-focus/50`, the kit's value until 2026-11-04) it measured about 2.96:1
+// on the site's paper, under WCAG 1.4.11's 3:1 for a focus indicator, and
+// web-designer-pro's keyboard walk could not see it change at all. Every
+// `ring-focus/50` in the repo moved to full alpha in the same change.
 const button = tv({
   slots: {
     root:
       'shrink-0 flex-row items-center justify-center gap-element self-start rounded-control border-2 border-border-strong ' +
       'transition-all duration-fast active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ' +
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 ' +
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ' +
       'motion-reduce:transition-none',
     label: 'whitespace-nowrap font-semibold',
   },

@@ -23,16 +23,23 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { Quickdraw, type QuickdrawRef, type Snapshot } from '@quickdrawjs/react';
 import '@quickdrawjs/core/quickdraw.css';
+import { handleWhiteboardHistoryKey, createWhiteboardGestureHistory } from './whiteboard-history.ts';
 import type { WhiteboardBoardProps, WhiteboardHandle } from './whiteboard.types.ts';
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ snapshot, onChange, onReady, onHistory }, ref) {
+  function WhiteboardBoard({ snapshot, history, onChange, onReady, onHistory }, ref) {
     const board = useRef<QuickdrawRef>(null);
     /*
       The engine's history listener is installed once at `onMount`, but the
       callback prop may be a different function every render — keep the LATEST
       one behind a ref so the engine never holds a stale closure.
     */
+    const historyCommands = useRef(history);
+    useEffect(() => {
+      historyCommands.current = history;
+    }, [history]);
+    const shortcutStop = useRef<(() => void) | null>(null);
+    useEffect(() => () => shortcutStop.current?.(), []);
     const historyListener = useRef(onHistory);
     const historyStop = useRef<(() => void) | null>(null);
     useEffect(() => {
@@ -86,8 +93,8 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         loadSnapshot: (next) => board.current?.editor?.store.loadSnapshot(next as never, 'remote'),
         setTool: (tool) => board.current?.editor?.setTool(tool),
         setInk: (colour) => board.current?.editor?.setStyle('color', colour),
-        undo: () => board.current?.editor?.store.undo(),
-      redo: () => board.current?.editor?.store.redo(),
+        undo: () => history ? history.undo() : board.current?.editor?.store.undo(),
+      redo: () => history ? history.redo() : board.current?.editor?.store.redo(),
       /*
         THE SAME VERB, AND ON THIS SIDE IT IS A REAL DOM EVENT rather than a
         string of script. The engine is in this document, so the board's own
@@ -140,7 +147,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       },
         clear: () => board.current?.editor?.clearBoard(),
       }),
-      [exportPng],
+      [exportPng, history],
     );
 
     return (
@@ -163,6 +170,24 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         onChange={(diff, source) => onChange?.(diff, source)}
         onMount={(editor) => {
           onReady?.();
+          shortcutStop.current?.();
+          const onKeyDown = (event: KeyboardEvent) => {
+            handleWhiteboardHistoryKey(event, historyCommands.current);
+          };
+          const gestures = createWhiteboardGestureHistory(() => historyCommands.current);
+          const begin = (event: PointerEvent) => gestures.begin(event);
+          const end = (event: PointerEvent) => gestures.end(event);
+          editor.container.addEventListener('keydown', onKeyDown, true);
+          editor.container.addEventListener('pointerdown', begin, true);
+          editor.container.addEventListener('pointerup', end, true);
+          editor.container.addEventListener('pointercancel', end, true);
+          shortcutStop.current = () => {
+            editor.container.removeEventListener('keydown', onKeyDown, true);
+            editor.container.removeEventListener('pointerdown', begin, true);
+            editor.container.removeEventListener('pointerup', end, true);
+            editor.container.removeEventListener('pointercancel', end, true);
+            gestures.dispose();
+          };
           /*
             Undo/redo availability, same as the native fork's `moyo:history`
             posts — except here the editor is in this document, so the

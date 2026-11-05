@@ -27,14 +27,16 @@
 // SOT: docs/pack/23-tutorstage-handoff.md §5 · docs/design/reset/00-repo-baseline.md:34
 // SOT-KEYWORDS: whiteboard learning canvas drawing board controls responsive pane compact expanded age band
 
-import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
 import { ActivityIndicator, type LayoutChangeEvent } from 'react-native';
 import { targets } from '@acme/theme';
 import { Button } from './Button';
 import { LearningCanvas } from './LearningCanvas';
 import { Text } from './Text';
 import { AnimatePresence, MotionView, useReducedMotion } from './motion';
-import { Brush, Eraser, Highlighter, Sparkles, Trash2, Undo2 } from './icons';
+import { Sparkles, Trash2, Undo2 } from './icons';
+import { ForgeBoardIcon, type ForgeBoardIconName } from './ForgeBoardIcon';
+import { useInstanceStore, useStore } from './use-instance-store';
 import { View, Pressable } from './primitives';
 import { WhiteboardBoard } from './whiteboard-board';
 import type {
@@ -42,6 +44,7 @@ import type {
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
+  WhiteboardHistoryOwner,
   WhiteboardInk,
   WhiteboardSnapshot,
   WhiteboardTool,
@@ -52,6 +55,7 @@ export type {
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
+  WhiteboardHistoryOwner,
   WhiteboardInk,
   WhiteboardSnapshot,
   WhiteboardTool,
@@ -77,6 +81,8 @@ const NO_ENGINE_TO_ASK: WhiteboardCalibration = {
 export interface WhiteboardProps {
   /** A board the learner already started. Read once, at mount. */
   snapshot?: WhiteboardSnapshot;
+  /** Session-owned history; standalone boards use the renderer's own history. */
+  history?: WhiteboardHistoryOwner;
   /**
    * Touch target comes from the age band, never a hardcoded size (CONTRIBUTING.md
    * §UI). `buttonSizeForBand` produces it; a K–2 learner gets 72dp keys here
@@ -176,7 +182,7 @@ const TARGET_DP: Record<NonNullable<WhiteboardProps['size']>, number> = {
  * `check-contrast.mjs` already gates.
  */
 const FOCUS =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2';
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2';
 
 const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
   sm: 'min-h-target-adult',
@@ -223,11 +229,20 @@ const TOOL_KEY: Record<NonNullable<WhiteboardProps['size']>, string> = {
   xl: 'min-h-target-child px-2',
 };
 
-const TOOLS: readonly { id: WhiteboardTool; label: string; Icon: typeof Brush }[] = [
-  { id: 'draw', label: 'Pen', Icon: Brush },
-  { id: 'highlight', label: 'Highlighter', Icon: Highlighter },
-  { id: 'eraser', label: 'Eraser', Icon: Eraser },
+const TOOLS: readonly { id: WhiteboardTool; label: string; glyph: ForgeBoardIconName }[] = [
+  { id: 'draw', label: 'Pen', glyph: 'pen' },
+  { id: 'highlight', label: 'Highlighter', glyph: 'highlighter' },
+  { id: 'eraser', label: 'Eraser', glyph: 'eraser' },
 ];
+
+interface WhiteboardState {
+  tool: WhiteboardTool;
+  ink: WhiteboardInk;
+  pickingInk: boolean;
+  hasMarks: boolean;
+  emptyNotice: boolean;
+  rowWidth: number | null;
+}
 
 /**
  * The pens, named the way a child names them.
@@ -252,12 +267,19 @@ const INKS = [
 ] as const satisfies readonly { id: WhiteboardInk; label: string; swatch: string }[];
 
 export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function Whiteboard(
-  { snapshot, size = 'md', onAsk, asking = false, onChange, onReady, onCalibration, className },
+  { snapshot, history, size = 'md', onAsk, asking = false, onChange, onReady, onCalibration, className },
   ref,
 ) {
   const board = useRef<WhiteboardHandle>(null);
-  const [tool, setTool] = useState<WhiteboardTool>('draw');
-  const [ink, setInk] = useState<WhiteboardInk>('black');
+  const state = useInstanceStore<WhiteboardState>(() => ({
+    tool: 'draw', ink: 'black', pickingInk: false, hasMarks: false, emptyNotice: false, rowWidth: null,
+  }));
+  const tool = useStore(state, (s) => s.tool);
+  const ink = useStore(state, (s) => s.ink);
+  const pickingInk = useStore(state, (s) => s.pickingInk);
+  const hasMarks = useStore(state, (s) => s.hasMarks);
+  const emptyNotice = useStore(state, (s) => s.emptyNotice);
+  const rowWidth = useStore(state, (s) => s.rowWidth);
   /*
     Whether the learner has made a mark, and it is the only thing gating the
     ask. NOT derived from a snapshot count: the native fork's handle is an async
@@ -270,9 +292,6 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     control's state) and "is there anything on the paper right now" (a fact only
     the engine knows).
   */
-  const [pickingInk, setPickingInk] = useState(false);
-  const [hasMarks, setHasMarks] = useState(false);
-  const [emptyNotice, setEmptyNotice] = useState(false);
 
   useImperativeHandle(ref, () => ({
     exportPng: async () => (await board.current?.exportPng()) ?? null,
@@ -280,20 +299,20 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     loadSnapshot: (next) => board.current?.loadSnapshot(next),
     getSnapshot: async () => (await board.current?.getSnapshot()) ?? null,
     setTool: (next) => {
-      setTool(next);
+      state.setState({ tool: next });
       board.current?.setTool(next);
     },
     setInk: (next) => {
-      setInk(next);
+      state.setState({ ink: next });
       board.current?.setInk(next);
     },
-    undo: () => board.current?.undo(),
+    undo: () => history ? history.undo() : board.current?.undo(),
     /*
       Forwarded, not surfaced. The tray deliberately has no redo key — see
       `WhiteboardHandle.redo` — but the handle is one contract, and the spatial
       rail reaches the engine through this component.
     */
-    redo: () => board.current?.redo(),
+    redo: () => history ? history.redo() : board.current?.redo(),
     injectPointer: (sample) => board.current?.injectPointer(sample),
     clear: () => board.current?.clear(),
     /*
@@ -312,10 +331,9 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     calibrate: async () => (await board.current?.calibrate?.()) ?? NO_ENGINE_TO_ASK,
   }));
 
-  const [rowWidth, setRowWidth] = useState<number | null>(null);
   const measureRow = useCallback((event: LayoutChangeEvent) => {
-    setRowWidth(event.nativeEvent.layout.width);
-  }, []);
+    state.setState({ rowWidth: event.nativeEvent.layout.width });
+  }, [state]);
 
   const target = TARGET_DP[size];
   /*
@@ -335,9 +353,9 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   const compact = rowWidth !== null && rowWidth < fullRowDp;
 
   const chooseTool = useCallback((next: WhiteboardTool) => {
-    setTool(next);
+    state.setState({ tool: next });
     board.current?.setTool(next);
-  }, []);
+  }, [state]);
 
   /*
     Choosing a colour also picks the pen back up. A child who has just erased
@@ -348,18 +366,19 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   */
   const chooseInk = useCallback(
     (next: WhiteboardInk) => {
-      setInk(next);
+      state.setState({ ink: next });
       board.current?.setInk(next);
-      setPickingInk(false);
+      state.setState({ pickingInk: false });
       if (tool === 'eraser') chooseTool('draw');
     },
-    [tool, chooseTool],
+    [state, tool, chooseTool],
   );
 
   const undo = useCallback(() => {
-    setEmptyNotice(false);
-    board.current?.undo();
-  }, []);
+    state.setState({ emptyNotice: false });
+    if (history) history.undo();
+    else board.current?.undo();
+  }, [state, history]);
 
   /*
     Clear runs without a confirm, and that is the undo working, not a corner
@@ -368,15 +387,15 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     scratch paper is friction that teaches them not to use the paper.
   */
   const clear = useCallback(() => {
-    setEmptyNotice(false);
+    state.setState({ emptyNotice: false });
     board.current?.clear();
-  }, []);
+  }, [state]);
 
   const handleAsk = useCallback(async () => {
     const png = (await board.current?.exportPng()) ?? null;
-    setEmptyNotice(png === null);
+    state.setState({ emptyNotice: png === null });
     onAsk?.(png);
-  }, [onAsk]);
+  }, [state, onAsk]);
 
   /*
     `hasMarks` turns on for the LEARNER's hand only. A restored board and a
@@ -388,12 +407,12 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   const handleChange = useCallback(
     (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
       if (source === 'user') {
-        setHasMarks(true);
-        setEmptyNotice(false);
+        state.setState({ hasMarks: true });
+        state.setState({ emptyNotice: false });
       }
       onChange?.(diff, source);
     },
-    [onChange],
+    [state, onChange],
   );
 
   /*
@@ -432,6 +451,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           <WhiteboardBoard
             ref={board}
             snapshot={snapshot}
+            history={history}
             onChange={handleChange}
             onReady={onReady}
             onCalibration={onCalibration}
@@ -575,7 +595,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           aria-label="Drawing tool"
           className="flex-row items-center overflow-hidden rounded-control border-2 border-strong bg-surface"
         >
-        {TOOLS.map(({ id, label, Icon }) => (
+        {TOOLS.map(({ id, label, glyph }) => (
           <Pressable
             key={id}
             onPress={() => chooseTool(id)}
@@ -592,7 +612,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               thing you press to make something happen. A pressed key is the
               page's own ink turned inside out.
             */
-            className={`${key} ${FOCUS} items-center justify-center ${
+            className={`${key} ${FOCUS} active:opacity-70 items-center justify-center ${
               tool === id ? 'bg-text' : ''
             }`}
           >
@@ -609,7 +629,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               Shipped that way for one build; every other call site in the kit
               spells it in full.
             */}
-            <Icon size={20} className={tool === id ? 'text-text-inverse' : 'text-text'} />
+            <ForgeBoardIcon name={glyph} selected={tool === id} size={20} className={tool === id ? 'text-text-inverse' : 'text-text'} />
           </Pressable>
         ))}
         </View>
@@ -632,7 +652,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           list that says "Red" is still a list about colour rather than colour.
         */}
         <Pressable
-          onPress={() => setPickingInk((open) => !open)}
+          onPress={() => state.setState((s) => ({ pickingInk: !s.pickingInk }))}
           aria-label={`Pen color: ${currentInk.label}`}
           aria-expanded={pickingInk}
           className={`${key} ${FOCUS} items-center justify-center rounded-control ${

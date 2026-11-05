@@ -1,0 +1,64 @@
+{
+  "scope": "Physical Quest 3S API34; CDM association records versus latest application chooser receipt",
+  "applicationPackage": "com.moyolearn.app",
+  "actualOwnedAssociations": [
+    {
+      "associationId": 1,
+      "displayName": "Logitech Muse",
+      "approvedLocalTime": "2026-11-03T00:43:58-05:00",
+      "selfManaged": false,
+      "revoked": false,
+      "lastTimeConnected": null,
+      "selectionEvidence": "OS-owned association contains an actual BLE ScanResult"
+    },
+    {
+      "associationId": 2,
+      "displayName": "Logitech Muse",
+      "approvedLocalTime": "2026-11-03T00:44:02-05:00",
+      "selfManaged": false,
+      "revoked": false,
+      "lastTimeConnected": null,
+      "selectionEvidence": "OS-owned association contains an actual BLE ScanResult"
+    }
+  ],
+  "latestChooserReceipt": {
+    "associationId": null,
+    "error": "discovery_timeout",
+    "generation": 23,
+    "resultCode": null,
+    "state": "cancelled",
+    "timestampMs": 1793684755326
+  },
+  "latestGattState": {
+    "connected": false,
+    "connectionGeneration": 0,
+    "servicesState": "idle",
+    "totalNotifications": 0
+  },
+  "interpretation": {
+    "associationIsBluetoothBond": false,
+    "associationVerifiesPenInput": false,
+    "associationGenerationMappingEstablished": false,
+    "note": "OS records prove two application-owned associations exist. A later generation23 timeout does not erase those records or identify which earlier chooser callback created them."
+  },
+  "implementationFinding": "API33+ onAssociationCreated is documented as an independent success callback; artifact13 only stored it and awaited an Activity result. Artifact14 shared verified completion fix is in progress and has not yet been physically validated.",
+  "primarySource": "https://android.googlesource.com/platform/frameworks/base/+/refs/tags/android-14.0.0_r1/core/java/android/companion/CompanionDeviceManager.java",
+  "sources": {
+    "serviceDumpSha256": "1f9f55ab6cd59f7da66a4d7f43706144444767877ee1d95f840b5ed8aece3321",
+    "afterSearchSha256": "295f6212f02add6edea0dc6b90471bcb959d81d95a9aa58aaa4d235970acf6ba"
+  },
+  "privacy": "Bluetooth addresses, unrelated devices, room coordinates and logical device IDs omitted",
+  "artifact14SourceReview": {
+    "status": "passed",
+    "physicalValidation": "Public callback completion physically observed: association 3, completionSource association-callback, resultCode null; see quest-public-asa14.json",
+    "completionRoutes": [
+      "association-callback",
+      "activity-result"
+    ],
+    "guarantees": [
+      "Actual application-owned association is verified before selection publication",
+      "Callback-only success retains null activity result code",
+      "First verified completion wins; cancelled or stale callbacks cannot publish"
+    ]
+  }
+}

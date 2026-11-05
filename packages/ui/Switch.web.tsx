@@ -24,7 +24,7 @@ export function Switch({ value, onChange, label, disabled, className }: SwitchPr
         aria-label={label}
         disabled={disabled}
         onClick={() => onChange(!value)}
-        className={`relative h-7 w-12 shrink-0 rounded-md border-2 transition-colors duration-base ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 ${
+        className={`relative h-7 w-12 shrink-0 rounded-md border-2 transition-colors duration-base ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ${
           value
             ? 'border-border-strong bg-primary'
             : 'border-border bg-surface-sunken'

@@ -22,7 +22,7 @@ import 'server-only';
 // client believed was current; the repository compares it inside one
 // transaction and answers `stale` with the row as it stands when another
 // device moved first.
-// SOT: docs/work/pr-100/contract.md §Data §Routes · docs/decisions/adr-124-homework-submissions-persistence.md · docs/decisions/adr-119-graded-turns-need-a-locked-revision.md
+// SOT: docs/work/pr-100/contract.md §Data §Routes · docs/decisions/adr-125-homework-submissions-persistence.md · docs/decisions/adr-119-graded-turns-need-a-locked-revision.md
 // SOT-KEYWORDS: homework service ward rule guardian forbidden submission create revise advance stale cursor evidence evaluation ready false practice set
 import { randomUUID } from 'node:crypto';
 import type { Auth } from '@acme/auth/server';

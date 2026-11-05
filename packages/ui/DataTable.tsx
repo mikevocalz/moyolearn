@@ -232,7 +232,7 @@ export function DataTable<T>({
                         /* The header must carry the column's alignment too —
                            a right-aligned number column under a left-aligned
                            label is the tell that the two were styled apart. */
-                        className={`min-h-target-adult flex-1 flex-row items-center gap-element rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${numeric ? 'justify-end' : ''}`}
+                        className={`min-h-target-adult flex-1 flex-row items-center gap-element rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${numeric ? 'justify-end' : ''}`}
                       >
                         <Text className={s.headLabel()}>{label}</Text>
                         {/* Only the ACTIVE direction shows a glyph. A permanent

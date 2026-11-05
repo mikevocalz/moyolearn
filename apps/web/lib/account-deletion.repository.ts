@@ -102,7 +102,7 @@ const SUBJECT_COLLECTIONS = [
   { collection: 'assignment-completions', fields: ['learnerAuthId'] },
   { collection: 'handoff-codes', fields: ['learnerAuthId', 'guardianAuthId'] },
   /*
-    ADR-124's homework rows. None carries an `expires_at`, so like
+    ADR-125's homework rows. None carries an `expires_at`, so like
     `sessionSummaries` this cascade is their only deleter. Questions go before
     the submission that groups them, content-before-links as the header says.
     A submission a guardian uploaded for a ward is the WARD's row

@@ -1,0 +1,200 @@
+{
+  "scope": "Physical Quest3S API34; native14 public companion chooser, Bluetooth bond and public ASAS reads",
+  "applicationPackage": "com.moyolearn.app",
+  "chooser": {
+    "associationId": 3,
+    "completionSource": "association-callback",
+    "error": null,
+    "generation": 4,
+    "resultCode": null,
+    "state": "associated",
+    "timestampMs": 1793711268936
+  },
+  "initialLink": {
+    "connected": true,
+    "stateKind": "linked",
+    "verification": "Bluetooth linkage only; pen input unverified"
+  },
+  "actualBondEvents": [
+    {
+      "state": 10,
+      "wallTimeMs": 1793711295315
+    },
+    {
+      "state": 11,
+      "wallTimeMs": 1793711295340
+    },
+    {
+      "state": 12,
+      "wallTimeMs": 1793711296100
+    }
+  ],
+  "services": {
+    "count": 7,
+    "status": 0,
+    "wallTimeMs": 1793711302211
+  },
+  "accessoryVersionRead": {
+    "kind": "read",
+    "status": 0,
+    "hex": "0200010100",
+    "byteLength": 5,
+    "wallTimeMs": 1793711308180
+  },
+  "accessoryVersionInterpretation": {
+    "basis": "Current Apple R32 Update1 table19-15 major-byte-first layout",
+    "versionLength": 2,
+    "major": 0,
+    "minor": 1,
+    "featureLength": 1,
+    "featureHex": "00",
+    "supportedByCurrentHostPolicy": false,
+    "note": "Measured bytes are 02 00 01 01 00. Do not relabel them ASA1.0 or change byte order without a matching protocol source."
+  },
+  "utiRead": {
+    "kind": "read",
+    "status": 0,
+    "hex": "42636f6d2e6c6f6769746563682e6d7573652e793537370a636f6d2e6c6f6769746563682e6d7573650a636f6d2e6170706c652e7370617469616c2d7374796c75730a",
+    "byteLength": 67,
+    "wallTimeMs": 1793711315087
+  },
+  "utiObservedContent": {
+    "prefixHex": "42",
+    "prefixDecimal": 66,
+    "remainingByteCount": 66,
+    "utf8Lines": [
+      "com.logitech.muse.y577",
+      "com.logitech.muse",
+      "com.apple.spatial-stylus"
+    ]
+  },
+  "hostVersionRead": {
+    "kind": "read",
+    "status": 0,
+    "hex": "00010100",
+    "byteLength": 4,
+    "wallTimeMs": 1793711366884
+  },
+  "hostVersionInterpretation": {
+    "basis": "Current Apple table19-17 major-byte-first layout",
+    "major": 0,
+    "minor": 1,
+    "featureLength": 1,
+    "featureHex": "00",
+    "operation": "read only; not a host negotiation write"
+  },
+  "disconnect": {
+    "cause": "User confirmed pressing the chooser action again; controller explicitly releases the prior link",
+    "wallTimeMs": 1793711319026,
+    "timeoutClaim": false
+  },
+  "hostNegotiationWritesPerformed": false,
+  "penPressureVerified": false,
+  "penPoseVerified": false,
+  "tipInputVerified": false,
+  "authority": "Public application CDM/Bluetooth APIs only for these observations. Any separate UiAutomation descriptor instrumentation is test-only authority and not production application access.",
+  "sourceHashes": {
+    "linked-state": "c6d785528ca355fbc3bcc6eed5125c90744a3310d44c11a71e213312d9bef683",
+    "bond-state": "5dcbd872a5071af3b4a38f6d876c0e958e9cb68f8caa8a833efc42022dc8b3a6",
+    "services": "4b05b80f8331cebab24bf3fa9ea92719ef696ca9174e3a8a83b78fd573fd5833",
+    "version": "61a074f85052c222afa07839a41b2b4e4013671092f0b70c40d76dbec1204535",
+    "uti": "b2f79c00049ab4da6f14216f0a6271b9b6b2db3aab56510d633240ac34437001",
+    "host-read": "a1de75a7cd46f08af552364175d8e05e0e5789123922f52ec80a31cc20ed20fe",
+    "postBondBluetooth": "f96822e1315f89e1daf3746a36d0387d1cef3ce0ea005e8e6f1aac9bf951dad4",
+    "postBondInput": "76061d9fadbafbed6355a0ddb8c96bf83d2c5d44ee5f9dc17dfc3e2e14d4f322"
+  },
+  "privacy": "Bluetooth addresses, unrelated devices, logical device IDs and room coordinates omitted",
+  "postBondOsSnapshot": {
+    "museBondedLowEnergy": true,
+    "hidHostConnected": true,
+    "nativeHidReady": false,
+    "nativeHidReports": 0,
+    "nativeHidDrops": 0,
+    "logitechMuseInputReaderDeviceFound": false,
+    "note": "Transport/OS HID connection does not establish public pen reports or readiness."
+  },
+  "separateTestOnlyDescriptorAttempt": {
+    "testOnly": true,
+    "productionAccess": false,
+    "completed": false,
+    "errorType": "IllegalStateException",
+    "errorCategory": "UiAutomationService already registered; failed before BLE operations",
+    "descriptorBytesObserved": false,
+    "receiptSha256": "85699f5d7d04bde7fe73ff3c4c31688b752d17bf25358d355907b8b078c7d51c",
+    "attemptsObserved": 2,
+    "secondAttemptOutcome": "Same UiAutomationService already-registered error before BLE; no descriptor bytes",
+    "secondReceiptSha256": "912c681783ee9cc46a3bf0036eb1097af26df656df8b219e1e4ebeaf14a046e2",
+    "interpretation": "Instrumentation ownership/setup failure, not evidence of a Muse protocol or hardware failure",
+    "currentBlocker": "Existing UiAutomation owner remains active; user declined stopping its service. No descriptor bytes acquired."
+  },
+  "standardDeviceInformation": {
+    "connectionGeneration": 3,
+    "connected": true,
+    "bondState": 12,
+    "reads": {
+      "model": {
+        "status": 0,
+        "hex": "4d757365",
+        "byteLength": 4,
+        "wallTimeMs": 1793711624054,
+        "utf8": "Muse"
+      },
+      "manufacturer": {
+        "status": 0,
+        "hex": "4c6f6769",
+        "byteLength": 4,
+        "wallTimeMs": 1793711624077,
+        "utf8": "Logi"
+      },
+      "pnpId": {
+        "status": 0,
+        "hex": "026d041ed10902",
+        "byteLength": 7,
+        "wallTimeMs": 1793711624099,
+        "vendorIdSource": 2,
+        "vendorId": "046D",
+        "productId": "D11E"
+      },
+      "firmwareRevision": {
+        "status": 0,
+        "hex": "322e392e38",
+        "byteLength": 5,
+        "wallTimeMs": 1793711624144,
+        "utf8": "2.9.8"
+      },
+      "softwareRevision": {
+        "status": 0,
+        "hex": "34352e34313333372e33303734343532313638",
+        "byteLength": 19,
+        "wallTimeMs": 1793711624167,
+        "utf8": "45.41337.3074452168"
+      }
+    },
+    "serialNumberOmitted": true,
+    "sourceSha256": "d1ff8cf0b42469b89c883b4e8a88d9ac73502d02420fec0297de941b72752965"
+  },
+  "boundedAndroidInputTrial": {
+    "artifact": 14,
+    "durationSeconds": 50,
+    "userConfirmedTipPresses": 3,
+    "userConfirmedNearTipButtonPresses": "3 presses of each near-tip button",
+    "touchControllersHeldStillByUser": true,
+    "captureCommand": "timeout 50 getevent -lt",
+    "metaCliExitCode": 124,
+    "capturedStdoutObservation": {
+      "inputDeviceEnumerationCount": 4,
+      "inputEventLinesObserved": 0,
+      "receiptScope": "Meta CLI returned capture stdout in its nonzero-exit error result"
+    },
+    "outputFileEmpty": true,
+    "emptyFileIsNegativeEvidence": false,
+    "limitation": "No event lines were observed in the bounded command receipt; an empty redirected file alone cannot establish absent input. This does not prove global hardware incompatibility.",
+    "postTrialNativeHid": {
+      "connected": true,
+      "ready": false,
+      "reports": 0,
+      "drops": 0
+    },
+    "postTrialBluetoothSha256": "491932c179bddfd944ffb8a77897132f69efd1bfdca44d5cc5e66c0cd5745074"
+  }
+}

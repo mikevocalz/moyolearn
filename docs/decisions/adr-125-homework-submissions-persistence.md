@@ -1,4 +1,4 @@
-# ADR-124: a captured worksheet is a server row, and the device caches it
+# ADR-125: a captured worksheet is a server row, and the device caches it
 
 Status: proposed. Collections, repository, service and routes are in code; migration `homework_additive.sql` has been applied only to a scratch Postgres, twice, to prove it parses and is idempotent. No shared database has it.
 Date: 2026-10-15

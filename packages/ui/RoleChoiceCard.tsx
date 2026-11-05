@@ -31,7 +31,7 @@ const roleChoice = tv({
     root:
       'min-h-target-young w-full flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-inset text-left ' +
       'transition-all duration-fast hover:border-border-strong ' +
-      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 ' +
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 ' +
       'motion-reduce:transition-none',
     iconWrap: 'h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-surface-sunken',
     body: 'min-w-0 flex-1 gap-0.5',

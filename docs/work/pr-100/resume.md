@@ -3,7 +3,7 @@
 Clone: /Users/mikevocalz/moyolearn-pr100, branch feat/homework-worksheet-question-flow-20261015. Pushed: map, contract, types, briefs (bb9694f0).
 
 Uncommitted partial work (typechecks clean in payload, student-model, app, web; untested, unreviewed):
-- B1: three Homework* collections, homework_additive.sql, payload.config/payload-types/index/sweep.sql/account-deletion edits. Missing: homework.repository.ts, homework.service.ts + server-test, routes, server.ts exports, ADR-124, log.
+- B1: three Homework* collections, homework_additive.sql, payload.config/payload-types/index/sweep.sql/account-deletion edits. Missing: homework.repository.ts, homework.service.ts + server-test, routes, server.ts exports, ADR-125, log.
 - B3: guardian timeline, assign sheet, wards/timeline hooks, routes, Mobbin docs, family/home edits. Missing: gates, copy table, a11y audit, handoff spec, log. Mobbin URLs unverified.
 - B5: practice-generator/checker + test, expo-print/expo-sharing deps. Missing: service, sheet HTML, native print, preview, routes, gates, log.
 - B2 and B4: not started.

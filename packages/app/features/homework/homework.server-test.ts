@@ -1,4 +1,4 @@
-// ADR-124's denials, held as tests over fake ports built on Maps.
+// ADR-125's denials, held as tests over fake ports built on Maps.
 //
 // Four claims, each a way a family's data could leak or a child could be
 // graded on a photograph:
@@ -13,7 +13,7 @@
 //     `edu.questions` with `evaluationReady: false`, to the CHILD.
 //
 // `.server-test.ts` because the service opens with `import 'server-only'`.
-// SOT: docs/decisions/adr-124-homework-submissions-persistence.md · docs/work/pr-100/contract.md §Routes
+// SOT: docs/decisions/adr-125-homework-submissions-persistence.md · docs/work/pr-100/contract.md §Routes
 // SOT-KEYWORDS: homework service test ward revoked forbidden sibling stale cursor evaluation ready false evidence
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';

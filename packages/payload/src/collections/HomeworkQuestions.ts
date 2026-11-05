@@ -24,7 +24,7 @@ import type { CollectionConfig } from 'payload';
 // acceptance contract distinguishes, and none of them is a score shown to a
 // child. The guardian report maps them to `ProblemStatus`; it never maps them to
 // a grade.
-// SOT: docs/design/homework-end-to-end-2026.md · docs/work/pr-100/contract.md §Data · docs/decisions/adr-119-graded-turns-need-a-locked-revision.md · docs/decisions/adr-124-homework-submissions-persistence.md
+// SOT: docs/design/homework-end-to-end-2026.md · docs/work/pr-100/contract.md §Data · docs/decisions/adr-119-graded-turns-need-a-locked-revision.md · docs/decisions/adr-125-homework-submissions-persistence.md
 // SOT-KEYWORDS: homework question revision append-only current revision crop expiry outcome attempts hints misconception tags evidence binding
 
 export const HomeworkQuestions: CollectionConfig = {

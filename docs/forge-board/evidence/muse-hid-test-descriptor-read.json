@@ -1,0 +1,143 @@
+{
+  "scope": "Physical Logitech Muse on Quest API34; temporary test-only instrumentation descriptor reads, not production app access or pen input capture",
+  "testOnly": true,
+  "productionAccess": false,
+  "inputProducer": false,
+  "instrumentationPackage": "com.moyolearn.museprobe",
+  "sdkInt": 34,
+  "wallTimeMs": 1793714508038,
+  "authority": {
+    "api": "Public Instrumentation/UiAutomation temporary named shell permission identity",
+    "namedPermissions": [
+      "android.permission.BLUETOOTH_CONNECT",
+      "android.permission.BLUETOOTH_PRIVILEGED"
+    ],
+    "productionMoyoUidGrantedPrivilegedAccess": false,
+    "rootOrHiddenApiRequired": false,
+    "firmwareModified": false
+  },
+  "freshPublicSetup": {
+    "association": {
+      "associationId": 4,
+      "completionSource": "association-callback",
+      "error": null,
+      "generation": 4,
+      "resultCode": null,
+      "state": "associated",
+      "timestampMs": 1793714453495
+    },
+    "connectedBeforeTest": true,
+    "actualBondState": 12,
+    "bondEvents": [
+      {
+        "state": 10,
+        "wallTimeMs": 1793714460196
+      },
+      {
+        "state": 11,
+        "wallTimeMs": 1793714460224
+      },
+      {
+        "state": 12,
+        "wallTimeMs": 1793714461378
+      }
+    ]
+  },
+  "operations": "connect,discover,read1812/2A4B,read1812/2A4D/2908",
+  "matchingBondedDeviceCount": 1,
+  "deviceName": "Logitech Muse",
+  "bondStateAtTest": 12,
+  "connectionStatus": 0,
+  "discoveryStatus": 0,
+  "completed": true,
+  "reportMap": {
+    "gattStatus": 0,
+    "byteLength": 457,
+    "serviceInstanceId": 45,
+    "characteristicInstanceId": 68
+  },
+  "reportMapFile": "muse-hid-report-map.bin",
+  "reportMapSha256": "4708e62215883a297c88be41600d2ddea20345ecfbe41213db47f7d6778b3405",
+  "reportReferences": [
+    {
+      "gattStatus": 0,
+      "byteLength": 2,
+      "rawHex": "0201",
+      "serviceInstanceId": 45,
+      "characteristicInstanceId": 49
+    },
+    {
+      "gattStatus": 0,
+      "byteLength": 2,
+      "rawHex": "0402",
+      "serviceInstanceId": 45,
+      "characteristicInstanceId": 53
+    },
+    {
+      "gattStatus": 0,
+      "byteLength": 2,
+      "rawHex": "0502",
+      "serviceInstanceId": 45,
+      "characteristicInstanceId": 56
+    },
+    {
+      "gattStatus": 0,
+      "byteLength": 2,
+      "rawHex": "0103",
+      "serviceInstanceId": 45,
+      "characteristicInstanceId": 59
+    },
+    {
+      "gattStatus": 0,
+      "byteLength": 2,
+      "rawHex": "0203",
+      "serviceInstanceId": 45,
+      "characteristicInstanceId": 62
+    },
+    {
+      "gattStatus": 0,
+      "byteLength": 2,
+      "rawHex": "0503",
+      "serviceInstanceId": 45,
+      "characteristicInstanceId": 65
+    }
+  ],
+  "attributePermissionBitsRecorded": false,
+  "sideEffects": {
+    "ownGattClientOpenedAndClosed": true,
+    "cccdWrites": false,
+    "featureReportWrites": false,
+    "vendorWrites": false,
+    "firmwareWrites": false,
+    "notificationRegistration": false
+  },
+  "inspectionLifecycle": {
+    "userExplicitlyApprovedScopedPauseAndRestore": true,
+    "onlyScopedQuestInspectionServicesPaused": true,
+    "pausedServiceKinds": [
+      "AndroidDevtools",
+      "JsRuntimeDebugger"
+    ],
+    "inspectionRestored": true,
+    "restoredEvidenceSource": "android-devtools",
+    "exactPauseDurationProven": false,
+    "note": "Successful restored accessibility inspection is recorded; no exact pause duration is inferred from file timestamps."
+  },
+  "inputClaims": {
+    "rawTipPacketsCaptured": false,
+    "pressureMeasured": false,
+    "poseMeasured": false,
+    "workingPenInputVerified": false,
+    "descriptorFieldDecode": "Pending independent descriptor analysis; no guessed report offsets applied"
+  },
+  "sourceHashes": {
+    "readReceipt": "328511c46e62588c93cc16d4a242b7e10e96104c0a799f83cbc0d0a4694002d5",
+    "selected": "85925cd15da887997a361f91d2bdc2eff78f12089336ed3a45cdcda3c12482e7",
+    "bond": "10d934ab9adf6c11f12a8cfa25e887e62f5e24dd140fb6bfe97dedfeb626ad7e",
+    "inspectionPause": "a405794b5e4a86a72ee11ce3cf5673825db178c38f3a63b7091a21c6ab1db90e",
+    "restoredInspection": "bec059014bfb39e7ccf5b2f378af74769f7ec1c1430c0357a9e055e455577a31"
+  },
+  "privacy": "Bluetooth addresses, serial numbers, logical device IDs, process IDs and private paths omitted",
+  "instrumentationApkSha256": "d6a6b3250d65517aa11dca91735f680753f1ecac3527e80c7002336b62f2dcd7",
+  "callbackDeadlineSeconds": 40
+}
