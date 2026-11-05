@@ -1,69 +1,47 @@
 /**
- * Moyo Learn desktop shell: brand mark, shared tokens, native toolbar and an
- * empty workspace. React Native views rendered by Hermes in a Spark window.
+ * Moyo Learn desktop main window: AppKit split view with the section source
+ * list on the left and the toolbar plus the active section on the right.
  *
- * PR-D01 scope is the shell only. Sign-in, roles and learning surfaces are out
- * of scope (PR-D04, PR-D05), so the workspace says where that work happens
- * today and opens it, instead of rendering placeholder cards.
- * The Mobbin structure pass for this window has not run yet (see PR body).
- * SOT: docs/desktop/seams/SEAMS.md · packages/theme/tokens.ts
- * SOT-KEYWORDS: desktop app shell sidebar workspace empty-state spark
+ * `SidebarSplitView` is an NSSplitView (spark-ui appkit-split-view); it answers
+ * the host's View > Show Sidebar (⌃⌘S) itself and reports the change through
+ * `onSidebarCollapsedChange`, which the store mirrors. Sign-in, roles and
+ * learning surfaces are out of PR-D02 (PR-D04, PR-D05), so the workspace says
+ * where that work happens today and opens it.
+ * Structure (docs/desktop/mobbin/D02.md): Linear's sidebar order (identity,
+ * then sections); Loom's rule that a slot never goes blank.
+ * SOT: docs/desktop/seams/D02.md · packages/theme/tokens.ts
+ * SOT-KEYWORDS: desktop app shell split view sidebar workspace empty-state spark
  */
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect } from "react";
+import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from "react-native";
 import { openURL } from "@legendapp/spark/links";
 import { Button as NativeButton } from "@legendapp/spark/ui";
+import { SidebarSplitView } from "@legendapp/spark/ui/split-view";
 import { contentWidths, navChrome } from "../../packages/theme/tokens";
-import { DESKTOP_SECTIONS, sectionById, type DesktopSection } from "./src/layout";
-import { DesktopNativeMenus, NativeWorkspaceToolbar, chooseResource } from "./src/native-menus";
+import { chooseResource } from "./src/command-actions";
+import { sectionById, type DesktopSection } from "./src/layout";
+import { DesktopShellControllers } from "./src/native-menus";
+import { SidebarPane } from "./src/sidebar";
 import { useShellStore } from "./src/store";
-import { color, corner, space, target, textStyle, toPoints, useScheme, type Scheme } from "./src/theme";
+import { WorkspaceToolbar } from "./src/toolbar";
+import { color, corner, space, textStyle, toPoints, useScheme, type Scheme } from "./src/theme";
 
 /** Same origin mobile ships to (apps/mobile/eas.json EXPO_PUBLIC_APP_URL). */
 const WEB_APP_URL = "https://app.moyolearn.com";
-
-function Sidebar({ scheme }: { scheme: Scheme }) {
-  const section = useShellStore((state) => state.section);
-  const setSection = useShellStore((state) => state.setSection);
-  const styles = sidebarStyles(scheme);
-  return (
-    <View style={styles.sidebar} accessibilityLabel="Sections">
-      <View style={styles.brand}>
-        <Image
-          source={require("./assets/mark.png")}
-          style={styles.mark}
-          resizeMode="contain"
-          accessibilityLabel="Moyo Learn"
-        />
-        <Text style={styles.brandName}>Moyo Learn</Text>
-      </View>
-      {DESKTOP_SECTIONS.map((item) => {
-        const active = item.id === section;
-        return (
-          <Pressable
-            key={item.id}
-            onPress={() => setSection(item.id)}
-            accessibilityRole="button"
-            accessibilityLabel={item.label}
-            accessibilityState={{ selected: active }}
-            style={[styles.item, active && styles.itemActive]}
-          >
-            <Text style={[styles.itemLabel, active && styles.itemLabelActive]} numberOfLines={1}>
-              {item.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
+const SIDEBAR_WIDTH = toPoints(navChrome.railExpanded);
 
 function ErrorNotice({ scheme }: { scheme: Scheme }) {
   const error = useShellStore((state) => state.error);
   const dismiss = useShellStore((state) => state.dismissError);
+  // accessibilityLiveRegion is Android-only; VoiceOver on macOS hears the error
+  // through an explicit announcement.
+  useEffect(() => {
+    if (error) AccessibilityInfo.announceForAccessibility(`${error.source}: ${error.message}`);
+  }, [error]);
   if (!error) return null;
   const styles = contentStyles(scheme);
   return (
-    <View style={styles.notice} accessibilityLiveRegion="polite">
+    <View style={styles.notice} accessible accessibilityRole="alert">
       <Text style={styles.body} selectable>
         {error.source}: {error.message}
       </Text>
@@ -106,7 +84,9 @@ function ResourcesPanel({ scheme }: { scheme: Scheme }) {
   const styles = contentStyles(scheme);
   return (
     <View style={styles.panel}>
-      <Text style={styles.heading}>{resourceName ?? "No file chosen"}</Text>
+      <Text style={styles.heading} selectable>
+        {resourceName ?? "No file chosen"}
+      </Text>
       <Text style={styles.body}>
         Moyo Learn shows the file name only. It does not open, read or upload the file.
       </Text>
@@ -126,68 +106,62 @@ function SectionBody({ section, scheme }: { section: DesktopSection; scheme: Sch
   return <WorkspaceEmpty scheme={scheme} />;
 }
 
-export default function App() {
-  const scheme = useScheme();
+function ContentPane({ scheme }: { scheme: Scheme }) {
   const section = useShellStore((state) => state.section);
   const density = useShellStore((state) => state.density);
   const styles = contentStyles(scheme);
   const current = sectionById(section);
   return (
+    <ScrollView
+      style={styles.main}
+      contentContainerStyle={[styles.content, density === "compact" && styles.contentCompact]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <WorkspaceToolbar />
+      <View style={styles.titleGroup}>
+        <Text accessibilityRole="header" style={styles.title}>
+          {current.label}
+        </Text>
+        <Text style={styles.subtitle}>{current.description}</Text>
+      </View>
+      <ErrorNotice scheme={scheme} />
+      <SectionBody section={section} scheme={scheme} />
+    </ScrollView>
+  );
+}
+
+export default function App() {
+  const scheme = useScheme();
+  const sidebarVisible = useShellStore((state) => state.sidebarVisible);
+  const setSidebarVisible = useShellStore((state) => state.setSidebarVisible);
+  const reportError = useShellStore((state) => state.reportError);
+  const hydrated = useShellStore((state) => state.hydrated);
+  const styles = contentStyles(scheme);
+  // Settings load from disk asynchronously; painting before they arrive would
+  // flash the default appearance and sidebar state. The window background shows meanwhile.
+  if (!hydrated) return <View style={styles.root} />;
+  return (
     <View style={styles.root}>
-      <DesktopNativeMenus />
-      <Sidebar scheme={scheme} />
-      <ScrollView
-        style={styles.main}
-        contentContainerStyle={[styles.content, density === "compact" && styles.contentCompact]}
-        keyboardShouldPersistTaps="handled"
-      >
-        <NativeWorkspaceToolbar />
-        <View style={styles.titleGroup}>
-          <Text accessibilityRole="header" style={styles.title}>
-            {current.label}
-          </Text>
-          <Text style={styles.subtitle}>{current.description}</Text>
-        </View>
-        <ErrorNotice scheme={scheme} />
-        <SectionBody section={section} scheme={scheme} />
-      </ScrollView>
+      <DesktopShellControllers />
+      <SidebarSplitView
+        style={styles.split}
+        sidebar={<SidebarPane scheme={scheme} />}
+        content={<ContentPane scheme={scheme} />}
+        sidebarWidth={SIDEBAR_WIDTH}
+        sidebarMinWidth={SIDEBAR_WIDTH}
+        contentMinWidth={toPoints(contentWidths["content-feed"]) / 2}
+        sidebarCollapsed={!sidebarVisible}
+        onSidebarCollapsedChange={(collapsed) => setSidebarVisible(!collapsed)}
+        onError={(cause) => reportError("Split view", cause)}
+      />
     </View>
   );
 }
 
-function sidebarStyles(scheme: Scheme) {
-  return StyleSheet.create({
-    sidebar: {
-      width: toPoints(navChrome.railExpanded),
-      paddingVertical: space.group,
-      paddingHorizontal: space.element,
-      gap: space.hair,
-      backgroundColor: color("surface-stage", scheme),
-    },
-    brand: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: space.element,
-      paddingHorizontal: space.element,
-      paddingBottom: space.group,
-    },
-    mark: { width: target, height: target },
-    brandName: { ...textStyle("title"), color: color("on-surface-stage", scheme) },
-    item: {
-      minHeight: target,
-      justifyContent: "center",
-      paddingHorizontal: space.stack,
-      borderRadius: corner.control,
-    },
-    itemActive: { backgroundColor: color("primary", scheme) },
-    itemLabel: { ...textStyle("label"), color: color("on-surface-stage", scheme) },
-    itemLabelActive: { color: color("on-primary", scheme) },
-  });
-}
-
 function contentStyles(scheme: Scheme) {
   return StyleSheet.create({
-    root: { flex: 1, flexDirection: "row", backgroundColor: color("surface", scheme) },
+    root: { flex: 1, backgroundColor: color("surface", scheme) },
+    split: { flex: 1 },
     main: { flex: 1 },
     content: { padding: space.section, gap: space.group },
     contentCompact: { padding: space.group, gap: space.stack },

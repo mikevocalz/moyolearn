@@ -1,7 +1,10 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // Spark 0.0.2 entry files ui-search.ts, ui-sidebar.ts and ui-split-view.ts
+    // re-export paths ending in "index.tsx" (node_modules/@legendapp/spark).
+    "allowImportingTsExtensions": true
   },
   "include": ["index.ts", "App.tsx", "src/**/*.ts", "src/**/*.tsx"]
 }

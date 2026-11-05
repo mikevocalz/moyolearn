@@ -61,6 +61,7 @@ jobs:
       # prepare its patched native inputs. Do not pass --ignore-scripts.
       - run: npm ci
       - run: npm run typecheck
+      - run: npm test
       - run: npm run doctor
       - run: npm run analyze
       - name: Standalone macOS build
