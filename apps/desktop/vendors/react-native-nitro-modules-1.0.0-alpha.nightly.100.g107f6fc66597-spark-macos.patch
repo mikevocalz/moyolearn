@@ -1,6 +1,6 @@
 diff -ruN a/NitroModules.podspec b/NitroModules.podspec
---- a/NitroModules.podspec	2026-11-04 20:48:13
-+++ b/NitroModules.podspec	2026-11-04 20:48:13
+--- a/NitroModules.podspec
++++ b/NitroModules.podspec
 @@ -1,9 +1,12 @@
  require "json"
 +require_relative "apple/cocoapods/nitro_cocoapods"
@@ -79,9 +79,9 @@ diff -ruN a/SPARK-MACOS.md b/SPARK-MACOS.md
 +above against upstream, except the `spark` stamp, which carries the patch's
 +SHA-256 as `spark.patchHash`.
 diff -ruN a/apple/cocoapods/nitro_cocoapods.rb b/apple/cocoapods/nitro_cocoapods.rb
---- a/apple/cocoapods/nitro_cocoapods.rb	1969-12-31 19:00:00
-+++ b/apple/cocoapods/nitro_cocoapods.rb	2026-11-04 20:48:13
-@@ -0,0 +1,209 @@
+--- a/apple/cocoapods/nitro_cocoapods.rb
++++ b/apple/cocoapods/nitro_cocoapods.rb
+@@ -0,0 +1,224 @@
 +# Legend Spark port of Nitro v1 (react-native-nitro-modules
 +# 1.0.0-alpha.nightly.100.g107f6fc66597) for CocoaPods.
 +#
@@ -150,10 +150,25 @@ diff -ruN a/apple/cocoapods/nitro_cocoapods.rb b/apple/cocoapods/nitro_cocoapods
 +    "\"#{path}\""
 +  end
 +
++  # The Pods sandbox with symlinks resolved, without requiring it to exist.
++  # CocoaPods evaluates podspecs before it creates Pods/, so on a clean checkout
++  # Pathname#realpath on the sandbox raises ENOENT. Resolve the deepest ancestor
++  # that exists and append the missing components; once Pods/ exists the result
++  # equals Pathname#realpath. Nothing is written to disk.
++  def self.sandbox_realpath
++    path = Pathname.new(Pod::Config.instance.sandbox_root.to_s).expand_path
++    missing = []
++    until path.exist?
++      missing.unshift(path.basename)
++      path = path.dirname
++    end
++    missing.reduce(path.realpath) { |resolved, component| resolved + component }
++  end
++
 +  # NitroModules' package root as seen from a dependent pod, e.g.
 +  # ${PODS_ROOT}/../../node_modules/react-native-nitro-modules.
 +  def self.package_root_from_pods
-+    sandbox = Pathname.new(Pod::Config.instance.sandbox_root.to_s).realpath
++    sandbox = sandbox_realpath
 +    package = Pathname.new(PACKAGE_ROOT).realpath
 +    "${PODS_ROOT}/#{package.relative_path_from(sandbox)}"
 +  end
@@ -163,7 +178,7 @@ diff -ruN a/apple/cocoapods/nitro_cocoapods.rb b/apple/cocoapods/nitro_cocoapods
 +    unless $?.success? && File.exist?(resolved)
 +      raise "[NitroModules] #{SIMDUTF_PACKAGE} is not installed next to #{PACKAGE_ROOT}. It provides the SimdUTF pod Nitro v1 needs; add it to the app's dependencies."
 +    end
-+    sandbox = Pathname.new(Pod::Config.instance.sandbox_root.to_s).realpath
++    sandbox = sandbox_realpath
 +    "${PODS_ROOT}/#{Pathname.new(File.dirname(resolved)).realpath.relative_path_from(sandbox)}/cocoapods"
 +  end
 +
@@ -292,8 +307,8 @@ diff -ruN a/apple/cocoapods/nitro_cocoapods.rb b/apple/cocoapods/nitro_cocoapods
 +  end
 +end
 diff -ruN a/apple/views/HybridView.swift b/apple/views/HybridView.swift
---- a/apple/views/HybridView.swift	2026-11-04 20:48:13
-+++ b/apple/views/HybridView.swift	2026-11-04 20:48:13
+--- a/apple/views/HybridView.swift
++++ b/apple/views/HybridView.swift
 @@ -5,13 +5,21 @@
  //  Created by Marc Rousavy on 13.01.25.
  //
@@ -319,8 +334,8 @@ diff -ruN a/apple/views/HybridView.swift b/apple/views/HybridView.swift
       * Get the ``UIView`` this HybridView is holding.
       *
 diff -ruN a/cpp/core/include/NitroModules/JSIArrayHelpers.hpp b/cpp/core/include/NitroModules/JSIArrayHelpers.hpp
---- a/cpp/core/include/NitroModules/JSIArrayHelpers.hpp	2026-11-04 20:48:13
-+++ b/cpp/core/include/NitroModules/JSIArrayHelpers.hpp	2026-11-04 20:48:13
+--- a/cpp/core/include/NitroModules/JSIArrayHelpers.hpp
++++ b/cpp/core/include/NitroModules/JSIArrayHelpers.hpp
 @@ -2,6 +2,7 @@
  
  #include <array>
@@ -378,8 +393,8 @@ diff -ruN a/cpp/core/include/NitroModules/JSIArrayHelpers.hpp b/cpp/core/include
  
  /** Accept empty arrays; check only the first element to keep union selection inexpensive. */
 diff -ruN a/cpp/core/include/NitroModules/JSIConverter+ArrayBuffer.hpp b/cpp/core/include/NitroModules/JSIConverter+ArrayBuffer.hpp
---- a/cpp/core/include/NitroModules/JSIConverter+ArrayBuffer.hpp	2026-11-04 20:48:13
-+++ b/cpp/core/include/NitroModules/JSIConverter+ArrayBuffer.hpp	2026-11-04 20:48:13
+--- a/cpp/core/include/NitroModules/JSIConverter+ArrayBuffer.hpp
++++ b/cpp/core/include/NitroModules/JSIConverter+ArrayBuffer.hpp
 @@ -5,6 +5,7 @@
  #pragma once
  
@@ -398,8 +413,8 @@ diff -ruN a/cpp/core/include/NitroModules/JSIConverter+ArrayBuffer.hpp b/cpp/cor
      }
  
 diff -ruN a/cpp/core/include/NitroModules/JSIConverter+Exception.hpp b/cpp/core/include/NitroModules/JSIConverter+Exception.hpp
---- a/cpp/core/include/NitroModules/JSIConverter+Exception.hpp	2026-11-04 20:48:13
-+++ b/cpp/core/include/NitroModules/JSIConverter+Exception.hpp	2026-11-04 20:48:13
+--- a/cpp/core/include/NitroModules/JSIConverter+Exception.hpp
++++ b/cpp/core/include/NitroModules/JSIConverter+Exception.hpp
 @@ -5,6 +5,7 @@
  #pragma once
  
@@ -423,8 +438,8 @@ diff -ruN a/cpp/core/include/NitroModules/JSIConverter+Exception.hpp b/cpp/core/
    }
    static inline bool canConvert(jsi::Runtime& runtime, const jsi::Value& value) {
 diff -ruN a/cpp/core/include/NitroModules/JSIConverter+Tuple.hpp b/cpp/core/include/NitroModules/JSIConverter+Tuple.hpp
---- a/cpp/core/include/NitroModules/JSIConverter+Tuple.hpp	2026-11-04 20:48:13
-+++ b/cpp/core/include/NitroModules/JSIConverter+Tuple.hpp	2026-11-04 20:48:13
+--- a/cpp/core/include/NitroModules/JSIConverter+Tuple.hpp
++++ b/cpp/core/include/NitroModules/JSIConverter+Tuple.hpp
 @@ -5,6 +5,7 @@
  #pragma once
  
@@ -472,8 +487,8 @@ diff -ruN a/cpp/core/include/NitroModules/JSIConverter+Tuple.hpp b/cpp/core/incl
  
    template <typename T>
 diff -ruN a/cpp/core/include/NitroModules/detail/JSICompat.hpp b/cpp/core/include/NitroModules/detail/JSICompat.hpp
---- a/cpp/core/include/NitroModules/detail/JSICompat.hpp	1969-12-31 19:00:00
-+++ b/cpp/core/include/NitroModules/detail/JSICompat.hpp	2026-11-04 20:48:13
+--- a/cpp/core/include/NitroModules/detail/JSICompat.hpp
++++ b/cpp/core/include/NitroModules/detail/JSICompat.hpp
 @@ -0,0 +1,88 @@
 +//
 +//  JSICompat.hpp
