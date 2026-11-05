@@ -36,8 +36,10 @@ concurrency:
 jobs:
   macos:
     name: macOS (npm ci, typecheck, doctor, analyze, build)
-    # GitHub-hosted Apple Silicon. Spark 0.0.2 publishes macOS arm64 only.
-    runs-on: macos-15
+    # Same self-hosted Xcode 27.1 runner as ios-native.yml. Spark 0.0.2's
+    # RNSparkUI (RNSidebarSplitViewComponent.mm) does not compile with the
+    # Xcode 16.4 SDK on GitHub's macos-15 image. Spark publishes arm64 only.
+    runs-on: xcode-27
     timeout-minutes: 90
     defaults:
       run:
