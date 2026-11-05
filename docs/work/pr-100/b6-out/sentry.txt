@@ -1,0 +1,1 @@
+check-sentry-invariants: 1936 files clean (PII off, no replay, traces 0, tags lawful, offline silent)

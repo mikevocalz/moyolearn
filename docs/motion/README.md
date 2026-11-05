@@ -71,6 +71,7 @@ what starts it, "reduced" is what a person with Reduce Motion on sees.
 | --- | --- | --- | --- | --- |
 | Native splash cross-fade | `apps/mobile/app/_layout.tsx` | `feedback` (was a literal 220 ms) | first frame of `MoyoSplash` | the OS cross-fade, unchanged |
 | Animated splash | `apps/mobile/components/splash/MoyoSplash.tsx` | its own `BEAT` storyboard (no literals at call sites) | app launch | settled frame, no animation (`useReducedMotion`) |
+| Session-report movement bar (signature S1) | `packages/app/features/summary/movement-meter.tsx` (web, GSAP) and `.native.tsx` (Reanimated) | `cinematic` gain fill, then `entrance` position line (`signature.movement-bar`) | block mounts with data | settled frame on first paint: full bar, position line in place |
 | Plan card hover/press | `packages/ui/PlanCard.tsx` | CSS `duration-fast` token | pointer | `motion-reduce:transition-none` |
 
 ## Bare Reanimated outside the gate

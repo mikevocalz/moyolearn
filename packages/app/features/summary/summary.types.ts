@@ -19,6 +19,8 @@
 // SOT: docs/pack/34-session-summary-reports.md §2 §3 · docs/pack/08-visual-hierarchy-spacing-spec.md
 // SOT-KEYWORDS: summary types eight blocks report anatomy evidence ref problem row mastery movement trajectory teacher share
 
+import type { QuestionOutcome } from '../homework/homework.types.ts';
+
 // The codebase's VoiceBand values verbatim (voice-band.ts owns the spelling —
 // the doc sketch's 'K-2' is 'k-2' here).
 export type SummaryBand = 'k-2' | '3-5' | '6-8' | '9-12';
@@ -57,7 +59,27 @@ export type QuestionRef =
       readonly attachmentId: string;
       readonly text: string | null;
     }
-  | { readonly kind: 'problem-text'; readonly text: string };
+  | { readonly kind: 'problem-text'; readonly text: string }
+  /**
+   * A confirmed worksheet question (`homeworkQuestions`). `text` is the
+   * revision current when the report was generated, copied so the report
+   * outlives a later revise; the crop is never referenced here because it
+   * expires after 7 days and the report does not.
+   */
+  | { readonly kind: 'homework-question'; readonly questionId: string; readonly text: string };
+
+/**
+ * What a worksheet row carries beyond the status: the facts the print sheet
+ * lists per question. Counts and positions only. There is no answer and no
+ * score field, because a confirmed transcription is never graded (ADR-119).
+ */
+export interface HomeworkProblemDetail {
+  readonly orderIndex: number;
+  readonly sourcePage: number;
+  readonly sourceNumber: number | null;
+  readonly outcome: QuestionOutcome;
+  readonly hintsUsed: number;
+}
 
 /**
  * Trajectory language, never pass/fail (§2.3, doc 08's law): grade-green ·
@@ -87,6 +109,8 @@ export interface ProblemRow {
    */
   readonly submittedIncorrect: boolean;
   readonly orderInSession: number;
+  /** Present on worksheet rows only. Absent on rows stored before PR #100. */
+  readonly homework?: HomeworkProblemDetail;
 }
 
 /**

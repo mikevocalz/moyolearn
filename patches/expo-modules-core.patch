@@ -303,6 +303,20 @@ diff --git a/ios/Utilities/SceneGeometry.swift b/ios/Utilities/SceneGeometry.swi
  
  import UIKit
  
+@@ -79,7 +79,13 @@ public extension SceneGeometry {
+   static func interfaceOrientation(for view: UIView? = nil) -> UIInterfaceOrientation {
+     return windowScene(for: view)?.effectiveGeometry.interfaceOrientation ?? .unknown
+   }
++}
++#endif
+ 
++// Moyo patch: iOS and visionOS. expo-sharing's SharingModule calls this unconditionally,
++// and visionOS builds Expo pods from source, so an iOS-only symbol fails the compile there.
++#if os(iOS) || os(visionOS)
++public extension SceneGeometry {
+   /// Popovers are a regular-width behavior, not an iPad one, so never gate the call on idiom.
+   @discardableResult
+   static func anchorPopover(of controller: UIViewController, to view: UIView?, rect: CGRect? = nil) -> Bool {
 diff --git a/ios/Utilities/Utilities.swift b/ios/Utilities/Utilities.swift
 --- a/ios/Utilities/Utilities.swift
 +++ b/ios/Utilities/Utilities.swift
