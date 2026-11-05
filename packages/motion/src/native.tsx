@@ -64,8 +64,13 @@ export function useMotion(
   definition: MotionDefinition,
   options: MotionOptions = {},
 ): NativeMotionHandle {
+  // Autoplay is withheld under reduced motion. Kinetrell's finish effect runs
+  // before its autoplay effect (src/native/runtime.ts), so an autoplay that
+  // still fired would start the timeline again from the finished frame.
+  const reduced = useMotionReduced(options.reducedMotion);
   return useKinetrellMotion(definition, {
     ...options,
+    autoplay: options.autoplay === true && !reduced,
     reducedMotion: resolveReducedMotionPolicy(options.reducedMotion),
     reducedMotionBehavior: REDUCED_MOTION_BEHAVIOR,
   });
