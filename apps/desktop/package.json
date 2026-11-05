@@ -131,7 +131,7 @@
   "sparkNativePatchOverrides": {
     "react-native-nitro-modules": {
       "version": "1.0.0-alpha.nightly.100.g107f6fc66597",
-      "patchHash": "f53e378dc03a02ac0f5c58ca70aac70b29820f5f30c9377f423a8866e5ed061e",
+      "patchHash": "897d2e7b264cd8278514a37dfe1c06c6b2e69bb43c853476d9a98254bd841db3",
       "upstreamIntegrity": "sha512-zcPVSeq49HZDuuxBZmVsHT1urwx7mU5MzPKOb6ytVqKsnzTcpT1Y1F/UeJAOkwvlrxLIUrVTrEqyJr8IQ7c1JA==",
       "reason": "Moyo pins Nitro v1 nightly.100 on every platform (ruling 2026-11-04). Port and patch: apps/desktop/vendors/README.md."
     }
