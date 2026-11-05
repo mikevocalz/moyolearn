@@ -2,6 +2,7 @@
 # apps/desktop has its own npm lockfile and is excluded from the root pnpm
 # workspace (docs/desktop/adr/0001-spark-isolated-workspace.md), so the macOS job
 # installs inside apps/desktop only and never runs the root pnpm install.
+# Actions are pinned to commit SHAs; the comment names the release tag.
 # SOT-KEYWORDS: desktop ci spark macos workflow isolation
 name: Desktop
 
@@ -47,8 +48,10 @@ jobs:
       run:
         working-directory: apps/desktop
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           # Spark needs Node >= 24.19.0; 24.12.0 breaks the Expo Desktop config import.
           node-version-file: .nvmrc
@@ -74,11 +77,13 @@ jobs:
       - run: npm test
       - run: npm run doctor
       - run: npm run analyze
+      # docs/desktop/production-modules.md must match what analyze selected.
+      - run: npm run modules -- --check
       - name: Standalone macOS build
         run: |
           set -o pipefail
           npm run build 2>&1 | tee "$RUNNER_TEMP/spark-build.log"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: desktop-macos-diagnostics
@@ -93,8 +98,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
       - run: node apps/desktop/scripts/check-root-isolation.mjs

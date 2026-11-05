@@ -1,0 +1,138 @@
+# Moyo Learn for Mac release: Developer ID signing and notarization in CI.
+#
+# Credentials live only in the `desktop-release` GitHub Environment, which must
+# have required reviewers and a deployment restriction to `desktop-v*` tags and
+# `main` (docs/desktop/release-checklist.md). The job refuses any commit that
+# main does not contain, then runs every check the Desktop workflow runs and
+# builds, and only then creates a throwaway keychain, imports the Developer ID
+# Application certificate, stores a notarytool profile from an App Store
+# Connect API key, and runs `spark package`. Signing variables reach that one
+# step only, through the names spark-cli reads (credentials.js:
+# SPARK_SIGNING_KEYCHAIN, SPARK_DEVELOPER_ID_APPLICATION, SPARK_TEAM_ID,
+# SPARK_NOTARY_KEYCHAIN_PROFILE). `spark package` writes
+# apps/desktop/dist/<App>.zip (package.js:189).
+# Actions are pinned to commit SHAs; the comment names the release tag.
+# Not yet run: the environment and its secrets do not exist (PR-D06 body).
+# SOT: docs/desktop/release-checklist.md
+# SOT-KEYWORDS: desktop release workflow sign notarize developer id spark package
+name: Desktop release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["desktop-v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build, sign, notarize (macOS arm64)
+    # xcode-27 for the same reason as desktop.yml: Spark's RNSparkUI needs
+    # Xcode 27.1. The runner is self-hosted, so the per-run keychain is
+    # deleted under if: always() and nothing signing-related persists.
+    runs-on: xcode-27
+    environment: desktop-release
+    timeout-minutes: 120
+    defaults:
+      run:
+        working-directory: apps/desktop
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Full history so the next step can see origin/main; the token is
+          # not left in .git/config for later steps.
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Release commit is on main
+        working-directory: .
+        run: |
+          set -euo pipefail
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::$GITHUB_SHA is not on main. Release only commits that main contains."
+            exit 1
+          fi
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+      - name: moyo-desktop-core (typecheck, nitrogen drift)
+        working-directory: packages/desktop-native/moyo-desktop-core
+        run: |
+          npm ci --ignore-scripts
+          npm run typecheck
+          npm run specs:check
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run doctor
+      - run: npm run analyze
+      - run: npm run modules -- --check
+      - run: npm run build
+      # Secrets enter the job here, after every check and the build have passed.
+      - name: Temporary signing keychain
+        env:
+          KEYCHAIN: ${{ runner.temp }}/moyo-release.keychain-db
+          NOTARY_PROFILE: moyo-desktop-notary
+          CERT_P12_BASE64: ${{ secrets.DESKTOP_DEVELOPER_ID_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.DESKTOP_DEVELOPER_ID_P12_PASSWORD }}
+          ASC_KEY_P8_BASE64: ${{ secrets.DESKTOP_ASC_API_KEY_P8_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.DESKTOP_ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.DESKTOP_ASC_API_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          # Random per run; the keychain is deleted in the last step.
+          KEYCHAIN_PASSWORD="$(uuidgen)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 7200 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          printf '%s' "$CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          # `security import` takes the passphrase only as -P or through a GUI
+          # prompt. `security -i` reads the command from stdin, so the
+          # password goes through bash's printf builtin and a pipe, never a
+          # process argument list. Backslashes and double quotes are escaped
+          # for security's quoted-string parser.
+          escaped="$(printf '%s' "$CERT_PASSWORD" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')"
+          printf 'import "%s" -k "%s" -f pkcs12 -P "%s" -T /usr/bin/codesign\n' \
+            "$RUNNER_TEMP/cert.p12" "$KEYCHAIN" "$escaped" | security -i
+          unset escaped
+          rm -f "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+          # Keep the existing search list, one quoted path per entry.
+          existing=()
+          while IFS= read -r line; do
+            line="${line#"${line%%[![:space:]]*}"}"
+            line="${line#\"}"
+            line="${line%\"}"
+            if [ -n "$line" ]; then existing+=("$line"); fi
+          done < <(security list-keychains -d user)
+          security list-keychains -d user -s "$KEYCHAIN" ${existing[@]+"${existing[@]}"}
+          printf '%s' "$ASC_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/asc.p8"
+          xcrun notarytool store-credentials "$NOTARY_PROFILE" \
+            --key "$RUNNER_TEMP/asc.p8" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER_ID" \
+            --keychain "$KEYCHAIN"
+          rm -f "$RUNNER_TEMP/asc.p8"
+      - name: Sign and notarize
+        env:
+          SPARK_SIGNING_KEYCHAIN: ${{ runner.temp }}/moyo-release.keychain-db
+          SPARK_DEVELOPER_ID_APPLICATION: ${{ secrets.DESKTOP_DEVELOPER_ID_APPLICATION }}
+          SPARK_TEAM_ID: ${{ secrets.DESKTOP_TEAM_ID }}
+          SPARK_NOTARY_KEYCHAIN_PROFILE: moyo-desktop-notary
+        run: npm run package
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: moyo-learn-macos
+          path: apps/desktop/dist/*.zip
+          if-no-files-found: error
+      - name: Remove signing keychain
+        if: always()
+        env:
+          KEYCHAIN: ${{ runner.temp }}/moyo-release.keychain-db
+        run: |
+          if [ -e "$KEYCHAIN" ]; then security delete-keychain "$KEYCHAIN" || true; fi
+          rm -f "$RUNNER_TEMP/cert.p12" "$RUNNER_TEMP/asc.p8"
