@@ -1,0 +1,367 @@
+Ignoring ffi-1.16.3 because its extensions are not built. Try: gem pristine ffi --version 1.16.3
+Using Expo modules
+[Expo] Enabling modular headers for pod ExpoModulesCore
+[Expo] Enabling modular headers for pod ExpoModulesWorklets
+[Expo] Enabling modular headers for pod React-RCTFabric
+[Expo] Enabling modular headers for pod SDWebImage
+[Expo] Enabling modular headers for pod ExpoModulesJSI
+[Expo] Enabling modular headers for pod React-RCTAppDelegate
+[Expo] Enabling modular headers for pod ReactAppDependencyProvider
+[Expo] Enabling modular headers for pod React-Core
+[Expo] Enabling modular headers for pod ReactCodegen
+[Expo] Enabling modular headers for pod RCTRequired
+[Expo] Enabling modular headers for pod RCTTypeSafety
+[Expo] Enabling modular headers for pod React-bridging
+[Expo] Enabling modular headers for pod ReactCommon
+[Expo] Enabling modular headers for pod React-NativeModulesApple
+[Expo] Enabling modular headers for pod Yoga
+[Expo] Enabling modular headers for pod React-Fabric
+[Expo] Enabling modular headers for pod React-graphics
+[Expo] Enabling modular headers for pod React-utils
+[Expo] Enabling modular headers for pod React-featureflags
+[Expo] Enabling modular headers for pod React-debug
+[Expo] Enabling modular headers for pod React-ImageManager
+[Expo] Enabling modular headers for pod React-rendererdebug
+[Expo] Enabling modular headers for pod React-jsi
+[Expo] Enabling modular headers for pod React-renderercss
+[Expo] Enabling modular headers for pod React-cxxstableapi
+[Expo] Enabling modular headers for pod hermes-engine
+[Expo] Enabling modular headers for pod glog
+[Expo] Enabling modular headers for pod boost
+[Expo] Enabling modular headers for pod DoubleConversion
+[Expo] Enabling modular headers for pod fast_float
+[Expo] Enabling modular headers for pod fmt
+[Expo] Enabling modular headers for pod RCT-Folly
+[Expo] Enabling modular headers for pod SocketRocket
+[Expo] Enabling modular headers for pod ExpoTaskManager
+[Expo] Enabling modular headers for pod SDWebImageAVIFCoder
+[Expo] Enabling modular headers for pod SDWebImageSVGCoder
+[Expo] Enabling modular headers for pod SDWebImageWebPCoder
+[Expo] Enabling modular headers for pod libavif
+[Expo] Enabling modular headers for pod RNScreens
+[Expo] Enabling modular headers for pod UMAppLoader
+[Expo] Enabling modular headers for pod EXStructuredHeaders
+[Expo] Enabling modular headers for pod EXUpdatesInterface
+[Expo] Enabling modular headers for pod EXManifests
+[Expo] Enabling modular headers for pod EASClient
+[Expo] Enabling modular headers for pod ReachabilitySwift
+-- SK_GRAPHITE: ON (detected via libs/.graphite marker file)
+react-native-skia: installing ios Skia frameworks (154.3.0)
+react-native-skia: installing macos Skia frameworks (154.3.0)
+react-native-skia: react-native-webgpu detected, Dawn is provided by its libwebgpu_dawn
+react-native-skia: Dawn versions match (dawn-chrome-m154a)
+[NitroModules] 🔥 NitroCanvasInVision is boosted by nitro!
+[NitroModules] 🔥 NitroMmkv is boosted by nitro!
+[NitroModules] 🔥 NitroFetch is boosted by nitro!
+[NitroModules] 🔥 NitroImage is boosted by nitro!
+[NitroModules] 🔥 Your app is boosted by nitro modules!
+[NitroModules] Found react-native 0.88.0-rc.2 (88) in /Users/mikevocalz/moyolearn-pr100/node_modules/react-native!
+Using published PulsarHaptics pod 1.4.0
+[RNScreens] Gamma project enabled. Including source files.
+[NitroModules] 🔥 VisionCamera is boosted by nitro!
+react-native-webgpu: installing Dawn (react-native-webgpu-dawn 154.3.0)
+Found 23 modules for target `Moyo`
+link_native_modules! {:ios_packages=>[{:configurations=>[], :name=>"@react-native-masked-view/masked-view", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/@react-native-masked-view/masked-view", :path=>"../../../node_modules/@react-native-masked-view/masked-view", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/@react-native-masked-view/masked-view/RNCMaskedView.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"@sentry/react-native", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/@sentry/react-native", :path=>"../../../node_modules/@sentry/react-native", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/@sentry/react-native/RNSentry.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"@shopify/react-native-skia", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/@shopify/react-native-skia", :path=>"../../../node_modules/@shopify/react-native-skia", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/@shopify/react-native-skia/react-native-skia.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"expo", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/expo", :path=>"../../../node_modules/expo", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/expo/Expo.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"nitro-canvas-in-Vision", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/nitro-canvas-in-Vision", :path=>"../../../node_modules/nitro-canvas-in-Vision", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/nitro-canvas-in-Vision/NitroCanvasInVision.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-audio-api", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-audio-api", :path=>"../../../node_modules/react-native-audio-api", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-audio-api/RNAudioAPI.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-enriched-html", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-enriched-html", :path=>"../../../node_modules/react-native-enriched-html", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-enriched-html/ReactNativeEnrichedHtml.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-executorch", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-executorch", :path=>"../../../node_modules/react-native-executorch", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-executorch/react-native-executorch.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-gesture-handler", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-gesture-handler", :path=>"../../../node_modules/react-native-gesture-handler", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-gesture-handler/RNGestureHandler.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-keyboard-controller", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-keyboard-controller", :path=>"../../../node_modules/react-native-keyboard-controller", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-keyboard-controller/react-native-keyboard-controller.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-mmkv", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-mmkv", :path=>"../../../node_modules/react-native-mmkv", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-mmkv/NitroMmkv.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-nitro-fetch", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-nitro-fetch", :path=>"../../../node_modules/react-native-nitro-fetch", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-nitro-fetch/NitroFetch.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-nitro-image", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-nitro-image", :path=>"../../../node_modules/react-native-nitro-image", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-nitro-image/NitroImage.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-nitro-modules", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-nitro-modules", :path=>"../../../node_modules/react-native-nitro-modules", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-nitro-modules/NitroModules.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-pulsar", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-pulsar", :path=>"../../../node_modules/react-native-pulsar", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-pulsar/Pulsar.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-reanimated", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-reanimated", :path=>"../../../node_modules/react-native-reanimated", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-reanimated/RNReanimated.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-safe-area-context", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-safe-area-context", :path=>"../../../node_modules/react-native-safe-area-context", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-screens", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-screens", :path=>"../../../node_modules/react-native-screens", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-screens/RNScreens.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-svg", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-svg", :path=>"../../../node_modules/react-native-svg", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-svg/RNSVG.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-vision-camera", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-vision-camera", :path=>"../../../node_modules/react-native-vision-camera", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-vision-camera/VisionCamera.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-webgpu", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-webgpu", :path=>"../../../node_modules/react-native-webgpu", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-webgpu/react-native-webgpu.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-webview", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-webview", :path=>"../../../node_modules/react-native-webview", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-webview/react-native-webview.podspec", :script_phases=>[]}, {:configurations=>[], :name=>"react-native-worklets", :root=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-worklets", :path=>"../../../node_modules/react-native-worklets", :podspec_path=>"/Users/mikevocalz/moyolearn-pr100/node_modules/react-native-worklets/RNWorklets.podspec", :script_phases=>[]}], :ios_project_root_path=>"/Users/mikevocalz/moyolearn-pr100/apps/mobile/ios", :react_native_path=>"../../../node_modules/react-native"}
+-- SK_GRAPHITE: ON (detected via libs/.graphite marker file)
+react-native-skia: react-native-webgpu detected, Dawn is provided by its libwebgpu_dawn
+react-native-skia: Dawn versions match (dawn-chrome-m154a)
+[NitroModules] 🔥 NitroCanvasInVision is boosted by nitro!
+[NitroModules] 🔥 NitroMmkv is boosted by nitro!
+[NitroModules] 🔥 NitroFetch is boosted by nitro!
+[NitroModules] 🔥 NitroImage is boosted by nitro!
+[NitroModules] 🔥 Your app is boosted by nitro modules!
+[NitroModules] Found react-native 0.88.0-rc.2 (88) in /Users/mikevocalz/moyolearn-pr100/node_modules/react-native!
+Using published PulsarHaptics pod 1.4.0
+[RNScreens] Gamma project enabled. Including source files.
+[NitroModules] 🔥 VisionCamera is boosted by nitro!
+Auto-linking React Native modules for target `Moyo`: NitroCanvasInVision, NitroFetch, NitroImage, NitroMmkv, NitroModules, Pulsar, RNAudioAPI, RNCMaskedView, RNGestureHandler, RNReanimated, RNSVG, RNScreens, RNSentry, RNWorklets, ReactNativeEnrichedHtml, VisionCamera, react-native-executorch, react-native-keyboard-controller, react-native-safe-area-context, react-native-skia, react-native-webgpu, and react-native-webview
+Framework build type is static library
+[ReactNativeDependencies] Setting up ReactNativeDependencies...
+[ReactNativeDependencies] Building from source: false
+[ReactNativeDependencies] Using tarball from URL: https://repo.reactnative.dev/maven2/com/facebook/react/react-native-artifacts/0.88.0-rc.2/react-native-artifacts-0.88.0-rc.2-reactnative-dependencies-debug.tar.gz
+[ReactNativeDependencies] Cache miss: downloading reactnative-dependencies-0.88.0-rc.2-debug.tar.gz from https://repo.reactnative.dev/maven2/com/facebook/react/react-native-artifacts/0.88.0-rc.2/react-native-artifacts-0.88.0-rc.2-reactnative-dependencies-debug.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 37.9M  100 37.9M    0     0  58.6M      0 --:--:-- --:--:-- --:--:-- 58.7M
+[ReactNativeDependencies] Verifying checksum for downloaded reactnative-dependencies-0.88.0-rc.2-debug.tar.gz...
+[Cache] SHA1 verified for reactnative-dependencies-0.88.0-rc.2-debug.tar.gz
+[ReactNativeDependencies] Saved reactnative-dependencies-0.88.0-rc.2-debug.tar.gz to shared cache (/Users/mikevocalz/Library/Caches/ReactNative)
+[ReactNativeDependencies] Cache miss: downloading reactnative-dependencies-0.88.0-rc.2-release.tar.gz from https://repo.reactnative.dev/maven2/com/facebook/react/react-native-artifacts/0.88.0-rc.2/react-native-artifacts-0.88.0-rc.2-reactnative-dependencies-release.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 30.0M  100 30.0M    0     0  50.0M      0 --:--:-- --:--:-- --:--:-- 50.1M
+[ReactNativeDependencies] Verifying checksum for downloaded reactnative-dependencies-0.88.0-rc.2-release.tar.gz...
+[Cache] SHA1 verified for reactnative-dependencies-0.88.0-rc.2-release.tar.gz
+[ReactNativeDependencies] Saved reactnative-dependencies-0.88.0-rc.2-release.tar.gz to shared cache (/Users/mikevocalz/Library/Caches/ReactNative)
+[ReactNativeDependencies] Source: {:http=>"https://repo.reactnative.dev/maven2/com/facebook/react/react-native-artifacts/0.88.0-rc.2/react-native-artifacts-0.88.0-rc.2-reactnative-dependencies-debug.tar.gz"}
+[ReactNativeCore] Setting up ReactNativeCore...
+[ReactNativeCore] Building from source: false
+Configuring the target with the New Architecture
+[ReactNativeCore] Using React Native Core and React Native Dependencies prebuilt versions.
+[36m[1m[Codegen][0m Analyzing /Users/mikevocalz/moyolearn-pr100/apps/mobile/package.json[0m
+[36m[1m[Codegen][0m [33mSearching for codegen-enabled libraries in the app.[0m
+[36m[1m[Codegen][0m [33mThe "codegenConfig" field is not defined in package.json. Assuming there is nothing to generate at the app level.[0m
+[36m[1m[Codegen][0m [33mSearching for codegen-enabled libraries in react-native.config.js[0m
+[36m[1m[Codegen][0m Found @sentry/react-native[0m
+[36m[1m[Codegen][0m Found @shopify/react-native-skia[0m
+[36m[1m[Codegen][0m Found react-native-audio-api[0m
+[36m[1m[Codegen][0m Found react-native-enriched-html[0m
+[36m[1m[Codegen][0m Found react-native-executorch[0m
+[36m[1m[Codegen][0m Found react-native-gesture-handler[0m
+[36m[1m[Codegen][0m Found react-native-keyboard-controller[0m
+[36m[1m[Codegen][0m Found react-native-nitro-modules[0m
+[36m[1m[Codegen][0m Found react-native-pulsar[0m
+[36m[1m[Codegen][0m Found react-native-reanimated[0m
+[36m[1m[Codegen][0m Found react-native-safe-area-context[0m
+[36m[1m[Codegen][0m Found react-native-screens[0m
+[36m[1m[Codegen][0m Found react-native-svg[0m
+[36m[1m[Codegen][0m Found react-native-webgpu[0m
+[36m[1m[Codegen][0m Found react-native-webview[0m
+[36m[1m[Codegen][0m Found react-native-worklets[0m
+[36m[1m[Codegen][0m Processing RNSentrySpec[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for RNSentrySpec[0m
+[36m[1m[Codegen][0m Processing rnskia[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos for rnskia[0m
+[36m[1m[Codegen][0m Processing rnaudioapi[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios for rnaudioapi[0m
+[36m[1m[Codegen][0m Processing ReactNativeEnrichedSpec[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios for ReactNativeEnrichedSpec[0m
+[36m[1m[Codegen][0m Processing RnExecutorchSpec[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios for RnExecutorchSpec[0m
+[36m[1m[Codegen][0m Processing rngesturehandler_codegen[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rngesturehandler_codegen[0m
+[36m[1m[Codegen][0m Processing RNKC[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios for RNKC[0m
+[36m[1m[Codegen][0m Processing NitroModulesSpec[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Processing RNPulsarSpec[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios for RNPulsarSpec[0m
+[36m[1m[Codegen][0m Processing rnreanimated[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rnreanimated[0m
+[36m[1m[Codegen][0m Processing safeareacontext[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for safeareacontext[0m
+[36m[1m[Codegen][0m Processing rnscreens[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, tvos, visionos for rnscreens[0m
+[36m[1m[Codegen][0m Processing rnsvg[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rnsvg[0m
+[36m[1m[Codegen][0m Processing RNWgpuViewSpec[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, visionos for RNWgpuViewSpec[0m
+[36m[1m[Codegen][0m Processing RNCWebViewSpec[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, visionos for RNCWebViewSpec[0m
+[36m[1m[Codegen][0m Processing rnworklets[0m
+[36m[1m[Codegen][0m [33mSearching for podspec in the project dependencies.[0m
+[36m[1m[Codegen][0m Supported Apple platforms: ios, macos, tvos, visionos for rnworklets[0m
+[36m[1m[Codegen][0m Generating Native Code for RNSentrySpec - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for rnskia - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for rnaudioapi - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for RnExecutorchSpec - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for rngesturehandler_codegen - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for RNKC - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for NitroModulesSpec - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for RNPulsarSpec - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for rnreanimated - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for safeareacontext - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for rnscreens - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for rnsvg - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for RNWgpuViewSpec - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for RNCWebViewSpec - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating Native Code for rnworklets - ios[0m
+[36m[1m[Codegen][0m Generated artifacts: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen[0m
+[36m[1m[Codegen][0m Generating RCTThirdPartyComponentsProvider.h[0m
+[36m[1m[Codegen][0m Generated artifact: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen/RCTThirdPartyComponentsProvider.h[0m
+[36m[1m[Codegen][0m Generating RCTThirdPartyComponentsProvider.mm[0m
+[36m[1m[Codegen][0m Crawling @sentry/react-native library for components[0m
+[36m[1m[Codegen][0m Generated artifact: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen/RCTThirdPartyComponentsProvider.mm[0m
+[36m[1m[Codegen][0m Generating RCTModulesProvider.h[0m
+[36m[1m[Codegen][0m Generated artifact: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen/RCTModuleProviders.h[0m
+[36m[1m[Codegen][0m Generating RCTModuleProviders.mm[0m
+[36m[1m[Codegen][0m Generated artifact: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen/RCTModuleProviders.mm[0m
+[36m[1m[Codegen][0m Generating RCTAppDependencyProvider[0m
+[36m[1m[Codegen][0m Generated artifact: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactAppDependencyProvider/RCTAppDependencyProvider.h[0m
+[36m[1m[Codegen][0m Generated artifact: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactAppDependencyProvider/RCTAppDependencyProvider.mm[0m
+[36m[1m[Codegen][0m Generated podspec: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactAppDependencyProvider/ReactAppDependencyProvider.podspec[0m
+[36m[1m[Codegen][0m Generated podspec: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/ReactCodegen/ReactCodegen.podspec[0m
+[36m[1m[Codegen][0m Generating Package.swift[0m
+[36m[1m[Codegen][0m Generated artifact: /Users/mikevocalz/moyolearn-pr100/apps/mobile/ios/build/generated/ios/Package.swift[0m
+[36m[1m[Codegen][0m [33mDone.[0m
+[!] The version of CocoaPods used to generate the lockfile (1.17.0) is higher than the version of the current executable (1.16.2). Incompatibility issues may arise.
+Analyzing dependencies
+[NitroModules] 🔥 NitroCanvasInVision is boosted by nitro!
+[NitroModules] 🔥 NitroFetch is boosted by nitro!
+[NitroModules] 🔥 NitroImage is boosted by nitro!
+[NitroModules] 🔥 NitroMmkv is boosted by nitro!
+[NitroModules] 🔥 Your app is boosted by nitro modules!
+[NitroModules] Found react-native 0.88.0-rc.2 (88) in /Users/mikevocalz/moyolearn-pr100/node_modules/react-native!
+Using published PulsarHaptics pod 1.4.0
+[RNScreens] Gamma project enabled. Including source files.
+Fetching podspec for `React-Core-prebuilt` from `../../../node_modules/react-native/React-Core-prebuilt.podspec`
+[ReactNativeCore] Cache miss: downloading reactnative-core-0.88.0-rc.2-debug.tar.gz from https://repo.reactnative.dev/maven2/com/facebook/react/react-native-artifacts/0.88.0-rc.2/react-native-artifacts-0.88.0-rc.2-reactnative-core-debug.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 55 96.7M   55 53.2M    0     0  61.6M      0  0:00:01 --:--:--  0:00:01 61.5M100 96.7M  100 96.7M    0     0  62.9M      0  0:00:01  0:00:01 --:--:-- 62.9M
+[ReactNativeCore] Verifying checksum for downloaded reactnative-core-0.88.0-rc.2-debug.tar.gz...
+[Cache] SHA1 verified for reactnative-core-0.88.0-rc.2-debug.tar.gz
+[ReactNativeCore] Saved reactnative-core-0.88.0-rc.2-debug.tar.gz to shared cache (/Users/mikevocalz/Library/Caches/ReactNative)
+[ReactNativeCore] Cache miss: downloading reactnative-core-0.88.0-rc.2-release.tar.gz from https://repo.reactnative.dev/maven2/com/facebook/react/react-native-artifacts/0.88.0-rc.2/react-native-artifacts-0.88.0-rc.2-reactnative-core-release.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 54 29.5M   54 16.0M    0     0  37.3M      0 --:--:-- --:--:-- --:--:-- 37.3M100 29.5M  100 29.5M    0     0  51.0M      0 --:--:-- --:--:-- --:--:-- 51.0M
+[ReactNativeCore] Verifying checksum for downloaded reactnative-core-0.88.0-rc.2-release.tar.gz...
+[Cache] SHA1 verified for reactnative-core-0.88.0-rc.2-release.tar.gz
+[ReactNativeCore] Saved reactnative-core-0.88.0-rc.2-release.tar.gz to shared cache (/Users/mikevocalz/Library/Caches/ReactNative)
+[ReactNativeCore] Resolved stable ReactNativeCore-prebuilt version:
+[ReactNativeCore]   ../../apps/mobile/ios/Pods/ReactNativeCore-artifacts/reactnative-core-0.88.0-rc.2-debug.tar.gz
+[ReactNativeCore]   ../../apps/mobile/ios/Pods/ReactNativeCore-artifacts/reactnative-core-0.88.0-rc.2-release.tar.gz
+Fetching podspec for `ReactNativeDependencies` from `../../../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`
+[ReactNativeDependencies] Using tarball from URL: https://repo.reactnative.dev/maven2/com/facebook/react/react-native-artifacts/0.88.0-rc.2/react-native-artifacts-0.88.0-rc.2-reactnative-dependencies-debug.tar.gz
+[ReactNativeDependencies] Tarball reactnative-dependencies-0.88.0-rc.2-debug.tar.gz already exists in Pods. Skipping download.
+[ReactNativeDependencies] Tarball reactnative-dependencies-0.88.0-rc.2-release.tar.gz already exists in Pods. Skipping download.
+[NitroModules] 🔥 VisionCamera is boosted by nitro!
+Fetching podspec for `hermes-engine` from `../../../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`
+[Hermes] Using release tarball from URL: https://repo.reactnative.dev/maven2/com/facebook/hermes/hermes-ios/260318099.0.3/hermes-ios-260318099.0.3-hermes-ios-debug.tar.gz
+[Hermes] Cache miss: downloading hermes-ios-260318099.0.3-debug.tar.gz from https://repo.reactnative.dev/maven2/com/facebook/hermes/hermes-ios/260318099.0.3/hermes-ios-260318099.0.3-hermes-ios-debug.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0 20 30.3M   20 6223k    0     0  7138k      0  0:00:04 --:--:--  0:00:04 7137k 69 30.3M   69 21.0M    0     0  11.2M      0  0:00:02  0:00:01  0:00:01 11.2M100 30.3M  100 30.3M    0     0  13.5M      0  0:00:02  0:00:02 --:--:-- 13.5M
+[Hermes] Verifying checksum for downloaded hermes-ios-260318099.0.3-debug.tar.gz...
+[Hermes] SHA1 verified for hermes-ios-260318099.0.3-debug.tar.gz
+[Hermes] Saved hermes-ios-260318099.0.3-debug.tar.gz to shared cache (/Users/mikevocalz/Library/Caches/ReactNative)
+[Hermes] Cache miss: downloading hermes-ios-260318099.0.3-release.tar.gz from https://repo.reactnative.dev/maven2/com/facebook/hermes/hermes-ios/260318099.0.3/hermes-ios-260318099.0.3-hermes-ios-release.tar.gz
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 24.1M  100 24.1M    0     0  38.5M      0 --:--:-- --:--:-- --:--:-- 38.5M
+[Hermes] Verifying checksum for downloaded hermes-ios-260318099.0.3-release.tar.gz...
+[Hermes] SHA1 verified for hermes-ios-260318099.0.3-release.tar.gz
+[Hermes] Saved hermes-ios-260318099.0.3-release.tar.gz to shared cache (/Users/mikevocalz/Library/Caches/ReactNative)
+-- SK_GRAPHITE: ON (detected via libs/.graphite marker file)
+react-native-skia: react-native-webgpu detected, Dawn is provided by its libwebgpu_dawn
+react-native-skia: Dawn versions match (dawn-chrome-m154a)
+[!] Couldn't determine repo type for URL: `https://cdn.cocoapods.org/`: Permission bits for '/Users/mikevocalz/.netrc' should be 0600, but are 644
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/@expo/ui/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c56361e88>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-asset/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c5639ba48>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-background-task/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c563a0610>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-document-picker/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c563af6b0>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-eas-client/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c563de870>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-file-system/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c563eeec8>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-font/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c563f61a0>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-glass-effect/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c56434b08>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-image/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c5644b380>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-image-manipulator/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c56489ec8>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-image-picker/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c56495840>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-json-utils/spm.config.json: undefined method `filter_map' for []:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-keep-awake/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c564da580>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-linking/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c564871f0>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-manifests/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55b49840>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-core/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55d8a2d0>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-jsi/spm.config.json: undefined method `filter_map' for ["Hermes", "React", "ReactNativeDependencies"]:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-print/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55d9da10>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-screen-capture/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55e21ab8>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-secure-store/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55e82db8>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-sharing/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55ee3050>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-splash-screen/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55efceb0>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-structured-headers/spm.config.json: undefined method `filter_map' for []:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-system-ui/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c55fe3bf8>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-updates-interface/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c56011418>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-web-browser/spm.config.json: undefined method `filter_map' for #<Array:0x0000007c5602a7d8>
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read spm.config.json at /Users/mikevocalz/moyolearn-pr100/node_modules/unimodules-app-loader/spm.config.json: undefined method `filter_map' for []:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read external config at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-autolinking/scripts/ios/../../external-configs/ios/react-native-reanimated/spm.config.json: undefined method `filter_map' for ["ReactNativeDependencies", "React", "Hermes", "RNWorklets"]:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read external config at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-autolinking/scripts/ios/../../external-configs/ios/react-native-safe-area-context/spm.config.json: undefined method `filter_map' for ["ReactNativeDependencies", "React", "Hermes"]:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read external config at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-autolinking/scripts/ios/../../external-configs/ios/react-native-worklets/spm.config.json: undefined method `filter_map' for ["ReactNativeDependencies", "React", "Hermes"]:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read external config at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-autolinking/scripts/ios/../../external-configs/ios/react-native-screens/spm.config.json: undefined method `filter_map' for ["ReactNativeDependencies", "React", "Hermes"]:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read external config at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-autolinking/scripts/ios/../../external-configs/ios/react-native-svg/spm.config.json: undefined method `filter_map' for ["ReactNativeDependencies", "React", "Hermes"]:Array
+Did you mean?  filter
+
+[!] [Expo-precompiled] Failed to read external config at /Users/mikevocalz/moyolearn-pr100/node_modules/expo-modules-autolinking/scripts/ios/../../external-configs/ios/@shopify/react-native-skia/spm.config.json: undefined method `filter_map' for ["ReactNativeDependencies", "React", "Hermes"]:Array
+Did you mean?  filter
+pod exit=1
