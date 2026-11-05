@@ -1,0 +1,16 @@
+node_modules/
+.threaded-runtime/
+.spark/*
+!.spark/version
+macos/
+dist/
+app.json
+windows/
+.expo/
+
+# Spark verified release package inputs
+!/spark-packages/
+!/spark-packages/**
+
+# Expo autolinking writes ios/build/generated/autolinking/ during analyze and build.
+/ios/
