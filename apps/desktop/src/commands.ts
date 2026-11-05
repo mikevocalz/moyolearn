@@ -9,9 +9,9 @@
  * without React Native (scripts/commands.test.mjs).
  *
  * Role gate: a command with `roles` is visible only when the signed-in session
- * holds one of them. With no session every gated command is hidden. PR-D04
- * supplies session roles; until then the Workspace menu shows one disabled
- * line saying sign-in is required.
+ * holds one of them. With no session every gated command is hidden. Session
+ * roles come from src/auth/session.ts (server member rows); signed out, the
+ * Workspace menu shows one disabled line saying sign-in is required.
  *
  * Strikes recorded 2026-11-04 (PR-D02), each returns with the PR that ships
  * its backing object:
@@ -56,6 +56,8 @@ export interface CommandDefinition {
 
 export const COMMANDS = {
   "app.settings": { label: "Settings…", shortcut: "Cmd+,", surfaces: ["menu", "palette"] },
+  // Gated on every non-learner workspace: visible exactly when someone is signed in.
+  "account.signOut": { label: "Sign Out", roles: ["guardian", "tutor", "org", "district"], surfaces: ["menu", "palette"] },
   "file.chooseResource": { label: "Choose Resource…", shortcut: "Cmd+O", surfaces: ["menu", "palette", "context"] },
   "file.clearResource": { label: "Clear Resource", surfaces: ["palette", "context"] },
   // The host storyboard's View > Show Sidebar (⌃⌘S, `toggleSidebar:`) already

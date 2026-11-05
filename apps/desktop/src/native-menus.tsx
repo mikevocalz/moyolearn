@@ -22,6 +22,7 @@ import { Appearance } from "react-native";
 import { useMenu, type MenuItem, type MenuRootItem } from "@legendapp/spark/menus";
 import { getShortcutAvailability, registerShortcut } from "@legendapp/spark/shortcuts";
 import { runCommand, runCommandItem } from "./command-actions";
+import { restoreSession, watchSessionOnFocus } from "./auth/session";
 import { loadDesktopCore } from "./desktop-core";
 import {
   COMMANDS,
@@ -44,11 +45,16 @@ function action(id: CommandId, extra: Partial<Extract<MenuItem, { type: "action"
   };
 }
 
-function workspaceItems(sessionRoles: readonly WorkspaceRole[], activeRole: WorkspaceRole | null): MenuItem[] {
-  if (sessionRoles.length === 0) {
+function workspaceItems(
+  sessionRoles: readonly WorkspaceRole[],
+  activeRole: WorkspaceRole | null,
+  email: string | null,
+): MenuItem[] {
+  if (sessionRoles.length === 0 || email === null) {
     return [{ type: "action", id: "workspace-signed-out", label: "Sign In to Switch Workspaces", disabled: true }];
   }
-  return WORKSPACE_ROLES.map((role) => {
+  const account: MenuItem = { type: "action", id: "workspace-account", label: `Signed In as ${email}`, disabled: true };
+  return [account, { type: "separator" }, ...WORKSPACE_ROLES.map((role) => {
     const id = WORKSPACE_COMMANDS[role];
     return {
       type: "checkbox" as const,
@@ -57,13 +63,14 @@ function workspaceItems(sessionRoles: readonly WorkspaceRole[], activeRole: Work
       checked: activeRole === role,
       hidden: !isCommandVisible(id, sessionRoles),
     };
-  });
+  })];
 }
 
 function buildMenuBar(state: {
   density: string;
   sessionRoles: readonly WorkspaceRole[];
   activeRole: WorkspaceRole | null;
+  email: string | null;
 }): MenuRootItem[] {
   return [
     {
@@ -71,7 +78,13 @@ function buildMenuBar(state: {
       id: "moyo-app",
       label: "Moyo Learn",
       target: { menu: "app" },
-      items: [action("app.settings", { target: { role: "settings" } })],
+      items: [
+        action("app.settings", { target: { role: "settings" } }),
+        action("account.signOut", {
+          placement: { after: { role: "settings" } },
+          hidden: !isCommandVisible("account.signOut", state.sessionRoles),
+        }),
+      ],
     },
     {
       type: "submenu",
@@ -98,7 +111,7 @@ function buildMenuBar(state: {
       id: "moyo-workspace",
       label: "Workspace",
       placement: { before: { menu: "window" } },
-      items: workspaceItems(state.sessionRoles, state.activeRole),
+      items: workspaceItems(state.sessionRoles, state.activeRole, state.email),
     },
     {
       type: "submenu",
@@ -116,7 +129,18 @@ export function DesktopShellControllers() {
   const sessionRoles = useShellStore((state) => state.sessionRoles);
   const activeRole = useShellStore((state) => state.activeRole);
   const appearance = useShellStore((state) => state.appearance);
-  const items = useMemo(() => buildMenuBar({ density, sessionRoles, activeRole }), [density, sessionRoles, activeRole]);
+  const email = useShellStore((state) => (state.auth.status === "signed-in" ? state.auth.account.email : null));
+  const items = useMemo(
+    () => buildMenuBar({ density, sessionRoles, activeRole, email }),
+    [density, sessionRoles, activeRole, email],
+  );
+
+  // Session: validate any Keychain cookie with the server at launch, then
+  // re-check whenever the main window regains focus.
+  useEffect(() => {
+    void restoreSession();
+    return watchSessionOnFocus();
+  }, []);
 
   useMenu({
     id: "moyo-desktop-menu",

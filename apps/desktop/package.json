@@ -13,7 +13,7 @@
     "postinstall": "node scripts/apply-spark-patches.mjs && node node_modules/@legendapp/spark/init-template.cjs",
     "typecheck": "tsc --noEmit",
     "analyze": "spark analyze",
-    "test": "node --test scripts/commands.test.mjs"
+    "test": "node --test scripts/commands.test.mjs scripts/auth.test.mjs"
   },
   "dependencies": {
     "@legendapp/spark": "0.0.2",
@@ -48,7 +48,16 @@
       "exclude": [
         "react-native-windows",
         "@legendapp/spark-codex",
-        "@react-native-runtimes/core"
+        "@react-native-runtimes/core",
+        "@legendapp/spark-audio",
+        "@legendapp/spark-clipboard",
+        "@legendapp/spark-drag-drop",
+        "@legendapp/spark-global-shortcuts",
+        "@legendapp/spark-notifications",
+        "@legendapp/spark-processes",
+        "@legendapp/spark-system",
+        "@legendapp/spark-tray",
+        "@legendapp/spark-updates"
       ]
     }
   },

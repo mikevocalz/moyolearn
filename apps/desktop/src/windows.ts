@@ -19,8 +19,8 @@ export const windows = createWindowsNavigator({
     component: SettingsWindow,
     options: {
       title: "Settings",
-      size: { width: 480, height: 300 },
-      minSize: { width: 480, height: 300 },
+      size: { width: 520, height: 420 },
+      minSize: { width: 520, height: 420 },
       resizable: false,
       minimizable: false,
     },
