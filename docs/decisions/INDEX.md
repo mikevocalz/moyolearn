@@ -42,10 +42,11 @@ hand — nothing regenerates it.
 | [`adr-123-pgboss-schema-42.md`](adr-123-pgboss-schema-42.md) | ADR-123 — Take the pg-boss schema to 42, and take `main` with it | decided, migration not yet applied | — |
 | [`adr-124-kinetrell-by-git-tag.md`](adr-124-kinetrell-by-git-tag.md) | ADR-124 — Kinetrell is pinned to its git tag through a vendored tarball (the git dependency's install-time build failed on CI). Revisit when Kinetrell publishes to npm | accepted | 2026-11-04 |
 | [`2026-11-04-open-pr-dispositions.md`](2026-11-04-open-pr-dispositions.md) | Open PR dispositions, 2026-11-04 | decided | 2026-11-04 |
+| [`adr-125-homework-submissions-persistence.md`](adr-125-homework-submissions-persistence.md) | ADR-125: a captured worksheet is a server row, and the device caches it | proposed. Migration `homework_additive.sql` scr | 2026-10-15 |
 | [`adr-homework-exact-math.md`](adr-homework-exact-math.md) | Exact arithmetic for homework | implemented checker; production assessment evi | 2026-09-16 |
 | [`bunny-storage-presign-spike.md`](bunny-storage-presign-spike.md) | Spike: can a client PUT directly to Bunny Storage? | RESOLVED — yes, verified against a live zone | — |
 
-**31 decisions recorded.**
+**32 decisions recorded.**
 
 ## Toolchain candidates
 

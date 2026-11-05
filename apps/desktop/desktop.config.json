@@ -1,0 +1,66 @@
+{
+  "$schema": "./node_modules/@legendapp/spark/schema.json",
+  "name": "Moyo Learn",
+  "version": "0.1.0",
+  "window": {
+    "size": {
+      "width": 1280,
+      "height": 800
+    },
+    "minSize": {
+      "width": 900,
+      "height": 600
+    },
+    "restoreBounds": true
+  },
+  "macos": {
+    "buildNumber": "1",
+    "bundleIdentifier": "com.moyolearn.desktop",
+    "infoPlist": {
+      "CFBundleName": "Moyo Learn"
+    }
+  },
+  "platforms": [
+    "macos"
+  ],
+  "expo": {
+    "name": "Moyo Learn",
+    "slug": "moyo-learn-desktop",
+    "version": "0.1.0",
+    "platforms": [
+      "macos",
+      "ios",
+      "android",
+      "windows"
+    ],
+    "icon": "./assets/icon.png",
+    "macos": {
+      "version": "0.1.0",
+      "buildNumber": "1",
+      "bundleIdentifier": "com.moyolearn.desktop",
+      "infoPlist": {
+        "CFBundleName": "Moyo Learn"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.moyolearn.desktop",
+      "infoPlist": {
+        "CFBundleName": "Moyo Learn"
+      }
+    },
+    "android": {
+      "package": "com.moyolearn.desktop"
+    },
+    "windows": {
+      "displayName": "Moyo Learn",
+      "namespace": "com.moyolearn.desktop",
+      "packageGuid": "7c153aae-3fe9-460b-9cbc-852b07106dd8",
+      "projectGuid": "3e9cc7ca-114f-4ae5-ae40-ed5163ca59bd"
+    },
+    "experiments": {
+      "outOfTreePlatforms": true,
+      "autolinkingModuleResolution": false
+    }
+  },
+  "projectId": "3e9cc7ca-114f-4ae5-ae40-ed5163ca59bd"
+}

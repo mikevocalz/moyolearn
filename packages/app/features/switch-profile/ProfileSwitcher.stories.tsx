@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 
 const THREE: ChildSummary[] = [
   ...CHILDREN,
-  { id: 'sam', name: 'Sam', gradeBand: 'teen', status: 'On track' },
+  { id: 'sam', name: 'Sam', gradeBand: 'teen' },
 ];
 
 /** Verification that never resolves — freezes the gate for state inspection. */
