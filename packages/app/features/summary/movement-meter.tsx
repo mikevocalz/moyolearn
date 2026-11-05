@@ -27,7 +27,7 @@ import { METER_CLASS, meterGeometry, type MovementMeterProps } from './movement-
 const compiled = compileMotion(movementBar);
 
 export function MovementMeter({ label, beforeP, afterP, state, levelLine, positionCopy }: MovementMeterProps) {
-  const { after, base, gain } = meterGeometry(beforeP, afterP);
+  const { after, before, base, gain, lost } = meterGeometry(beforeP, afterP);
   const fill = METER_CLASS.fill[state];
   return (
     <GsapMotionProvider motion={compiled}>
@@ -48,7 +48,7 @@ export function MovementMeter({ label, beforeP, afterP, state, levelLine, positi
           aria-valuenow={after}
         >
           <View
-            className={gain > 0 ? `${METER_CLASS.base} ${fill.base}` : `${METER_CLASS.settledBase} ${fill.solid}`}
+            className={gain > 0 ? `${METER_CLASS.base} ${fill.base}` : `${lost > 0 ? METER_CLASS.base : METER_CLASS.settledBase} ${fill.solid}`}
             style={{ width: `${base}%` }}
           />
           <Motion.div
@@ -56,10 +56,18 @@ export function MovementMeter({ label, beforeP, afterP, state, levelLine, positi
             aria-hidden
             style={{ position: 'absolute', top: 0, bottom: 0, left: `${base}%`, width: `${gain}%`, transformOrigin: 'left center' }}
           >
-            <View className={fill.gain} />
+            <Motion.div target="settle" style={{ height: '100%', transformOrigin: 'left center' }}>
+              <View className={fill.gain} />
+            </Motion.div>
           </Motion.div>
+          {lost > 0 ? (
+            <View aria-hidden className={METER_CLASS.lost} style={{ left: `${base}%`, width: `${lost}%` }} />
+          ) : null}
+          {before > 0 ? <View aria-hidden className={METER_CLASS.from} style={{ left: `${before}%` }} /> : null}
         </View>
-        <Text variant="data" className="font-mono text-text">{levelLine}</Text>
+        <Motion.div target="level">
+          <Text variant="data" className="font-mono text-text">{levelLine}</Text>
+        </Motion.div>
         <Motion.div target="position">
           <Text variant="body" tone="muted">{positionCopy}</Text>
         </Motion.div>

@@ -17,7 +17,7 @@ import { METER_CLASS, meterGeometry, type MovementMeterProps } from './movement-
 
 export function MovementMeter({ label, beforeP, afterP, state, levelLine, positionCopy }: MovementMeterProps) {
   const motion = useMotion(movementBar, { autoplay: true });
-  const { after, base, gain } = meterGeometry(beforeP, afterP);
+  const { after, before, base, gain, lost } = meterGeometry(beforeP, afterP);
   const fill = METER_CLASS.fill[state];
   return (
     <View className={METER_CLASS.root}>
@@ -37,7 +37,7 @@ export function MovementMeter({ label, beforeP, afterP, state, levelLine, positi
           aria-valuenow={after}
         >
         <View
-            className={gain > 0 ? `${METER_CLASS.base} ${fill.base}` : `${METER_CLASS.settledBase} ${fill.solid}`}
+            className={gain > 0 ? `${METER_CLASS.base} ${fill.base}` : `${lost > 0 ? METER_CLASS.base : METER_CLASS.settledBase} ${fill.solid}`}
             style={{ width: `${base}%` }}
           />
         <Motion.View
@@ -46,10 +46,18 @@ export function MovementMeter({ label, beforeP, afterP, state, levelLine, positi
           aria-hidden
           style={{ position: 'absolute', top: 0, bottom: 0, left: `${base}%`, width: `${gain}%`, transformOrigin: 'left' }}
         >
-          <View className={fill.gain} />
+          <Motion.View motion={motion} target="settle" style={{ height: '100%', transformOrigin: 'left' }}>
+            <View className={fill.gain} />
+          </Motion.View>
         </Motion.View>
+        {lost > 0 ? (
+          <View aria-hidden className={METER_CLASS.lost} style={{ left: `${base}%`, width: `${lost}%` }} />
+        ) : null}
+        {before > 0 ? <View aria-hidden className={METER_CLASS.from} style={{ left: `${before}%` }} /> : null}
       </View>
-      <Text variant="data" className="font-mono text-text">{levelLine}</Text>
+      <Motion.View motion={motion} target="level">
+        <Text variant="data" className="font-mono text-text">{levelLine}</Text>
+      </Motion.View>
       <Motion.View motion={motion} target="position">
         <Text variant="body" tone="muted">{positionCopy}</Text>
       </Motion.View>
