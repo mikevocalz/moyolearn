@@ -48,11 +48,23 @@ missing.
 
 | Round | Date | Surface | Shots path | Scores (1-15) | The change that would make it a 5 |
 | --- | --- | --- | --- | --- | --- |
+| S1 r1 | 2026-11-04 | Session report block 4, movement bar (web, Storybook `Summary/MovementMeter`) | not committed (local film) | 13 Signature 2 · 10 Craft 3 · 3 Slop/rut 3 | 13: a needle that overshoots and settles. 10: draw a dip; the level line gave the result away at frame 0. 3: drop the 6 px rise (fade-up). |
+| S1 r2 | 2026-11-04 | same | not committed | 13 Signature 3 · 10 Craft 3 · 3 Slop/rut 4 | 13: a fixed mark at the before edge; overshoot as an absolute share of the track. 10: the lost span as a track tone, no stroke. |
+| S1 r3 | 2026-11-04 | same | not committed | 13 Signature 4 · 10 Craft 4 · 3 Slop/rut 4 | 13: an overshoot of 1.5-2% of the whole track (today 3% of the gain, about 1 px, below notice). 10: a level line that admits a dip, e.g. "Proficient, down from 63%" (needs doc 34 data). |
+
+Lines scored are the ones a motion signature touches (13, 10, 3); the other twelve
+judge a page and wait for a page-level round. One critic agent was continued for all
+three rounds.
 
 ## Declined asks
 
 Each declined ask gets one line with its reason: it brings back a refused default (DIRECTION.md §2), undoes
 an earlier ask from the same critic, breaks a hard rule, or creates a scan or matrix FAIL.
+
+- S1 r3, line 13, an absolute overshoot: deferred. It needs one definition per row, while the registry
+  and the gate hold one static definition per signature.
+- S1 r3, line 10, "down from 63%" in the level line: deferred to doc 34. The line is report data, and
+  new report copy belongs to that spec, not to the motion.
 
 ## How a round is run
 
