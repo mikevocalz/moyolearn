@@ -13,9 +13,10 @@
     "postinstall": "node scripts/apply-spark-patches.mjs && node node_modules/@legendapp/spark/init-template.cjs",
     "typecheck": "tsc --noEmit",
     "analyze": "spark analyze",
-    "test": "node --test scripts/commands.test.mjs scripts/auth.test.mjs"
+    "test": "node --test scripts/commands.test.mjs scripts/auth.test.mjs scripts/classrooms.test.mjs"
   },
   "dependencies": {
+    "@legendapp/list": "3.7.1",
     "@legendapp/spark": "0.0.2",
     "@react-native-community/cli": "20.1.3",
     "@react-native-runtimes/core": "file:./spark-packages/react-native-runtimes-core-3a04e0455ac44b0bc11cfa315943ad84509c445111a2b3974ca85c8ed489827c.tgz",
@@ -50,7 +51,6 @@
         "@legendapp/spark-codex",
         "@react-native-runtimes/core",
         "@legendapp/spark-audio",
-        "@legendapp/spark-clipboard",
         "@legendapp/spark-drag-drop",
         "@legendapp/spark-global-shortcuts",
         "@legendapp/spark-notifications",

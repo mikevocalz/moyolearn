@@ -101,7 +101,9 @@ function buildMenuBar(state: {
       items: [
         { type: "separator" },
         action("view.section.workspace"),
+        action("view.section.classrooms", { hidden: !isCommandVisible("view.section.classrooms", state.sessionRoles) }),
         action("view.section.resources"),
+        action("classrooms.reload", { hidden: !isCommandVisible("classrooms.reload", state.sessionRoles) }),
         { type: "separator" },
         { type: "checkbox", id: "view.toggleCompact", label: COMMANDS["view.toggleCompact"].label, checked: state.density === "compact" },
       ],

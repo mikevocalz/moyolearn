@@ -17,6 +17,7 @@
 import type { SubscriptionState } from "../../../../packages/auth/src/entitlements.ts";
 import type { CookieJar } from "./cookie-jar";
 import { mergeSetCookie } from "./cookies.ts";
+import type { Enrollment, TeacherClass } from "../classrooms/types";
 import type { MemberRow } from "./roles";
 
 /** Same origin mobile ships to (apps/mobile/eas.json EXPO_PUBLIC_AUTH_URL). */
@@ -75,7 +76,14 @@ export function createAuthClient(cookies: Pick<CookieJar, "read" | "persist">) {
     if (!response.ok) {
       const record = body !== null && typeof body === "object" ? (body as Record<string, unknown>) : {};
       const code = typeof record.code === "string" ? record.code : null;
-      const message = typeof record.message === "string" ? record.message : `Request failed (${response.status})`;
+      // Better Auth errors carry `message`; the app's own routes (teacher
+      // classes, entitlements) answer `{ error: "..." }`.
+      const message =
+        typeof record.message === "string"
+          ? record.message
+          : typeof record.error === "string"
+            ? record.error
+            : `Request failed (${response.status})`;
       throw new AuthHttpError(response.status, code, message);
     }
     return body;
@@ -107,6 +115,27 @@ export function createAuthClient(cookies: Pick<CookieJar, "read" | "persist">) {
       const body = await request(`/api/auth/organization/get-full-organization?organizationId=${encodeURIComponent(organizationId)}`);
       const members = (body as { members?: unknown } | null)?.members;
       return Array.isArray(members) ? (members as MemberRow[]) : [];
+    },
+    // A 200 without `ok: true` and the expected array is a broken response,
+    // not an empty class list: it throws so the pane shows an error and Try
+    // Again instead of "No classes yet" or an empty roster.
+    async teacherClasses(): Promise<TeacherClass[]> {
+      const body = (await request("/api/teacher/classes")) as { ok?: unknown; classes?: unknown } | null;
+      if (body?.ok !== true || !Array.isArray(body.classes)) {
+        throw new AuthHttpError(502, null, "app.moyolearn.com sent a classes response without a class list.");
+      }
+      return body.classes as TeacherClass[];
+    },
+    async classRoster(classId: string): Promise<{ class: TeacherClass; roster: Enrollment[] }> {
+      const body = (await request(`/api/teacher/classes/${encodeURIComponent(classId)}/roster`)) as {
+        ok?: unknown;
+        class?: unknown;
+        roster?: unknown;
+      } | null;
+      if (body?.ok !== true || body.class === null || typeof body.class !== "object" || !Array.isArray(body.roster)) {
+        throw new AuthHttpError(502, null, "app.moyolearn.com sent a roster response without a class and its students.");
+      }
+      return { class: body.class as TeacherClass, roster: body.roster as Enrollment[] };
     },
     async entitlements(): Promise<SubscriptionState[]> {
       const body = (await request("/api/entitlements")) as { subscriptions?: unknown } | null;

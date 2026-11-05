@@ -19,6 +19,7 @@
  */
 import { deleteItemAsync, getItemAsync, setItemAsync } from "@legendapp/spark/secure-storage";
 import { addWindowListener } from "@legendapp/spark/windows";
+import { invalidateClassrooms } from "../classrooms/requests";
 import { useShellStore, type AuthNotice } from "../store";
 import { AuthHttpError, AuthOfflineError, createAuthClient, type SessionUser } from "./client";
 import { createCookieJar } from "./cookie-jar";
@@ -94,6 +95,8 @@ function signOutBothSides() {
 
 function signedOut(ticket: number, notice: AuthNotice | null): void {
   if (!current(ticket)) return;
+  // Classroom reads made for this session must not land in the next one.
+  invalidateClassrooms();
   const store = useShellStore.getState();
   store.setSessionRoles([]);
   store.setPlan({ status: "idle" });
@@ -168,6 +171,17 @@ export async function signOut(): Promise<void> {
   const problem = signOutProblem(await signOutBothSides());
   signedOut(ticket, null);
   if (problem) useShellStore.getState().reportError("Sign Out", new Error(problem));
+}
+
+/** The signed-in client for feature reads (Classrooms). Same cookie, same origin. */
+export const sessionClient = client;
+
+/** Called when a feature read gets 401: the server no longer honours the cookie. */
+export async function endSession(): Promise<void> {
+  const ticket = begin();
+  invalidateClassrooms();
+  await forgetLocalSession().catch(() => undefined);
+  signedOut(ticket, { kind: "session-ended" });
 }
 
 /** Re-checks the session whenever the main window gains focus (revoked elsewhere, expired). */
