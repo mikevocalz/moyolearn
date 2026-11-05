@@ -22,6 +22,8 @@ import { chooseResource } from "./src/command-actions";
 import { sectionById, type DesktopSection } from "./src/layout";
 import { DesktopShellControllers } from "./src/native-menus";
 import { SidebarPane } from "./src/sidebar";
+import { SignInPane } from "./src/sign-in-pane";
+import { ROLE_LABELS } from "./src/commands";
 import { useShellStore } from "./src/store";
 import { WorkspaceToolbar } from "./src/toolbar";
 import { color, corner, space, textStyle, toPoints, useScheme, type Scheme } from "./src/theme";
@@ -58,13 +60,26 @@ function ErrorNotice({ scheme }: { scheme: Scheme }) {
 
 function WorkspaceEmpty({ scheme }: { scheme: Scheme }) {
   const reportError = useShellStore((state) => state.reportError);
+  const auth = useShellStore((state) => state.auth);
+  const activeRole = useShellStore((state) => state.activeRole);
   const styles = contentStyles(scheme);
+  if (auth.status === "checking") {
+    return (
+      <View style={styles.panel} accessibilityLabel="Checking your session">
+        <Text style={styles.body}>Checking your session…</Text>
+      </View>
+    );
+  }
+  if (auth.status !== "signed-in") return <SignInPane scheme={scheme} />;
   return (
     <View style={styles.panel}>
-      <Text style={styles.heading}>Nothing to show here yet</Text>
+      <Text style={styles.heading} selectable>
+        {auth.account.name || auth.account.email}
+        {activeRole ? ` · ${ROLE_LABELS[activeRole]}` : ""}
+      </Text>
       <Text style={styles.body}>
-        Lessons, tutoring and classrooms run in Moyo Learn on the web and on your phone.
-        They move into this window once desktop sign-in is ready.
+        Lessons, tutoring and classrooms still run in Moyo Learn on the web and on your phone.
+        They move into this window in the next desktop release.
       </Text>
       <NativeButton
         variant="bordered"

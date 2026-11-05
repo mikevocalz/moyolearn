@@ -2,8 +2,9 @@
  * Settings window (⌘,): appearance and layout density.
  *
  * Mac settings apply as they change, so there is no Save button and nothing
- * can be left unsaved. Both rows are NSPopUpButtons bound to the shell store;
- * the store persists them through `@legendapp/spark/settings`.
+ * can be left unsaved. Appearance and Layout are NSPopUpButtons bound to the
+ * shell store, persisted through `@legendapp/spark/settings`. Signed in, the
+ * Plan section (plan-section.tsx, PR-D04) follows.
  * Structure (Mobbin pass, docs/desktop/mobbin/D02.md): Todoist and Height keep
  * settings in their own window with labelled rows; Moyo has two preferences,
  * so it is one pane with no category list.
@@ -13,6 +14,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Select as NativeSelect, getControlAvailability } from "@legendapp/spark/ui";
 import { isDensity } from "./layout";
+import { PlanSection } from "./plan-section";
 import { useShellStore, type AppearancePreference } from "./store";
 import { color, space, textStyle, useScheme, type Scheme } from "./theme";
 
@@ -67,6 +69,7 @@ export function SettingsWindow() {
           onError={(cause) => reportError("Layout", cause)}
         />
       </View>
+      <PlanSection scheme={scheme} />
       {selectAvailable ? null : (
         <Text style={styles.note} selectable>
           Pop-up menus are not available in this runtime, so these settings are read-only.

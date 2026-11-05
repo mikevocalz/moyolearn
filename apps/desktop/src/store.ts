@@ -13,8 +13,9 @@
  * for rehydration before the first paint (`hydrated`), so a stored
  * Dark appearance never flashes Light first. Section, query,
  * resource name, roles and errors are per launch. No credentials, learner
- * records or school data live here; the session arrives with PR-D04 and fills
- * `sessionRoles` from server claims, never from this store's own input.
+ * records or school data live here. The session cookie lives in the macOS
+ * Keychain (src/auth/session.ts); this store holds only the account summary
+ * and the roles resolved from server member rows, never from user input.
  * SOT: apps/desktop/src/store.ts · docs/desktop/seams/D02.md
  * SOT-KEYWORDS: desktop zustand shell store section density appearance roles persist
  */
@@ -22,6 +23,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { settings } from "@legendapp/spark/settings";
 import type { ThermalState } from "moyo-desktop-core";
+import type { SubscriptionState } from "../../../packages/auth/src/entitlements.ts";
 import type { WorkspaceRole } from "./commands";
 import { isDensity, type DesktopDensity, type DesktopSection } from "./layout";
 
@@ -31,6 +33,35 @@ export type AppearancePreference = "system" | "light" | "dark";
  * SHA-256 of the chosen resource, computed on this Mac by MoyoDesktopCore.
  * command-actions.ts drops results from superseded picks before they get here.
  */
+/** Why the sign-in pane is showing, when there is a reason worth saying. */
+export type AuthNotice =
+  | { readonly kind: "invalid-credentials" }
+  | { readonly kind: "verify-email" }
+  | { readonly kind: "session-ended" }
+  | { readonly kind: "learner-on-desktop" }
+  | { readonly kind: "offline" }
+  | { readonly kind: "error"; readonly message: string };
+
+export interface AccountSummary {
+  readonly id: string;
+  readonly name: string;
+  readonly email: string;
+  readonly organizations: readonly { readonly id: string; readonly name: string }[];
+}
+
+/** Session status. Identity comes from the server's get-session, never from input. */
+export type AuthState =
+  | { readonly status: "checking" }
+  | { readonly status: "signed-out"; readonly notice: AuthNotice | null }
+  | { readonly status: "signing-in" }
+  | { readonly status: "signed-in"; readonly account: AccountSummary };
+
+export type PlanState =
+  | { readonly status: "idle" }
+  | { readonly status: "loading" }
+  | { readonly status: "ready"; readonly subscriptions: readonly SubscriptionState[] }
+  | { readonly status: "failed"; readonly message: string };
+
 export type ResourceFingerprint =
   | { readonly status: "pending" }
   | { readonly status: "ready"; readonly sha256: string }
@@ -42,6 +73,8 @@ interface ShellState {
   appearance: AppearancePreference;
   sidebarVisible: boolean;
   query: string;
+  auth: AuthState;
+  plan: PlanState;
   /** Roles from the signed-in session. Empty while signed out. */
   sessionRoles: readonly WorkspaceRole[];
   /** The workspace the window shows; always one of `sessionRoles` or null. */
@@ -61,6 +94,8 @@ interface ShellState {
   setSidebarVisible: (visible: boolean) => void;
   setQuery: (query: string) => void;
   setSessionRoles: (roles: readonly WorkspaceRole[]) => void;
+  setAuth: (auth: AuthState) => void;
+  setPlan: (plan: PlanState) => void;
   setActiveRole: (role: WorkspaceRole) => void;
   setResourceName: (name: string | null) => void;
   setResourceFingerprint: (fingerprint: ResourceFingerprint | null) => void;
@@ -132,6 +167,8 @@ export const useShellStore = create<ShellState>()(
       section: "workspace",
       ...PERSISTED_DEFAULTS,
       query: "",
+      auth: { status: "checking" },
+      plan: { status: "idle" },
       sessionRoles: [],
       activeRole: null,
       resourceName: null,
@@ -152,6 +189,8 @@ export const useShellStore = create<ShellState>()(
           activeRole: activeRole && sessionRoles.includes(activeRole) ? activeRole : (sessionRoles[0] ?? null),
         });
       },
+      setAuth: (auth) => set({ auth }),
+      setPlan: (plan) => set({ plan }),
       setActiveRole: (role) => {
         if (get().sessionRoles.includes(role)) set({ activeRole: role });
       },
