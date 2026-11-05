@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@acme/app": "workspace:*",
+    "@acme/motion": "workspace:*",
     "@acme/secure": "workspace:*",
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",

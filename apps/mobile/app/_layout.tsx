@@ -26,6 +26,7 @@ import { AppQueryProvider, SafeAreaProvider, SessionProvider , useAskPermissions
 import { BookingSheet } from "../components/BookingSheet";
 import { ShellHeader } from "../components/ShellHeader";
 import { Toaster } from "@acme/ui";
+import { presets } from "@acme/motion";
 import { MoyoSplash } from "../components/splash/MoyoSplash";
 import { metaWindows } from "../src/spatial/metaWindows";
 import { SpatialWindowHost } from "../src/spatial/SpatialWindowHost";
@@ -41,8 +42,11 @@ import "../global.css";
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Rejects only if the splash is already gone, which is not worth a crash.
 });
-// The native splash cross-fades into the animated one instead of cutting.
-SplashScreen.setOptions({ fade: true, duration: 220 });
+// The native splash cross-fades into the animated one instead of cutting. The
+// cross-fade is feedback-length (the `feedback` preset, 200ms): it is the app
+// answering the tap on its icon, and it was the front door's one hand-typed
+// duration (220ms) before the presets existed.
+SplashScreen.setOptions({ fade: true, duration: presets.feedback.durationMs });
 
 // The root-level routes that are real destinations rather than front door, and
 // the title each one's bar carries. Every other root child is either a shell

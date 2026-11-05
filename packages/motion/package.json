@@ -1,0 +1,48 @@
+{
+  "name": "@acme/motion",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./native": "./src/native.tsx",
+    "./web": "./src/web.tsx",
+    "./dev": "./src/dev.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@acme/theme": "workspace:*",
+    "kinetrell": "0.1.0-alpha.2"
+  },
+  "peerDependencies": {
+    "@gsap/react": "*",
+    "gsap": "*",
+    "lenis": "*",
+    "react": "*",
+    "react-native": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-reanimated": "*",
+    "react-native-worklets": "*"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "@gsap/react": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "gsap": "catalog:",
+    "lenis": "catalog:",
+    "react": "catalog:",
+    "react-native": "catalog:",
+    "react-native-gesture-handler": "catalog:",
+    "react-native-reanimated": "catalog:",
+    "react-native-worklets": "catalog:",
+    "typescript": "catalog:"
+  }
+}
