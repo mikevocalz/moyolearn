@@ -621,6 +621,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
         text: q.text,
         confidence: null,
         crop: null,
+        ...(wardId ? { priorWork: q.priorWork ?? 'none' } : {}),
       })),
       ...(wardId ? { forLearnerAuthId: wardId } : {}),
     };
@@ -979,6 +980,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
           pages={pages}
           subject={context.subject}
           ageBand={ageBand}
+          allowPriorWork={wardId.length > 0}
           onBack={() => {
             setReviewIndex(0);
             setPageReadings({});

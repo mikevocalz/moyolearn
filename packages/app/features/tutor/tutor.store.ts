@@ -23,6 +23,8 @@ import type { CoachEvent } from './coach.service';
 import type { TurnImage } from '@acme/inference';
 
 interface TutorState {
+  sessionGeneration: number;
+  endForPriorWork: () => void;
   state: TutorStageState;
   problem: string;
   /**
@@ -205,6 +207,12 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   tutorPresence: 'auto' as TutorPresencePreference,
   currentTone: null,
   sessionId: null,
+  sessionGeneration: 0,
+  endForPriorWork: () => {
+    audioQueue.stop();
+    set((s) => ({ sessionGeneration: s.sessionGeneration + 1,
+      state: { kind: 'ended', summary: { title: 'All problems were already done', masteryDelta: 0 } } }));
+  },
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   lastOutcome: null,
@@ -213,7 +221,9 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   masteryBySkill: {},
   attemptsBySkill: {},
   hydrate: async (problem) => {
+    const generation = get().sessionGeneration;
     const snapshot = await fetchSession(problem);
+    if (get().sessionGeneration !== generation) return;
     if (snapshot === null) return;
 
     const problemText = snapshot.problem.length > 0 ? snapshot.problem : problem;
@@ -345,7 +355,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   },
   start: (problem, isReading = false) => {
     // A new problem starts with no verdict behind it.
-    set({ lastOutcome: null });
+    set((s) => ({ lastOutcome: null, sessionGeneration: s.sessionGeneration + 1 }));
     const p = problem ?? '';
     const skillTitle = inferSkillTitle(p);
     set((s) => {
@@ -456,7 +466,8 @@ export const useTutorStore = create<TutorState>((set, get) => ({
 
   coach: async (message, image) => {
     const { lastOutcome } = get();
-    const { problem, problemIsReading, state, sessionId } = useTutorStore.getState();
+    const { problem, problemIsReading, state, sessionId, sessionGeneration } = useTutorStore.getState();
+    const isCurrentTurn = () => get().sessionGeneration === sessionGeneration && get().state.kind !== 'ended' && get().problem === problem;
 
     /*
       The floor under the closed composer.
@@ -567,6 +578,10 @@ export const useTutorStore = create<TutorState>((set, get) => ({
         it is the difference between a child pressing a button that 401s again
         and one that takes them somewhere.
       */
+      if (!isCurrentTurn()) {
+        controller.abort();
+        return;
+      }
       if (response.status === 401) {
         audioQueue.stop();
         set({ state: { kind: 'signed-out' } });
@@ -576,6 +591,10 @@ export const useTutorStore = create<TutorState>((set, get) => ({
       armStall(COACH_STALL_TIMEOUT_MS);
 
       for await (const event of readCoachEvents(response)) {
+        if (!isCurrentTurn()) {
+          controller.abort();
+          return;
+        }
         armStall(COACH_STALL_TIMEOUT_MS);
         if (event.kind === 'chunk') {
           spoken += event.text;
@@ -640,6 +659,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
         return;
       }
     } catch {
+      if (!isCurrentTurn()) return;
       audioQueue.stop();
       // A transport failure is retryable, and an aborted stall arrives here as
       // one. Only a Safety Plane decision earns the terminal paused state.
@@ -655,6 +675,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
     // The stream ended without a terminal frame — a dropped connection. The
     // partial turn stays on screen because it already passed the plane, but a
     // turn with nothing in it is the paused state.
+    if (!isCurrentTurn()) return;
     if (!spoken) {
       set({ state: { kind: 'retry' } });
       return;

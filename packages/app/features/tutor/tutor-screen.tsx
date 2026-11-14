@@ -27,6 +27,7 @@ import {
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore , useWorksheetStore, currentPrompt, isCurrentWorksheetQuestion, outcomeForAdvance, questionIndexForPrompt } from '../capture';
 import type { HomeworkSubmissionView } from '../homework/homework.types.ts';
+import { nextUndoneIndex } from '../homework/homework-prior-work.ts';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { countImages, MAX_TUTOR_IMAGES } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
@@ -123,6 +124,14 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     void hydrateWorksheet(learnerId);
   }, [learnerId, restoreWorksheet, hydrateWorksheet]);
   const worksheetPrompt = worksheet ? currentPrompt(worksheet) : null;
+  const allPriorDone = Boolean(worksheet && worksheetOwner === learnerId &&
+    worksheet.status === 'complete' && worksheet.questions.length > 0 &&
+    worksheet.questions.every((question) => question.priorWork === 'complete') &&
+    (!problem || (problemIsReading && questionIndexForPrompt(worksheet, problem) >= 0)));
+  useEffect(() => {
+    if (!allPriorDone) return;
+    useTutorStore.getState().endForPriorWork();
+  }, [allPriorDone]);
   // Prompt equality alone conflates two identical worksheet questions; the
   // evidence handle resolves the cursor's real question when wording repeats.
   const activeWorksheet =
@@ -130,6 +139,18 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     isCurrentWorksheetQuestion(worksheet, problem, problemEvidence)
       ? worksheet
       : null;
+  // Completion has no next prompt, but its progress and sync status still belong
+  // beside the problem the learner just finished.
+  const progressWorksheet = activeWorksheet ?? (
+    worksheet && worksheetOwner === learnerId && worksheet.status === 'complete' &&
+    problemIsReading && questionIndexForPrompt(worksheet, problem) >= 0
+      ? worksheet
+      : null
+  );
+  const nextWorksheetIndex = progressWorksheet
+    ? nextUndoneIndex(progressWorksheet.questions, progressWorksheet.currentIndex)
+    : -1;
+  const nextWorksheetQuestion = progressWorksheet?.questions[nextWorksheetIndex];
   const {
     state,
     start,
@@ -157,11 +178,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
 
   const startedProblem = useRef<string | null>(null);
   useEffect(() => {
+    if (allPriorDone) return;
     const key = String(problemIsReading) + ':' + (problem ?? '');
     if (startedProblem.current === key) return;
     startedProblem.current = key;
     start(problem, problemIsReading);
-  }, [problem, problemIsReading, start]);
+  }, [problem, problemIsReading, allPriorDone, start]);
 
   useEffect(() => {
     audioQueue.setSentencePause(SENTENCE_PAUSE_MS[ageBand]);
@@ -253,6 +275,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   // happen once on entry, not re-fetch a stale session after every next press.
   const hydratedOnce = useRef(false);
   useEffect(() => {
+    if (allPriorDone) { setResumed(true); return; }
     if (hydratedOnce.current) return;
     hydratedOnce.current = true;
     /*
@@ -271,7 +294,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     */
     clearStaleFailure();
     void hydrate(problem ?? '').finally(() => setResumed(true));
-  }, [problem, hydrate, clearStaleFailure]);
+  }, [problem, allPriorDone, hydrate, clearStaleFailure]);
 
   /*
     Points a stored attachment at its bytes the moment the queue lands them.
@@ -333,16 +356,19 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   */
   const askedForProblem = useRef(false);
   useEffect(() => {
-    if (problem || askedForProblem.current) return;
+    if (problem || allPriorDone || askedForProblem.current) return;
     askedForProblem.current = true;
     requestNextProblem();
-  }, [problem, requestNextProblem]);
+  }, [problem, allPriorDone, requestNextProblem]);
 
   // The opening turn. Doc 29 §8's demo arc turns on the first thing a child sees
   // being a question rather than a solution, so the coaching starts on arrival
   // rather than waiting for the learner to type something first.
   const opened = useRef(false);
   useEffect(() => {
+    // Reopening an all-marked sheet is owned by presentWorksheetQuestion below.
+    // Do not also issue a first-visit greeting when that sheet is unticked.
+    if (allPriorDone) { opened.current = true; return; }
     if (!problem || !resumed || opened.current) return;
     /*
       ONLY WHEN THERE IS NOTHING TO RESUME.
@@ -385,7 +411,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       restoredTurn || messages.some((message) => !message.id.startsWith('problem-'));
     if (hasPriorTurns) return;
     void coach('');
-  }, [problem, resumed, coach]);
+  }, [problem, allPriorDone, resumed, coach]);
 
   async function recordAttempt(p: string, answer: string, depth: number, sourceReadiness: AssessmentReadiness): Promise<void> {
     if (!readyForEvaluation(sourceReadiness)) return;
@@ -933,13 +959,23 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     the server's question. Matching prompts prevent a refreshed outcome from
     restarting the current question.
   */
+  const wasAllPriorDone = useRef(false);
   useEffect(() => {
+    const reopenedPriorWork = wasAllPriorDone.current && !allPriorDone;
+    wasAllPriorDone.current = allPriorDone;
+    // Unticking a prestart sheet must reopen the tutor even when the current
+    // problem text is unchanged; the earlier all-done state ended its session.
+    if (reopenedPriorWork && worksheet && worksheetOwner === learnerId && worksheetPrompt !== null &&
+      (!problem || (problemIsReading && questionIndexForPrompt(worksheet, problem) >= 0))) {
+      presentWorksheetQuestion(worksheet);
+      return;
+    }
     if (!worksheet || worksheetOwner !== learnerId || !problemIsReading || worksheetPrompt === null) return;
     if (worksheetPrompt.trim() === problem?.trim()) return;
     if (questionIndexForPrompt(worksheet, problem) < 0) return;
     if (state.kind === 'thinking') return;
     presentWorksheetQuestion(worksheet);
-  }, [worksheet, worksheetOwner, learnerId, problemIsReading, worksheetPrompt, problem, state.kind, presentWorksheetQuestion]);
+  }, [worksheet, worksheetOwner, learnerId, problemIsReading, worksheetPrompt, problem, state.kind, allPriorDone, presentWorksheetQuestion]);
 
   // Keep worksheet hooks above every opening-state return so resume cannot
   // change the hook order when a problem becomes available.
@@ -959,6 +995,17 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     and end_session → learner.home as the two ways on. `TutorOpening` renders
     those, and separates the three reasons there is nothing here.
   */
+  if (allPriorDone) {
+    return <View className="flex-1 gap-stack bg-surface p-inset">
+      <Text variant="title">{ageBand === 'young' ? 'These problems are marked done' : 'All problems were already done'}</Text>
+      <Text variant="body">{ageBand === 'young'
+        ? 'Ask your grown-up if you want to try one.'
+        : ageBand === 'child'
+          ? 'All problems were marked already done. Your grown-up can change a mark.'
+          : 'All problems are marked already done. A parent can review the marks if you still need to work on one.'}</Text>
+      <Button title="Go home" onPress={() => router.replace('/')} />
+    </View>;
+  }
   if (problem == null) {
     const onHome = () => router.replace('/');
     const onSnap = () => router.push('/capture');
@@ -1021,6 +1068,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
 
   const moveToNextWorksheetQuestion = () => {
     if (!activeWorksheet || !learnerId || state.kind === 'thinking' || activeWorksheet.status === 'complete') return;
+    if (useWorksheetStore.getState().status === 'syncing') return;
     const tutor = useTutorStore.getState();
     // Turns since this question's own bubble; earlier questions' turns are theirs.
     let bubble = -1;
@@ -1039,7 +1087,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     // lands in the store as confirmed, reconciled or still pending.
     void useWorksheetStore.getState().advance({ outcome, attempts: learnerTurns, hintsUsed, misconceptionTags: [] });
     const advanced = useWorksheetStore.getState().current;
-    if (!advanced || advanced.status === 'complete') return;
+    if (!advanced || advanced.status === 'complete' || advanced.currentQuestionId === activeWorksheet.currentQuestionId) return;
     presentWorksheetQuestion(advanced);
   };
 
@@ -1054,20 +1102,29 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       */
       detailActions={
         <View className="flex-row flex-wrap items-center gap-element">
-          {activeWorksheet ? (
-            <View className="flex-row items-center gap-element">
+          {progressWorksheet ? (
+            <View className="flex-row flex-wrap items-center gap-element">
               <Text variant="caption" tone="muted">
-                Question {activeWorksheet.currentIndex + 1} of {activeWorksheet.questions.length}
+                Question {progressWorksheet.currentIndex + 1} of {progressWorksheet.questions.length}
               </Text>
-              {activeWorksheet.status === 'complete' ? (
+              <View className="flex-row flex-wrap gap-element" aria-label="Worksheet progress">
+                {progressWorksheet.questions.map((question, index) => <Text
+                  key={question.questionId}
+                  variant="caption"
+                  tone="muted"
+                  aria-label={`Problem ${question.sourceNumber ?? index + 1}, page ${question.sourcePage}${question.priorWork === 'complete' ? ', already done before upload' : index === progressWorksheet.currentIndex ? progressWorksheet.status === 'complete' ? ', last worked problem' : ', current problem' : ''}`}
+                  className={question.priorWork === 'complete' ? 'line-through' : undefined}
+                >{question.priorWork === 'complete' ? '✓ ' : ''}{question.sourceNumber ?? index + 1}</Text>)}
+              </View>
+              {progressWorksheet.status === 'complete' ? (
                 <Text variant="caption" tone="muted">Worksheet finished</Text>
-              ) : activeWorksheet.currentIndex + 1 < activeWorksheet.questions.length ? (
+              ) : nextWorksheetQuestion ? (
                 <Button
                   title="Next question"
-                  aria-label={'Move to question ' + (activeWorksheet.currentIndex + 2)}
+                  aria-label={`Move to problem ${nextWorksheetQuestion.sourceNumber ?? nextWorksheetIndex + 1}, page ${nextWorksheetQuestion.sourcePage}`}
                   variant="outline"
                   size="sm"
-                  disabled={state.kind === 'thinking'}
+                  disabled={state.kind === 'thinking' || worksheetSync === 'syncing'}
                   onPress={moveToNextWorksheetQuestion}
                 />
               ) : (
@@ -1076,7 +1133,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
                   aria-label="Finish this worksheet"
                   variant="outline"
                   size="sm"
-                  disabled={state.kind === 'thinking'}
+                  disabled={state.kind === 'thinking' || worksheetSync === 'syncing'}
                   onPress={moveToNextWorksheetQuestion}
                 />
               )}
