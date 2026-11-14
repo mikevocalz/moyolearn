@@ -24,6 +24,8 @@ jobs:
           xcodebuild -version
           swift --version
       - run: pnpm install --frozen-lockfile
+      - name: Verify runtime acceptance contracts
+        run: node --test tooling/native-runtime-smoke.test.mjs
       - name: Expo XCFramework cache key
         id: expo-key
         run: |
@@ -55,6 +57,10 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+      - name: Execute iPad simulator rendering and lifecycle checks
+        env:
+          MOYO_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node tooling/native-runtime-smoke.mjs --platform ios --app "$RUNNER_TEMP/moyo-derived/Build/Products/Debug-iphonesimulator/Moyo.app" --artifacts "$RUNNER_TEMP/moyo-ios-runtime"
       - name: Summarize build errors
         if: failure()
         run: grep -E "error:|\*\* BUILD" "$RUNNER_TEMP/moyo-ios-build.log" | sort -u | head -80 || true
@@ -67,6 +73,7 @@ jobs:
             ${{ runner.temp }}/expo-work/expo/packages/prebuild-errors-*.log
             ${{ runner.temp }}/moyo-spm.log
             ${{ runner.temp }}/moyo-ios-build.log
+            ${{ runner.temp }}/moyo-ios-runtime
             apps/mobile/ios/build/generated/autolinking/Package.swift
             apps/mobile/ios/build/generated/autolinking/autolinking.json
           if-no-files-found: ignore

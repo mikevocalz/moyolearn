@@ -43,3 +43,62 @@ jobs:
             apps/mobile/android/build/reports
             apps/mobile/android/app/build/reports
           if-no-files-found: ignore
+  mobile-runtime:
+    # Quest's required headset features and arm64 binary are kept in the quest job.
+    # This is the existing ordinary-mobile flavor on a real x86_64 emulator.
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 security backports
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # verified v4 commit
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # verified v4 commit
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: pnpm install --frozen-lockfile
+      - name: Verify runtime acceptance contracts
+        run: node --test tooling/native-runtime-smoke.test.mjs
+      - name: Install pinned native toolchain
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
+      - name: Assemble ordinary mobile debug app for the emulator
+        working-directory: apps/mobile/android
+        env:
+          ORG_GRADLE_PROJECT_moyoNativeJobPool: '2'
+        run: bash "$GITHUB_WORKSPACE/tooling/run-with-resource-heartbeat.sh" bash gradlew :app:assembleMobileDebug --stacktrace --max-workers=1 --no-parallel -PreactNativeArchitectures=x86_64 '-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'
+      - name: Release the build daemon before running the emulator
+        working-directory: apps/mobile/android
+        run: bash gradlew --stop
+      - name: Enable KVM for the hosted emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Execute Android emulator rendering and lifecycle checks
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # verified v2 commit
+        env:
+          MOYO_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          cores: 2
+          ram-size: 3072M
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
+          script: node tooling/native-runtime-smoke.mjs --platform android --serial emulator-5554 --app "$GITHUB_WORKSPACE/apps/mobile/android/app/build/outputs/apk/mobile/debug/app-mobile-debug.apk" --artifacts "$RUNNER_TEMP/moyo-android-runtime"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: android-mobile-runtime-diagnostics
+          path: |
+            ${{ runner.temp }}/moyo-android-runtime
+            apps/mobile/android/build/reports
+            apps/mobile/android/app/build/reports
+          if-no-files-found: warn
