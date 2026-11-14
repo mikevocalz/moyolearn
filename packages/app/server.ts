@@ -270,10 +270,12 @@ export {
   type NewQuestionRow,
   type NewSubmissionRow,
   type ReviseHomeworkQuestion,
+  type ReviseHomeworkPriorWork,
   type StartHomeworkSubmission,
   type WardProfile,
 } from './features/homework/homework.service';
 export type * from './features/homework/homework.types';
+export { nextUndoneIndex, canRevisePriorWork, homeworkQuestionCounts } from './features/homework/homework-prior-work';
 export type {
   EvidenceRef,
   MasteryMovement,
