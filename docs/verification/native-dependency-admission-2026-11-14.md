@@ -28,9 +28,9 @@ The actual Skia 2.14 `Package.swift` explicitly selects Ganesh and excludes the 
 
 The existing `patches/react-native-gesture-handler.patch` applies cleanly to the actual 3.5.0 archive. It retains the visionOS refresh-rate guard; the package's own podspec declares visionOS and reads version 3.5.0 from its manifest.
 
-The committed visionOS lock still records `RNGestureHandler (3.4.0)`. Do not manufacture its new spec checksum. On the native runner, `tooling/prepare-visionos.mjs` builds pinned ViroKit and runs `pod install`; `.github/workflows/visionos.yml` already uploads the resulting `apps/mobile/visionos/Podfile.lock` in `visionos-native-diagnostics`. Retrieve that generated lock and compare it with the committed file after the new dependency set resolves, then retain the app compile result separately.
+The visionOS workflow for head `b34fdb6062fce8d1e987ee5e9146fcd531a2717f` resolved Gesture Handler 3.5.0 and completed `TEST BUILD SUCCEEDED`. The committed lock is now copied byte for byte from artifact `14126700120` in [run 43615673096](https://github.com/mikevocalz/moyolearn/actions/runs/43615673096), after checking the archive SHA-256 against GitHub’s recorded digest. Its SHA-256 is `266b2ac235f9271f9a8d8da988fadc68dad9c7d24c0ef42167abc61dab0694ca`. No dependency version, path or checksum was hand-authored. The generated output also updates other previously stale pods to the versions already resolved by this exact head’s package lock. The complete provenance is recorded in the companion JSON.
 
-Android/iOS application builds with the final regenerated lockfile, visionOS resolution/build with Gesture Handler 3.5.0, and physical rendering/input/lifecycle checks remain required. Host artifact inspection does not substitute for those results.
+Android, iOS, visionOS, desktop and full workspace CI completed successfully on `b34fdb6062fce8d1e987ee5e9146fcd531a2717f`; their run IDs are recorded in the companion JSON. The follow-up lock/evidence commit must pass its applicable checks before merge. These compile results do not establish physical rendering, input or lifecycle acceptance, which remains a separate native-release requirement.
 
 ## Workspace verification
 

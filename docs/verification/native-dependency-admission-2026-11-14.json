@@ -371,5 +371,23 @@
     "visionOS pod resolution and build with RNGH 3.5.0",
     "iOS CocoaPods Graphite compile/runtime",
     "Physical Quest/PICO/iOS rendering, input and lifecycle acceptance"
-  ]
+  ],
+  "nativeBuildEvidence": {
+    "sourceHead": "b34fdb6062fce8d1e987ee5e9146fcd531a2717f",
+    "visionOS": {
+      "runId": 43615673096,
+      "artifactId": 14126700120,
+      "archiveSha256": "d48f4b8b835dd7ee493dc383092c5baa4c2baa72fb7f3e256a07f236c40d37aa",
+      "lockSha256": "266b2ac235f9271f9a8d8da988fadc68dad9c7d24c0ef42167abc61dab0694ca",
+      "lockCopiedByteForByte": true,
+      "result": "TEST BUILD SUCCEEDED"
+    },
+    "iosRunId": 43615673077,
+    "androidRunId": 43615673097,
+    "desktopRunId": 43615673057,
+    "ciRunId": 43615673078,
+    "freshnessRunId": 43615673127,
+    "allListedRunsConclusion": "success",
+    "scope": "Native compilation and simulator build-for-testing. Physical-device rendering, input and lifecycle acceptance are not established by these runs. Follow-up lock/evidence commit requires its applicable checks."
+  }
 }
