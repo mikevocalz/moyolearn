@@ -194,6 +194,54 @@ test('an advance cannot race the start response and overwrite guardian cursor se
   assert.equal(store.getState().current?.tutorSessionId, 'session-1');
 });
 
+test('a hydrate started before tutoring cannot restore marks and cursor from before start', async () => {
+  const { store, server } = setup();
+  const initial = await store.getState().begin('learner-1', input());
+  let resolveRead!: (view: HomeworkSubmissionView) => void;
+  let readRequested!: () => void;
+  const requested = new Promise<void>((resolve) => { readRequested = resolve; });
+  server.client.getSubmission = async () => new Promise<HomeworkSubmissionView>((resolve) => {
+    resolveRead = resolve;
+    readRequested();
+  });
+  const hydrating = store.getState().hydrate('learner-1');
+  await requested;
+  const questions = initial.questions.map((question, index) => ({
+    ...question,
+    priorWork: index === 0 ? 'complete' as const : 'none' as const,
+  }));
+  server.rows.set(initial.submissionId, {
+    ...initial, questions, currentIndex: 1, currentQuestionId: questions[1]!.questionId,
+  });
+  await store.getState().start('session-1');
+  resolveRead(initial);
+  await hydrating;
+  assert.equal(store.getState().current?.tutorSessionId, 'session-1');
+  assert.equal(store.getState().current?.currentIndex, 1);
+  assert.equal(store.getState().current?.questions[0]!.priorWork, 'complete');
+});
+
+test('a delayed hydrate cannot discard an offline cursor move or its pending sync feedback', async () => {
+  const { store, server } = setup();
+  const initial = await store.getState().begin('learner-1', input());
+  let resolveRead!: (view: HomeworkSubmissionView) => void;
+  let readRequested!: () => void;
+  const requested = new Promise<void>((resolve) => { readRequested = resolve; });
+  server.client.getSubmission = async () => new Promise<HomeworkSubmissionView>((resolve) => {
+    resolveRead = resolve;
+    readRequested();
+  });
+  const hydrating = store.getState().hydrate('learner-1');
+  await requested;
+  server.net.online = false;
+  await store.getState().advance(step);
+  resolveRead(initial);
+  await hydrating;
+  assert.equal(store.getState().current?.currentIndex, 1);
+  assert.equal(store.getState().pending.length, 1);
+  assert.equal(store.getState().status, 'pending');
+});
+
 function setup() {
   const storage = fakeStorage();
   const server = fakeServer();

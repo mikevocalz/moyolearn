@@ -33,6 +33,7 @@ import type {
 import type { ProblemStorage } from './problem-storage.shared.ts';
 import { questionForTutor, type WorksheetQuestion } from './worksheet-questions.ts';
 import { clearWorksheet, readWorksheet, type WorksheetSession } from './worksheet-session.ts';
+import { nextUndoneIndex } from '../homework/homework-prior-work.ts';
 
 /** Where the device copy stands against the server. */
 export type WorksheetSyncStatus = 'idle' | 'syncing' | 'confirmed' | 'pending' | 'reconciled' | 'error';
@@ -135,7 +136,7 @@ export function applyMove(
         }
       : q,
   );
-  const nextIndex = questions.findIndex((question, index) => index > move.expectedIndex && question.priorWork !== 'complete');
+  const nextIndex = nextUndoneIndex(questions, move.expectedIndex);
   const next = questions[nextIndex];
   // Past the last question the server keeps the cursor on it and marks the work complete.
   return next
@@ -262,12 +263,15 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
 
   return (set, get) => {
     let selectionEpoch = 0;
+    // A read issued before a cursor move/start must not replace that newer write.
+    let cacheVersion = 0;
     const load = (learnerAuthId: string): WorksheetCacheRecord | null => readCacheRecord(storage, learnerAuthId);
     const isSelected = (learnerAuthId: string, epoch: number) =>
       selectionEpoch === epoch && get().ownerId === learnerAuthId;
 
     const commit = (record: WorksheetCacheRecord | null, learnerAuthId: string, status: WorksheetSyncStatus, epoch: number) => {
       if (!isSelected(learnerAuthId, epoch)) return;
+      cacheVersion += 1;
       if (record === null) {
         storage.remove(worksheetKeyFor(learnerAuthId));
         set({ current: null, ownerId: learnerAuthId, pending: [], status });
@@ -414,15 +418,19 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         if (!isSelected(learnerAuthId, epoch)) return null;
         record = load(learnerAuthId);
         if (record === null || record.pending.length > 0) return get().current;
+        if (starting.has(epoch)) return get().current;
 
         const before = get().status;
+        const readVersion = cacheVersion;
         try {
           const fresh = await client.getSubmission(record.confirmed.submissionId);
           if (!isSelected(learnerAuthId, epoch)) return null;
+          if (cacheVersion !== readVersion) return get().current;
           if (fresh.learnerAuthId !== learnerAuthId) throw new ApiError(403);
           commit({ ...record, confirmed: fresh }, learnerAuthId, before === 'reconciled' ? 'reconciled' : 'confirmed', epoch);
         } catch (error) {
           if (!isSelected(learnerAuthId, epoch)) return null;
+          if (cacheVersion !== readVersion) return get().current;
           // The row is gone (erased, or never this learner's): the cache must not outlive it.
           if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
             commit(null, learnerAuthId, 'idle', epoch);
@@ -460,6 +468,7 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         if (record === null || record.confirmed.tutorSessionId === tutorSessionId) return;
         if (starting.has(epoch)) return;
         starting.add(epoch);
+        cacheVersion += 1;
         try {
           await flush(ownerId, epoch);
           if (!isSelected(ownerId, epoch) || load(ownerId)?.pending.length) return;

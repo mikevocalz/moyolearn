@@ -7,6 +7,7 @@ import { homeworkClient } from './homework.client.ts';
 import type { HomeworkSubmissionView, PriorWork } from './homework.types.ts';
 import { PriorWorkMark } from './prior-work-mark';
 import { homeworkTimelineQueryKey } from './use-homework-timeline.ts';
+import { canRevisePriorWork } from './homework-prior-work.ts';
 
 export function GuardianPriorWorkReview({ submissionId, learnerAuthId }: {
   submissionId: string;
@@ -28,6 +29,7 @@ export function GuardianPriorWorkReview({ submissionId, learnerAuthId }: {
     },
   });
   const submission: HomeworkSubmissionView | undefined = review.data?.learnerAuthId === learnerAuthId ? review.data : undefined;
+  const canEdit = submission ? canRevisePriorWork(submission, submission.questions) : false;
   return <View className="gap-element">
     <Button title={open ? 'Close question review' : 'Review already-done marks'} variant="outline"
       onPress={() => store.setState({ open: !open })} />
@@ -38,22 +40,28 @@ export function GuardianPriorWorkReview({ submissionId, learnerAuthId }: {
         <Button title="Retry question review" variant="outline" onPress={() => { void review.refetch(); }} />
       </> : null}
       {submission ? <>
-        <Text variant="body" aria-live="polite">{submission.questions.length} problems, {submission.questions.filter((q) => q.priorWork === 'complete').length} already done.</Text>
-        {submission.status === 'complete' && submission.tutorSessionId === null ? <Text variant="body">
+        <Text variant="body" aria-live="polite">{submission.questions.length} {submission.questions.length === 1 ? 'problem' : 'problems'}, {submission.questions.filter((q) => q.priorWork === 'complete').length} already done.</Text>
+        {submission.status === 'complete' && canEdit ? <Text variant="body">
           All problems were marked already done. Untick any problem your child still needs to work on.
         </Text> : null}
         <Text variant="caption" tone="muted">These marks skip work finished before upload. They do not check answers. You can change them before tutoring starts.</Text>
-        {submission.tutorSessionId !== null ? <Text variant="body">This worksheet has started. Already-done marks can’t be changed here.</Text> : null}
+        {!canEdit ? <Text variant="body">Already-done marks can only be changed before tutoring starts.</Text> : null}
         {revision.isPending ? <Text variant="body">Saving change…</Text> : null}
         {submission.questions.map((question) => <View key={question.questionId} className="gap-element rounded-card border-2 border-border p-3">
           <Text variant="label">Problem {question.sourceNumber ?? question.orderIndex + 1}</Text>
+          <Text variant="caption" tone="muted">Page {question.sourcePage}</Text>
           <Text variant="body">{question.text}</Text>
           <PriorWorkMark value={question.priorWork ?? 'none'} questionNumber={question.sourceNumber ?? question.orderIndex + 1}
-            disabled={revision.isPending || submission.tutorSessionId !== null}
+            sourcePage={question.sourcePage}
+            disabled={revision.isPending || review.isFetching || !canEdit}
             onChange={(priorWork) => revision.mutate({ questionId: question.questionId, priorWork })} />
         </View>)}
       </> : null}
-      {revision.isError ? <Text variant="body">The mark was not saved. Tutoring may have started. Reload the review before trying again.</Text> : null}
+      {revision.isError ? <>
+        <Text variant="body">Your change wasn’t saved. Reload the review before trying again.</Text>
+        <Button title="Reload question review" variant="outline" disabled={review.isFetching}
+          onPress={() => { void review.refetch().then((result) => { if (result.isSuccess) revision.reset(); }); }} />
+      </> : null}
     </View> : null}
   </View>;
 }

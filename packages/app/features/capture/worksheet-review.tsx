@@ -84,7 +84,7 @@ export function WorksheetReview({
           fractions, handwriting, or question order before Natalie begins.
         </Text>
         {allowPriorWork ? <Text variant="body" tone="muted">
-          {questions.length} problems, {questions.filter((q) => q.priorWork === 'complete').length} already done.
+          {questions.length} {questions.length === 1 ? 'problem' : 'problems'}, {questions.filter((q) => q.priorWork === 'complete').length} already done.
           Mark work your child finished before this upload. This skips it without checking the answer.
         </Text> : null}
         {warning ? (
@@ -124,6 +124,7 @@ export function WorksheetReview({
               {allowPriorWork ? <PriorWorkMark
                 value={question.priorWork ?? 'none'}
                 questionNumber={question.sourceNumber ?? i + 1}
+                sourcePage={question.sourcePage}
                 onChange={(priorWork) => store.setState((state) => ({
                   questions: state.questions.map((q) => q.id === question.id ? { ...q, priorWork } : q),
                 }))}
