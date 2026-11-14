@@ -2,6 +2,7 @@
 // SOT: docs/site/signaliq-business-connection.md
 // SOT-KEYWORDS: marketing signaliq cron bearer retry outbox
 import { drainMarketingOutbox } from '@/lib/marketing/marketing.service';
+import { recheckMoyoPaidInvoice } from '@acme/auth/server';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 export async function GET(request: Request) {
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
   if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`)
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   try {
-    return Response.json(await drainMarketingOutbox(), {
+    return Response.json(await drainMarketingOutbox(recheckMoyoPaidInvoice), {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch {

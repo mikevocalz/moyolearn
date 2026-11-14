@@ -126,6 +126,20 @@ function InquiryCard({
           {inquiry.pending} awaiting SignalIQ confirmation · {inquiry.attention}{' '}
           need attention{inquiry.last_error ? ` (${inquiry.last_error})` : ''}
         </p>
+        {inquiry.signal_consent && inquiry.billing_waiting > 0 && (
+          <p>
+            {inquiry.billing_waiting} saved invoice receipt(s) await the exact
+            Moyo subscription association. No sale is sent until that link is
+            confirmed.
+          </p>
+        )}
+        {inquiry.signal_consent && inquiry.billing_attention > 0 && (
+          <Banner type="warning">
+            {inquiry.billing_attention} invoice receipt(s) need verification. No
+            revenue is sent from those receipts.
+            {inquiry.billing_error ? ` (${inquiry.billing_error})` : ''}
+          </Banner>
+        )}
         {inquiry.scheduled_at && (
           <p>Recorded discovery call: {time(inquiry.scheduled_at)}</p>
         )}
@@ -205,6 +219,17 @@ function InquiryCard({
           </>
         )}
         <Gutter left={false} right={false} className="moyo-sales__actions">
+          {!inactive &&
+            inquiry.signal_consent &&
+            inquiry.billing_attention > 0 && (
+              <Button
+                buttonStyle="secondary"
+                disabled={disabled}
+                onClick={() => void update({ action: 'retry-billing' })}
+              >
+                Recheck invoice evidence
+              </Button>
+            )}
           {inquiry.attention > 0 && (
             <Button
               buttonStyle="secondary"
@@ -247,6 +272,9 @@ export function MarketingInquiriesClient({
   );
   const state = useStore(store);
   const readGeneration = useRef(0);
+  const invalidateReads = useCallback(() => {
+    readGeneration.current++;
+  }, []);
   const onUnauthorized = useCallback(() => {
     readGeneration.current++;
     store.setState({
@@ -296,9 +324,9 @@ export function MarketingInquiriesClient({
     const timer = setInterval(() => void refresh(), 30000);
     return () => {
       clearInterval(timer);
-      readGeneration.current++;
+      invalidateReads();
     };
-  }, [refresh]);
+  }, [refresh, invalidateReads]);
   return (
     <section className="moyo-sales">
       <h2>SignalIQ delivery</h2>

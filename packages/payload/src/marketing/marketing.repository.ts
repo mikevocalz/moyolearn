@@ -152,7 +152,10 @@ export async function listInquiries(orgId: string) {
     (SELECT max(scheduled_at) FROM payload.marketing_updates u WHERE u.org_id=i.org_id AND u.inquiry_id=i.id) AS scheduled_at,
     (SELECT count(*)::int FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.inquiry_id=i.id AND state IN ('pending','accepted')) AS pending,
     (SELECT count(*)::int FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.inquiry_id=i.id AND state IN ('blocked','failed') AND error_code IS DISTINCT FROM 'consent_withdrawn') AS attention,
-    (SELECT error_code FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.inquiry_id=i.id AND error_code IS NOT NULL AND error_code <> 'consent_withdrawn' ORDER BY created_at DESC LIMIT 1) AS last_error
+    (SELECT error_code FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.inquiry_id=i.id AND error_code IS NOT NULL AND error_code <> 'consent_withdrawn' ORDER BY created_at DESC LIMIT 1) AS last_error,
+    (SELECT count(*)::int FROM payload.marketing_verified_payments p WHERE p.org_id=i.org_id AND p.customer_id=i.stripe_customer_id AND (p.evidence_status<>'verified' OR p.error_code IS NOT NULL) AND EXISTS(SELECT 1 FROM better_auth.subscription s WHERE s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=i.billing_reference_id)) AS billing_attention,
+    (SELECT count(*)::int FROM payload.marketing_verified_payments p WHERE p.org_id=i.org_id AND p.customer_id=i.stripe_customer_id AND p.evidence_status='verified' AND NOT EXISTS(SELECT 1 FROM better_auth.subscription s WHERE s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id)) AS billing_waiting,
+    (SELECT p.error_code FROM payload.marketing_verified_payments p WHERE p.org_id=i.org_id AND p.customer_id=i.stripe_customer_id AND p.error_code IS NOT NULL AND EXISTS(SELECT 1 FROM better_auth.subscription s WHERE s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=i.billing_reference_id) ORDER BY p.occurred_at DESC LIMIT 1) AS billing_error
     FROM payload.marketing_inquiries i WHERE i.org_id=$1 ORDER BY i.created_at DESC LIMIT 100) summary`,
     [orgId],
   );
@@ -212,7 +215,7 @@ export async function saveInquiryUpdate(
       // email domain can never establish who paid or which business owns it.
       const linked = await client.query(
         `SELECT s."stripeCustomerId" AS customer_id FROM better_auth.subscription s
-        WHERE s."referenceId"=$1 AND s."stripeCustomerId" IS NOT NULL AND (
+        WHERE s."referenceId"=$1 AND s."stripeCustomerId" IS NOT NULL AND s."stripeSubscriptionId" IS NOT NULL AND (
           EXISTS(SELECT 1 FROM better_auth.organization o WHERE o.id=s."referenceId") OR
           EXISTS(SELECT 1 FROM better_auth."user" u WHERE u.id=s."referenceId" AND lower(u.email)=$2 AND u."emailVerified"=true AND coalesce(u."guardianManaged",false)=false AND coalesce(u."isMinor",false)=false))
         ORDER BY s.id LIMIT 1`,
@@ -241,17 +244,7 @@ export async function saveInquiryUpdate(
         [customer.data, input.referenceId, orgId, id],
       );
       if (record.signal_consent) {
-        const invoices = await client.query(
-          'SELECT to_jsonb(p) AS record FROM payload.marketing_verified_payments p WHERE org_id=$1 AND customer_id=$2 ORDER BY occurred_at,id',
-          [orgId, customer.data],
-        );
-        for (const row of invoices.rows)
-          await enqueuePayment(
-            client,
-            orgId,
-            id,
-            paymentFromRow.parse(row.record),
-          );
+        await enqueueEligiblePayments(client, orgId, id);
       }
     }
     if (input.action === 'withdraw') {
@@ -280,6 +273,14 @@ export async function saveInquiryUpdate(
       await client.query(
         "UPDATE payload.marketing_outbox SET state='pending',attempts=0,next_attempt_at=now(),error_code=null WHERE org_id=$1 AND inquiry_id=$2 AND operation='withdrawal' AND state IN ('blocked','failed')",
         [orgId, id],
+      );
+    } else if (input.action === 'retry-billing') {
+      await client.query(
+        `UPDATE payload.marketing_verified_payments p SET next_verify_at=now()
+        WHERE p.org_id=$1 AND p.customer_id=$2 AND p.evidence_status<>'verified'
+        AND p.error_code IS DISTINCT FROM 'invoice_evidence_changed'
+        AND EXISTS(SELECT 1 FROM better_auth.subscription s WHERE s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=$3)`,
+        [orgId, record.stripe_customer_id, record.billing_reference_id],
       );
     } else if (input.action === 'retry-delivery') {
       // Same source ids and exact payloads: an unconfirmed response never turns
@@ -327,30 +328,43 @@ const paymentInput = z
   .object({
     invoiceId: z.string().regex(/^in_[a-zA-Z0-9]+$/),
     customerId: z.string().regex(/^cus_[a-zA-Z0-9]+$/),
-    amountCents: z.number().int().positive(),
+    subscriptionId: z.string().regex(/^sub_[a-zA-Z0-9]+$/),
+    amountCents: z.number().int().positive().max(2147483647),
     currency: z.string().regex(/^[A-Z]{3}$/),
     occurredAt: z.iso.datetime(),
     live: z.boolean(),
+    evidenceStatus: z.enum(['verified', 'incomplete', 'mismatch']),
+    moyoPriceSeen: z.boolean(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (payment) => payment.evidenceStatus !== 'verified' || payment.moyoPriceSeen,
+    'Verified Moyo evidence must include a configured plan price.',
+  );
 export type MarketingPayment = z.infer<typeof paymentInput>;
 const paymentFromRow = z
   .object({
     id: z.string(),
     customer_id: z.string(),
+    subscription_id: z.string(),
     amount_cents: z.number(),
     currency: z.string(),
     occurred_at: z.string(),
     live: z.boolean(),
+    evidence_status: z.enum(['verified', 'incomplete', 'mismatch']),
+    moyo_price_seen: z.boolean(),
   })
   .transform((row) =>
     paymentInput.parse({
       invoiceId: row.id,
       customerId: row.customer_id,
+      subscriptionId: row.subscription_id,
       amountCents: row.amount_cents,
       currency: row.currency,
       occurredAt: new Date(row.occurred_at).toISOString(),
       live: row.live,
+      evidenceStatus: row.evidence_status,
+      moyoPriceSeen: row.moyo_price_seen,
     }),
   );
 async function enqueuePayment(
@@ -371,6 +385,42 @@ async function enqueuePayment(
     amount: { amountCents: input.amountCents, currency: input.currency },
   });
 }
+const paymentIdentity = (payment: MarketingPayment) =>
+  fingerprint([
+    payment.invoiceId,
+    payment.customerId,
+    payment.subscriptionId,
+    payment.amountCents,
+    payment.currency,
+    new Date(payment.occurredAt).toISOString(),
+    payment.live,
+  ]);
+
+/** A customer alone is insufficient: the exact subscription must belong to the linked reference. */
+async function enqueueEligiblePayments(
+  client: PoolClient,
+  orgId: string,
+  inquiryId?: string,
+) {
+  const eligible = await client.query(
+    `SELECT i.id AS inquiry_id,to_jsonb(p) AS record FROM payload.marketing_inquiries i
+    JOIN payload.marketing_verified_payments p ON p.org_id=i.org_id AND p.customer_id=i.stripe_customer_id
+    WHERE i.org_id=$1 AND ($2::uuid IS NULL OR i.id=$2::uuid) AND i.signal_consent=true AND i.withdrawn_at IS NULL
+    AND p.evidence_status='verified' AND p.moyo_price_seen=true AND p.error_code IS NULL
+    AND EXISTS(SELECT 1 FROM better_auth.subscription s WHERE s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=i.billing_reference_id)
+    AND NOT EXISTS(SELECT 1 FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.source_id='moyo.invoice:'||p.id)
+    ORDER BY p.occurred_at,p.id LIMIT 50 FOR UPDATE OF i`,
+    [orgId, inquiryId ?? null],
+  );
+  for (const row of eligible.rows)
+    await enqueuePayment(
+      client,
+      orgId,
+      z.uuid().parse(row.inquiry_id),
+      paymentFromRow.parse(row.record),
+    );
+}
+
 export async function saveVerifiedPayment(
   orgId: string,
   payment: MarketingPayment,
@@ -381,28 +431,162 @@ export async function saveVerifiedPayment(
     await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
       `marketing:billing:${orgId}`,
     ]);
-    // Keep only a minimal verified receipt locally, so a later explicit billing
-    // link does not lose an invoice that arrived before the owner made the link.
+    // Unknown complete prices on a non-Moyo subscription are unrelated to this app.
+    // Incomplete evidence is held privately until an exact canonical association can
+    // establish whether it belongs here. It never becomes revenue by customer match.
+    if (!input.moyoPriceSeen && input.evidenceStatus !== 'incomplete') {
+      const canonical = await client.query(
+        'SELECT 1 FROM better_auth.subscription WHERE "stripeSubscriptionId"=$1 AND "stripeCustomerId"=$2 LIMIT 1',
+        [input.subscriptionId, input.customerId],
+      );
+      if (!canonical.rowCount) return;
+    }
+    const previous = await client.query(
+      'SELECT to_jsonb(p) AS record FROM payload.marketing_verified_payments p WHERE org_id=$1 AND id=$2',
+      [orgId, input.invoiceId],
+    );
+    if (previous.rows[0]) {
+      const stored = paymentFromRow.safeParse(previous.rows[0].record);
+      if (
+        !stored.success ||
+        paymentIdentity(stored.data) !== paymentIdentity(input)
+      ) {
+        await client.query(
+          "UPDATE payload.marketing_verified_payments SET error_code='invoice_evidence_changed' WHERE org_id=$1 AND id=$2",
+          [orgId, input.invoiceId],
+        );
+        return;
+      }
+    }
+    const evidenceError =
+      input.evidenceStatus === 'verified'
+        ? null
+        : input.evidenceStatus === 'incomplete'
+          ? 'invoice_evidence_incomplete'
+          : 'invoice_price_or_subscription_mismatch';
+    // Durable before the subscription association or inquiry billing link exists.
+    // Proof can improve, but a previously verified receipt is never weakened by a
+    // later configuration change. Core payment facts cannot be rewritten on replay.
     await client.query(
-      `INSERT INTO payload.marketing_verified_payments(id,org_id,customer_id,amount_cents,currency,occurred_at,live) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(org_id,id) DO NOTHING`,
+      `INSERT INTO payload.marketing_verified_payments(id,org_id,customer_id,subscription_id,amount_cents,currency,occurred_at,live,evidence_status,moyo_price_seen,error_code)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      ON CONFLICT(org_id,id) DO UPDATE SET
+      evidence_status=CASE WHEN marketing_verified_payments.evidence_status='verified' THEN 'verified' ELSE excluded.evidence_status END,
+      moyo_price_seen=marketing_verified_payments.moyo_price_seen OR excluded.moyo_price_seen,
+      error_code=CASE WHEN marketing_verified_payments.error_code='invoice_evidence_changed' THEN marketing_verified_payments.error_code
+        WHEN marketing_verified_payments.evidence_status='verified' THEN NULL ELSE excluded.error_code END`,
       [
         input.invoiceId,
         orgId,
         input.customerId,
+        input.subscriptionId,
         input.amountCents,
         input.currency,
         input.occurredAt,
         input.live,
+        input.evidenceStatus,
+        input.moyoPriceSeen,
+        evidenceError,
       ],
     );
-    const result = await client.query(
-      'SELECT to_jsonb(i) AS record FROM payload.marketing_inquiries i WHERE org_id=$1 AND stripe_customer_id=$2 AND signal_consent=true AND withdrawn_at IS NULL FOR UPDATE',
-      [orgId, input.customerId],
-    );
-    if (!result.rows[0]) return;
-    const record = inquiryRow.parse(result.rows[0].record);
-    await enqueuePayment(client, orgId, record.id, input);
+    await enqueueEligiblePayments(client, orgId);
   });
+}
+
+/** Handles invoice.paid arriving before subscription.created, including already-linked inquiries. */
+export async function reconcileVerifiedPayments(orgId: string) {
+  await marketingTransaction(async (client) => {
+    await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [
+      `marketing:billing:${orgId}`,
+    ]);
+    await enqueueEligiblePayments(client, orgId);
+  });
+}
+
+/** Revalidate retained/legacy orders at the final sending boundary. */
+export async function hasVerifiedOrderReceipt(
+  client: PoolClient,
+  orgId: string,
+  inquiryId: string,
+  event: Extract<BusinessEvent, { kind: 'order' }>,
+) {
+  if (
+    !event.sourceId.startsWith('moyo.invoice:') ||
+    event.inquirySourceId !== inquirySourceId(inquiryId)
+  )
+    return false;
+  const result = await client.query(
+    `SELECT 1 FROM payload.marketing_verified_payments p JOIN payload.marketing_inquiries i
+    ON i.org_id=p.org_id AND i.stripe_customer_id=p.customer_id
+    WHERE p.org_id=$1 AND i.id=$2 AND p.id=$3 AND p.evidence_status='verified' AND p.moyo_price_seen=true AND p.error_code IS NULL
+    AND p.amount_cents=$4 AND p.currency=$5 AND p.occurred_at=$6::timestamptz
+    AND EXISTS(SELECT 1 FROM better_auth.subscription s WHERE s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=i.billing_reference_id)`,
+    [
+      orgId,
+      inquiryId,
+      event.sourceId.slice('moyo.invoice:'.length),
+      event.amount.amountCents,
+      event.amount.currency,
+      event.occurredAt,
+    ],
+  );
+  return Boolean(result.rowCount);
+}
+
+/** One bounded private verification attempt per worker run; no raw invoice body is retained. */
+export async function repairPaymentEvidence(
+  orgId: string,
+  inspect: (
+    receipt: Pick<MarketingPayment, 'invoiceId' | 'occurredAt'>,
+  ) => Promise<MarketingPayment | null>,
+) {
+  const candidate = await marketingTransaction(async (client) => {
+    const result = await client.query(
+      `SELECT to_jsonb(p) AS record FROM payload.marketing_verified_payments p
+      WHERE p.org_id=$1 AND p.evidence_status IN ('incomplete','mismatch') AND p.next_verify_at<=now()
+      AND p.error_code IS DISTINCT FROM 'invoice_evidence_changed'
+      AND EXISTS(SELECT 1 FROM payload.marketing_inquiries i JOIN better_auth.subscription s
+        ON s."referenceId"=i.billing_reference_id AND s."stripeCustomerId"=i.stripe_customer_id
+        WHERE i.org_id=p.org_id AND i.stripe_customer_id=p.customer_id AND s."stripeSubscriptionId"=p.subscription_id
+        AND i.signal_consent=true AND i.withdrawn_at IS NULL)
+      ORDER BY p.next_verify_at,p.id LIMIT 1 FOR UPDATE SKIP LOCKED`,
+      [orgId],
+    );
+    if (!result.rows[0]) return null;
+    const item = paymentFromRow.parse(result.rows[0].record);
+    await client.query(
+      "UPDATE payload.marketing_verified_payments SET next_verify_at=now()+interval '30 minutes' WHERE org_id=$1 AND id=$2",
+      [orgId, item.invoiceId],
+    );
+    return item;
+  });
+  if (!candidate) return;
+  try {
+    const inspected = await inspect({
+      invoiceId: candidate.invoiceId,
+      occurredAt: candidate.occurredAt,
+    });
+    if (!inspected) {
+      await connection().query(
+        "UPDATE payload.marketing_verified_payments SET error_code='invoice_evidence_unavailable' WHERE org_id=$1 AND id=$2 AND evidence_status<>'verified'",
+        [orgId, candidate.invoiceId],
+      );
+      return;
+    }
+    if (paymentIdentity(inspected) !== paymentIdentity(candidate)) {
+      await connection().query(
+        "UPDATE payload.marketing_verified_payments SET error_code='invoice_evidence_changed' WHERE org_id=$1 AND id=$2",
+        [orgId, candidate.invoiceId],
+      );
+      return;
+    }
+    await saveVerifiedPayment(orgId, inspected);
+  } catch {
+    await connection().query(
+      "UPDATE payload.marketing_verified_payments SET error_code='invoice_verification_unavailable' WHERE org_id=$1 AND id=$2 AND evidence_status<>'verified'",
+      [orgId, candidate.invoiceId],
+    );
+  }
 }
 
 export async function connectionStatus(orgId: string) {

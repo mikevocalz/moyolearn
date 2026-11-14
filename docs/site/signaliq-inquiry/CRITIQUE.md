@@ -8,6 +8,6 @@ Final production review must verify the live form reaches the deployed Next API,
 
 ## Verification in this change
 
-The native admin production build, Next/admin/Payload typechecks and scoped lint pass. An intentional client import of the shared private service fails the admin build at the native import-protection boundary; that probe is removed. The PostgreSQL 18 suite passes all 12 cases, including fixed internal identity/scope checks, repeat-prospect identity, exact recoverable replay and delivery/withdrawal races. Contract/transport and billing projection diagnostics pass.
+The native admin production build, Next/admin/Payload typechecks and scoped lint pass. An intentional client import of the shared private service fails the admin build at the native import-protection boundary; that probe is removed. The PostgreSQL 18 suite passes all 15 cases, including fixed internal identity/scope checks, repeat-prospect identity, exact recoverable replay delivery/withdrawal races, exact invoice attribution and delayed subscription reconciliation. Contract/transport and billing projection diagnostics pass.
 
 A local screenshot attempt could not launch Chromium because this executor refuses its process socket. No desktop/mobile screenshots or live authenticated UI interaction are claimed here. Production browser review and deployed end-to-end receipt verification remain release gates.

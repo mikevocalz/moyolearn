@@ -12,7 +12,7 @@ import { haveIBeenPwned, multiSession, organization, username } from 'better-aut
 import Stripe from 'stripe';
 import { Pool } from 'pg';
 import { authorizeReference, isBillingRole, isPlanName, resolvePrices } from './billing-plans.ts';
-import { verifiedPaidInvoice, type VerifiedBillingPayment } from './billing-payment.ts';
+import { recheckPaidInvoice, verifiedPaidInvoice, type VerifiedBillingPayment } from './billing-payment.ts';
 import {
   hostFromHeaderValues,
   permitsLoginAtHost,
@@ -382,6 +382,16 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
   });
 }
 
+
+/** Private worker repair, using only this application's configured Moyo plan prices. */
+export async function recheckMoyoPaidInvoice(receipt: Pick<VerifiedBillingPayment, 'invoiceId' | 'occurredAt'>) {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error('Billing verification is unavailable.');
+  const { priced } = resolvePrices();
+  return recheckPaidInvoice(process.env.STRIPE_SECRET_KEY, receipt.invoiceId,
+    priced.flatMap(({ priceId, annualPriceId }) => annualPriceId ? [priceId, annualPriceId] : [priceId]),
+    receipt.occurredAt);
+}
+
 /**
  * Doc 06 §4's config of record, wired. Returned as a TUPLE so Better Auth's
  * plugin inference survives the spread (same reason as the Expo fork), and
@@ -404,7 +414,7 @@ function billingPlugin(pool: Pool,onBillingPayment?: (payment:VerifiedBillingPay
       // The plugin verifies the signature before onEvent and retries failed
       // callbacks. Await the durable outbox write; never send in the webhook.
       onEvent: async(event)=>{
-        const payment=verifiedPaidInvoice(event);
+        const payment=verifiedPaidInvoice(event, priced.flatMap(({priceId,annualPriceId})=>annualPriceId?[priceId,annualPriceId]:[priceId]));
         if(payment&&onBillingPayment)await onBillingPayment(payment);
       },
       subscription: {

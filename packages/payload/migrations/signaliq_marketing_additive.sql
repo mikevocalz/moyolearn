@@ -37,9 +37,27 @@ CREATE TABLE IF NOT EXISTS payload.marketing_rate_limits (
 );
 CREATE TABLE IF NOT EXISTS payload.marketing_verified_payments (
   id varchar NOT NULL,org_id varchar NOT NULL,customer_id varchar NOT NULL,
+  subscription_id varchar,evidence_status varchar NOT NULL DEFAULT 'legacy_unverified',
+  moyo_price_seen boolean NOT NULL DEFAULT false,next_verify_at timestamptz NOT NULL DEFAULT now(),error_code varchar,
   amount_cents integer NOT NULL CHECK(amount_cents>0),currency varchar(3) NOT NULL,
   occurred_at timestamptz NOT NULL,live boolean NOT NULL,PRIMARY KEY(org_id,id)
 );
+-- Older receipts have no subscription/price proof and must not be attributed.
+ALTER TABLE payload.marketing_verified_payments ADD COLUMN IF NOT EXISTS subscription_id varchar;
+ALTER TABLE payload.marketing_verified_payments ADD COLUMN IF NOT EXISTS evidence_status varchar NOT NULL DEFAULT 'legacy_unverified';
+ALTER TABLE payload.marketing_verified_payments ADD COLUMN IF NOT EXISTS moyo_price_seen boolean NOT NULL DEFAULT false;
+ALTER TABLE payload.marketing_verified_payments ADD COLUMN IF NOT EXISTS next_verify_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE payload.marketing_verified_payments ADD COLUMN IF NOT EXISTS error_code varchar;
+-- Earlier releases lacked subscription/price proof. Stop retained unproven orders
+-- before a new worker can resend them; preserve only their identifier/error audit.
+UPDATE payload.marketing_outbox o SET state='blocked',event=null,error_code='invoice_evidence_unverified'
+WHERE o.state IN ('pending','accepted') AND o.operation='business-event' AND o.event->>'kind'='order'
+AND NOT EXISTS(SELECT 1 FROM payload.marketing_verified_payments p
+  JOIN payload.marketing_inquiries i ON i.org_id=p.org_id AND i.stripe_customer_id=p.customer_id
+  JOIN better_auth.subscription s ON s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=i.billing_reference_id
+  WHERE p.org_id=o.org_id AND i.id=o.inquiry_id AND o.source_id='moyo.invoice:'||p.id AND p.evidence_status='verified' AND p.moyo_price_seen=true AND p.error_code IS NULL
+  AND o.event->'amount'->'amountCents'=to_jsonb(p.amount_cents) AND o.event->'amount'->>'currency'=p.currency
+  AND (o.event->>'occurredAt')::timestamptz=p.occurred_at);
 CREATE INDEX IF NOT EXISTS marketing_verified_payment_customer ON payload.marketing_verified_payments(org_id,customer_id);
 -- No public Supabase access: these tables belong to the existing server DB role.
 ALTER TABLE payload.marketing_inquiries ENABLE ROW LEVEL SECURITY;

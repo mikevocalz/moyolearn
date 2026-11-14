@@ -51,16 +51,18 @@ const headers = new Headers({
   host: 'admin.moyolearn.com',
   origin: 'https://admin.moyolearn.com',
 });
-const internalRequest = (body, {headers:requestHeaders,...extra} = {}) =>
+const internalRequest = (body, { headers: requestHeaders, ...extra } = {}) =>
   Object.assign(
     new Request(
       'https://admin.moyolearn.com/payload-api/moyo-sales/inquiries',
       {
         method: body ? 'POST' : 'GET',
-        headers: requestHeaders??new Headers([
-          ...headers,
-          ...(body ? [['Content-Type', 'application/json']] : []),
-        ]),
+        headers:
+          requestHeaders ??
+          new Headers([
+            ...headers,
+            ...(body ? [['Content-Type', 'application/json']] : []),
+          ]),
         ...(body ? { body: JSON.stringify(body) } : {}),
       },
     ),
@@ -380,11 +382,14 @@ test('withdrawal after an unconfirmed send deletes queued PII and delivers an id
 test('verified invoices arriving before an explicit billing link survive and route only once', async () => {
   const saved = await repository.saveInquiry(org, input(), 'rate');
   await pool.query(
-    "INSERT INTO better_auth.organization(id,name,slug,\"createdAt\") VALUES('synthetic-customer-org','Synthetic customer','synthetic-customer',now()); INSERT INTO better_auth.subscription(id,plan,\"referenceId\",\"stripeCustomerId\",status) VALUES('synthetic-subscription','ops-studio','synthetic-customer-org','cus_Synthetic','active')",
+    "INSERT INTO better_auth.organization(id,name,slug,\"createdAt\") VALUES('synthetic-customer-org','Synthetic customer','synthetic-customer',now()); INSERT INTO better_auth.subscription(id,plan,\"referenceId\",\"stripeCustomerId\",\"stripeSubscriptionId\",status) VALUES('synthetic-subscription','ops-studio','synthetic-customer-org','cus_Synthetic','sub_Moyo','active')",
   );
   const invoice = {
     invoiceId: 'in_Synthetic',
     customerId: 'cus_Synthetic',
+    subscriptionId: 'sub_Moyo',
+    evidenceStatus: 'verified',
+    moyoPriceSeen: true,
     amountCents: 4900,
     currency: 'USD',
     occurredAt: new Date().toISOString(),
@@ -429,6 +434,238 @@ test('verified invoices arriving before an explicit billing link survive and rou
     0,
   );
 });
+async function linkedBillingInquiry() {
+  const saved = await repository.saveInquiry(org, input(), 'rate');
+  await pool.query(
+    `INSERT INTO better_auth.organization(id,name,slug,"createdAt") VALUES('synthetic-customer-org','Synthetic customer','synthetic-customer',now());
+     INSERT INTO better_auth.subscription(id,plan,"referenceId","stripeCustomerId","stripeSubscriptionId",status) VALUES('synthetic-subscription','ops-studio','synthetic-customer-org','cus_Synthetic','sub_Moyo','active')`,
+  );
+  await repository.saveInquiryUpdate(
+    org,
+    'synthetic-owner',
+    saved.id,
+    update('link-billing', { referenceId: 'synthetic-customer-org' }),
+  );
+  return saved;
+}
+const paidReceipt = (patch = {}) => ({
+  invoiceId: 'in_Synthetic',
+  customerId: 'cus_Synthetic',
+  subscriptionId: 'sub_Moyo',
+  amountCents: 4900,
+  currency: 'USD',
+  occurredAt: new Date().toISOString(),
+  live: true,
+  evidenceStatus: 'verified',
+  moyoPriceSeen: true,
+  ...patch,
+});
+test('an already-linked customer waits for the exact late subscription association and cannot attribute another reference', async () => {
+  await linkedBillingInquiry();
+  const invoice = paidReceipt({ subscriptionId: 'sub_LateMoyo' });
+  await repository.saveVerifiedPayment(org, invoice);
+  assert.equal(
+    await count('marketing_verified_payments'),
+    1,
+    'valid evidence is durable before the canonical row',
+  );
+  assert.equal(
+    await count(
+      'marketing_outbox',
+      "WHERE source_id='moyo.invoice:in_Synthetic'",
+    ),
+    0,
+  );
+  assert.equal((await repository.listInquiries(org))[0].billing_waiting, 1);
+  await pool.query(
+    `INSERT INTO better_auth.subscription(id,plan,"referenceId","stripeCustomerId","stripeSubscriptionId",status) VALUES('late-synthetic','ops-studio','synthetic-customer-org','cus_Synthetic','sub_LateMoyo','active')`,
+  );
+  await repository.reconcileVerifiedPayments(org);
+  await repository.reconcileVerifiedPayments(org);
+  assert.equal(
+    await count(
+      'marketing_outbox',
+      "WHERE source_id='moyo.invoice:in_Synthetic'",
+    ),
+    1,
+  );
+  await pool.query(
+    `INSERT INTO better_auth.organization(id,name,slug,"createdAt") VALUES('different-reference','Synthetic other customer','synthetic-other',now()); INSERT INTO better_auth.subscription(id,plan,"referenceId","stripeCustomerId","stripeSubscriptionId",status) VALUES('other-synthetic','ops-studio','different-reference','cus_Synthetic','sub_OtherReference','active')`,
+  );
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({
+      invoiceId: 'in_OtherReference',
+      subscriptionId: 'sub_OtherReference',
+    }),
+  );
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({ invoiceId: 'in_OtherCustomer', customerId: 'cus_Other' }),
+  );
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({
+      invoiceId: 'in_Unrelated',
+      subscriptionId: 'sub_Unrelated',
+      evidenceStatus: 'mismatch',
+      moyoPriceSeen: false,
+    }),
+  );
+  assert.equal(
+    await count('marketing_outbox', "WHERE event->>'kind'='order'"),
+    1,
+  );
+  assert.equal(
+    await count('marketing_verified_payments', "WHERE id='in_Unrelated'"),
+    0,
+    'unrelated complete invoice is not a Moyo receipt',
+  );
+  await assert.rejects(
+    repository.saveVerifiedPayment(
+      org,
+      paidReceipt({ invoiceId: 'in_Overflow', amountCents: 2147483648 }),
+    ),
+  );
+});
+test('incomplete or mixed invoice evidence stays visible and private repair cannot change the original payment', async () => {
+  const saved = await linkedBillingInquiry();
+  const invoice = paidReceipt({ evidenceStatus: 'incomplete' });
+  await repository.saveVerifiedPayment(org, invoice);
+  assert.equal((await repository.listInquiries(org))[0].billing_attention, 1);
+  assert.equal(
+    await count('marketing_outbox', "WHERE event->>'kind'='order'"),
+    0,
+  );
+  let inspections = 0;
+  await repository.repairPaymentEvidence(org, async (candidate) => {
+    inspections++;
+    assert.equal(candidate.invoiceId, invoice.invoiceId);
+    assert.equal(candidate.occurredAt, invoice.occurredAt);
+    return { ...invoice, evidenceStatus: 'verified' };
+  });
+  await repository.repairPaymentEvidence(org, async () => {
+    throw new Error('A verified receipt must not be reinspected.');
+  });
+  assert.equal(inspections, 1);
+  assert.equal(
+    await count('marketing_outbox', "WHERE event->>'kind'='order'"),
+    1,
+  );
+  const mixed = paidReceipt({
+    invoiceId: 'in_Mixed',
+    evidenceStatus: 'mismatch',
+  });
+  await repository.saveVerifiedPayment(org, mixed);
+  await repository.repairPaymentEvidence(org, async () => mixed);
+  assert.equal(
+    await count('marketing_outbox', "WHERE source_id='moyo.invoice:in_Mixed'"),
+    0,
+  );
+  await repository.saveInquiryUpdate(
+    org,
+    'synthetic-owner',
+    saved.id,
+    update('retry-billing'),
+  );
+  await repository.repairPaymentEvidence(org, async () => {
+    throw new Error('Must never disclose provider credential/body.');
+  });
+  let inbox = (await repository.listInquiries(org))[0];
+  assert.equal(inbox.billing_error, 'invoice_verification_unavailable');
+  assert.equal(JSON.stringify(inbox).includes('provider credential'), false);
+  await repository.saveInquiryUpdate(
+    org,
+    'synthetic-owner',
+    saved.id,
+    update('retry-billing'),
+  );
+  await repository.repairPaymentEvidence(org, async () => ({
+    ...mixed,
+    amountCents: 9900,
+    evidenceStatus: 'verified',
+  }));
+  inbox = (await repository.listInquiries(org))[0];
+  assert.equal(inbox.billing_error, 'invoice_evidence_changed');
+  assert.equal(
+    await count('marketing_outbox', "WHERE source_id='moyo.invoice:in_Mixed'"),
+    0,
+  );
+});
+test('legacy and unproven queued orders are quarantined by both migration and final delivery validation', async () => {
+  const saved = await linkedBillingInquiry();
+  const invoice = paidReceipt();
+  await repository.saveVerifiedPayment(org, invoice);
+  await pool.query(
+    "UPDATE payload.marketing_outbox SET state='delivered',event=null WHERE source_id LIKE 'moyo.inquiry:%'",
+  );
+  const safeEvent = (
+    await pool.query(
+      "SELECT event FROM payload.marketing_outbox WHERE source_id='moyo.invoice:in_Synthetic'",
+    )
+  ).rows[0].event;
+  await pool.query(
+    `INSERT INTO payload.marketing_outbox(id,org_id,inquiry_id,source_id,event) VALUES($1,$2,$3,'moyo.invoice:in_Legacy',$4::jsonb)`,
+    [
+      randomUUID(),
+      org,
+      saved.id,
+      JSON.stringify({ ...safeEvent, sourceId: 'moyo.invoice:in_Legacy' }),
+    ],
+  );
+  const migration = await readFile(
+    new URL(
+      '../../../../packages/payload/migrations/signaliq_marketing_additive.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+  await pool.query(migration);
+  assert.equal(
+    await count(
+      'marketing_outbox',
+      "WHERE source_id='moyo.invoice:in_Legacy' AND state='blocked' AND event IS NULL",
+    ),
+    1,
+  );
+  assert.equal(
+    await count(
+      'marketing_outbox',
+      "WHERE source_id='moyo.invoice:in_Synthetic' AND state='pending'",
+    ),
+    1,
+    'proven order survives repeat migration',
+  );
+  await pool.query(
+    "UPDATE payload.marketing_outbox SET state='delivered',event=null WHERE source_id='moyo.invoice:in_Synthetic'",
+  );
+  await pool.query(
+    `INSERT INTO payload.marketing_outbox(id,org_id,inquiry_id,source_id,event) VALUES($1,$2,$3,'moyo.invoice:in_Unproven',$4::jsonb)`,
+    [
+      randomUUID(),
+      org,
+      saved.id,
+      JSON.stringify({ ...safeEvent, sourceId: 'moyo.invoice:in_Unproven' }),
+    ],
+  );
+  const fetchMock = mock.method(globalThis, 'fetch', async () => {
+    throw new Error('An unproven order must never leave Moyo.');
+  });
+  try {
+    await service.drainMarketingOutbox();
+    assert.equal(fetchMock.mock.callCount(), 0);
+    assert.equal(
+      await count(
+        'marketing_outbox',
+        "WHERE source_id='moyo.invoice:in_Unproven' AND state='blocked' AND event IS NULL",
+      ),
+      1,
+    );
+  } finally {
+    fetchMock.mock.restore();
+  }
+});
+
 test('public body/origin limits reject untrusted requests without storing a contact', async () => {
   const request = (origin, body) =>
     new Request('https://app.moyolearn.com/api/marketing/inquiries', {

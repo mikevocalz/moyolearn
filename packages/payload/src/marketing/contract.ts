@@ -82,6 +82,9 @@ export const updateInput = z.discriminatedUnion('action', [
   z
     .object({ requestId: z.uuid(), action: z.literal('retry-delivery') })
     .strict(),
+  z
+    .object({ requestId: z.uuid(), action: z.literal('retry-billing') })
+    .strict(),
 ]);
 export type InquiryUpdate = z.infer<typeof updateInput>;
 // SignalIQ revalidates its current grant before accepting any exact replay.
@@ -138,6 +141,9 @@ export const inquirySummary = z.object({
   pending: z.number().int(),
   attention: z.number().int(),
   last_error: z.string().nullable(),
+  billing_attention: z.number().int(),
+  billing_waiting: z.number().int(),
+  billing_error: z.string().nullable(),
 });
 export type InquirySummary = z.infer<typeof inquirySummary>;
 export const connectionCount = z.object({
@@ -188,7 +194,7 @@ export const businessEvent = z.discriminatedUnion('kind', [
       inquirySourceId: z.string(),
       amount: z
         .object({
-          amountCents: z.number().int().positive(),
+          amountCents: z.number().int().positive().max(2147483647),
           currency: z.string().regex(/^[A-Z]{3}$/),
         })
         .strict(),

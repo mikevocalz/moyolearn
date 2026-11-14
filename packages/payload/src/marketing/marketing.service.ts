@@ -11,8 +11,11 @@ import {
 } from './contract.ts';
 import {
   connectionStatus,
+  hasVerifiedOrderReceipt,
   listInquiries,
   marketingTransaction,
+  reconcileVerifiedPayments,
+  repairPaymentEvidence,
   saveInquiry,
   saveInquiryUpdate,
   saveVerifiedPayment,
@@ -131,13 +134,17 @@ export async function recordMarketingPayment(payment: MarketingPayment) {
   await saveVerifiedPayment(MOYO_MARKETING_SCOPE, payment);
 }
 
-export async function drainMarketingOutbox() {
+export async function drainMarketingOutbox(
+  inspectInvoice?: Parameters<typeof repairPaymentEvidence>[1],
+) {
   const config = deliveryConfiguration(
     process.env.SIGNALIQ_BUSINESS_ENDPOINT,
     process.env.SIGNALIQ_BUSINESS_KEY,
   );
   if (!config) return { state: 'not-configured' as const, processed: 0 };
   const orgId = MOYO_MARKETING_SCOPE;
+  if (inspectInvoice) await repairPaymentEvidence(orgId, inspectInvoice);
+  await reconcileVerifiedPayments(orgId);
   let processed = 0;
   await marketingTransaction(async (client) => {
     await client.query(
@@ -175,6 +182,22 @@ export async function drainMarketingOutbox() {
       if (!parsed.success) {
         await client.query(
           "UPDATE payload.marketing_outbox SET state='failed',error_code='invalid_stored_event' WHERE id=$1 AND org_id=$2",
+          [row.id, orgId],
+        );
+        return true;
+      }
+      if (
+        parsed.data.operation === 'business-event' &&
+        parsed.data.event.kind === 'order' &&
+        !(await hasVerifiedOrderReceipt(
+          client,
+          orgId,
+          row.inquiry_id,
+          parsed.data.event,
+        ))
+      ) {
+        await client.query(
+          "UPDATE payload.marketing_outbox SET state='blocked',event=null,error_code='invoice_evidence_unverified' WHERE id=$1 AND org_id=$2",
           [row.id, orgId],
         );
         return true;
