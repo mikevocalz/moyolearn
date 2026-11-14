@@ -44,7 +44,7 @@ Independently measured new AAR SHA-256 `a733a97e0f15f25eb42f384c749eb12906842a75
 
 The mobile bridge declaration now matches the existing `.1` root override; source event fields already accept numeric source IDs, so no new event API or tarball was required. Tutor Room now explicitly enables hand tracking. The renderer pin and prebuild updater select the new AAR/checksum. App window/orientation/manifest metadata and scene geometry were not changed. Native work is a far-input prototype, not “no hands code”: direct touch, hand coach and physical input qualification remain absent.
 
-The release branches were initially absent. The coordinator created them from the audited app and renderer baselines and opened draft reviews: Moyo data/API #153, stacked UI #154, and ViroCore native #121. Moyo artifact integration is a separate draft. Nothing was merged or deployed; draft publication is not release qualification.
+The release branches were initially absent. The coordinator created them from the audited app and renderer baselines and opened draft reviews: Moyo data/API #153, stacked UI #154, Moyo artifact integration #155, and ViroCore native #121. Nothing was merged into a release branch or deployed; draft publication is not release qualification.
 
 ## Independently checked initial-source seams (historical baseline)
 

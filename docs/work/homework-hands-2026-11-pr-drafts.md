@@ -2,7 +2,7 @@
 
 Prepared 2026-11-14. The requested release branches were created from the audited app and renderer baselines. Nothing was merged or deployed.
 
-Created drafts: [homework data/API #153](https://github.com/mikevocalz/moyolearn/pull/153), [stacked homework UI #154](https://github.com/mikevocalz/moyolearn/pull/154), and [native renderer #121](https://github.com/mikevocalz/virocore/pull/121). The Moyo artifact integration is a separate review draft.
+Created drafts: [homework data/API #153](https://github.com/mikevocalz/moyolearn/pull/153), [stacked homework UI #154](https://github.com/mikevocalz/moyolearn/pull/154), [native renderer #121](https://github.com/mikevocalz/virocore/pull/121), and [Moyo renderer integration #155](https://github.com/mikevocalz/moyolearn/pull/155).
 
 ## Homework draft
 

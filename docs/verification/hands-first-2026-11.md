@@ -22,7 +22,7 @@ No scene geometry, app window dimensions, orientation, manifest metadata or boar
 
 Argent sees Quest 3S `340YC10GC3014S`, SDK 34. The existing debug app is version 1.0.0/code 1, last updated 2026-11-03. Initial launch reached an “Unable to load script” React Native screen. That installed APK has not been rebuilt with the candidate AAR; no candidate native input is claimed to have run on it.
 
-JavaScript dependency recovery restored exact lockfile pins and made TypeScript checks pass. Metro recovery remains separately tracked; a listener alone does not prove a usable bundle. The current public mobile environment selects mock auth/persona and localhost API. It cannot establish the prompt's deployed-backend homework journey.
+JavaScript dependency recovery restored exact lockfile pins and made TypeScript checks pass. The Metro transformer smoke test passed and the session-owned server is running on 8081. The Quest reported Asleep with no running app process at the restart attempt; the pending restart was canceled while waiting for the user to wake it. No device bundle was qualified. The current public mobile environment selects mock auth/persona and localhost API. It cannot establish the prompt's deployed-backend homework journey.
 
 Direct-touch ink is not implemented. Existing native plane-drag calculations can feed the current panel surface funnel, but fingertip/poke registration, depth hysteresis and near/far ownership still need a native implementation. The explicit fallback scope is ray pinch only, pending runtime qualification; do not describe touch-to-write as available. No first-run hand coach, two-foot reach qualification, left/one-hand pass, voice/tray acceptance, PICO Java build or entry recording is claimed.
 
