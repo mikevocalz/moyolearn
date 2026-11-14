@@ -11,6 +11,7 @@ import { SiteNav } from '@/components/site-nav';
 import { SiteFooter } from '@/components/site-footer';
 import { SchoolsChapter } from '@/components/chapters/schools';
 import { MarketingAnalyticsConsent } from '@/components/marketing-analytics-consent';
+import { SchoolInquiry } from '@/components/school-inquiry';
 
 const SITE_ORIGIN = 'https://moyolearn.com';
 const TITLE = 'For schools — Moyo';
@@ -34,6 +35,7 @@ function ForSchoolsPage() {
       <SiteNav />
       <Main role="main" className="bg-moyo-paper pb-40">
         <SchoolsChapter />
+        <SchoolInquiry />
         <MarketingAnalyticsConsent />
       </Main>
       <SiteFooter />

@@ -43,15 +43,8 @@ import type { PhotoName } from '@/components/photography';
 
 const SCOPE = '.chapter-schools';
 
-/*
-  The ask lands on the footer's contact band rather than on a route. `/contact`
-  does not exist, and TanStack Start's prerender crawls every href starting with
-  `/` and fails the build on a 404 — so a link to an unbuilt route would take
-  the whole site down at build time, not at click time. The footer band is a
-  real destination that works today; it is where `{SUPPORT_EMAIL}` lands when an
-  owner supplies one.
-*/
-const CONTACT_ANCHOR = '#talk-to-a-person';
+// The existing CTA now reaches the durable adult inquiry form on this page.
+const CONTACT_ANCHOR = '#request-demo';
 
 /**
  * Split at the em dash so the term and its qualifier can sit in two columns —
