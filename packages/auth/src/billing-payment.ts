@@ -31,33 +31,71 @@ export type VerifiedBillingPayment = NonNullable<
   ReturnType<typeof verifiedPaidInvoice>
 >;
 
-/** Deployment-only read: no customer, invoice, secret or unrelated endpoint output. */
+/** Deployment-only reads. Each result survives an unrelated permission failure. */
+const safeBillingCode = (value?: string) =>
+  value &&
+  /^[a-zA-Z][a-zA-Z0-9_]{0,79}$/.test(value) &&
+  !/(?:sk|rk|pk)_(?:live|test)_|whsec_/i.test(value)
+    ? value
+    : null;
+async function inspectBillingStep<T>(read: () => Promise<T>) {
+  try {
+    return { state: 'ok' as const, value: await read() };
+  } catch (error) {
+    const stripeError =
+      error instanceof Stripe.errors.StripeError ? error : null;
+    return {
+      state: 'failed' as const,
+      error: {
+        type: safeBillingCode(stripeError?.type) ?? 'UnclassifiedError',
+        status: stripeError?.statusCode ?? null,
+        code: safeBillingCode(stripeError?.code),
+      },
+    };
+  }
+}
 export async function readBillingPreflight(
   key: string,
   endpointUrl: string,
   priceId?: string,
+  httpClient?: ReturnType<typeof Stripe.createFetchHttpClient>,
 ) {
-  const stripe = new Stripe(key, { maxNetworkRetries: 1, timeout: 10000 });
-  const account = await stripe.accounts.retrieve(null);
-  const endpoints = [];
-  for await (const endpoint of stripe.webhookEndpoints.list({ limit: 100 })) {
-    if (endpoint.url.replace(/\/$/, '') !== endpointUrl) continue;
-    endpoints.push({
-      id: endpoint.id,
-      url: endpoint.url,
-      status: endpoint.status,
-      enabledEvents: endpoint.enabled_events,
-      invoicePaidEnabled:
-        endpoint.enabled_events.includes('*') ||
-        endpoint.enabled_events.includes('invoice.paid'),
-    });
-  }
-  const price = priceId ? await stripe.prices.retrieve(priceId) : null;
-  return {
-    accountId: account.id,
-    endpoints,
-    configuredOpsPrice: price
-      ? { currency: price.currency.toUpperCase(), live: price.livemode }
-      : null,
-  };
+  const stripe = new Stripe(key, {
+    maxNetworkRetries: 1,
+    timeout: 10000,
+    ...(httpClient ? { httpClient } : {}),
+  });
+  const [account, webhook, opsPrice] = await Promise.all([
+    inspectBillingStep(async () => ({
+      accountId: (await stripe.accounts.retrieve(null)).id,
+    })),
+    inspectBillingStep(async () => {
+      const endpoints = [];
+      for await (const endpoint of stripe.webhookEndpoints.list({
+        limit: 100,
+      })) {
+        if (endpoint.url.replace(/\/$/, '') !== endpointUrl) continue;
+        endpoints.push({
+          id: endpoint.id,
+          url: endpoint.url,
+          status: endpoint.status,
+          enabledEvents: endpoint.enabled_events,
+          invoicePaidEnabled:
+            endpoint.enabled_events.includes('*') ||
+            endpoint.enabled_events.includes('invoice.paid'),
+        });
+      }
+      return { endpoints };
+    }),
+    priceId
+      ? inspectBillingStep(async () => {
+          const price = await stripe.prices.retrieve(priceId);
+          return {
+            currency: price.currency.toUpperCase(),
+            live: price.livemode,
+          };
+        })
+      : Promise.resolve({ state: 'not-configured' as const }),
+  ]);
+  return { account, webhook, opsPrice };
 }

@@ -47,14 +47,15 @@ try {
       'SELECT id FROM better_auth."user" WHERE lower(email)=$1 AND "emailVerified"=true AND coalesce("guardianManaged",false)=false AND coalesce("isMinor",false)=false',
       [email],
     );
-    if (account.rowCount !== 1)
-      throw new Error(
-        'The exact verified adult owner account was not found. No changes made.',
-      );
-    const organizations = await pool.query(
-      `SELECT o.id,o.name,m.role FROM better_auth.organization o JOIN better_auth.member m ON m."organizationId"=o.id WHERE m."userId"=$1 AND m.role IN ('owner','manager') ORDER BY o.id`,
-      [account.rows[0].id],
-    );
+    if ((account.rowCount ?? 0) > 1)
+      throw new Error('The owner account is ambiguous. No changes made.');
+    const organizations =
+      account.rowCount === 1
+        ? await pool.query(
+            `SELECT o.id,o.name,m.role FROM better_auth.organization o JOIN better_auth.member m ON m."organizationId"=o.id WHERE m."userId"=$1 AND m.role IN ('owner','manager') ORDER BY o.id`,
+            [account.rows[0].id],
+          )
+        : { rows: [] };
     const results = [];
     for (const org of organizations.rows) {
       const subscriptions = await pool.query(
@@ -98,8 +99,35 @@ try {
         ),
       });
     }
+    const usersTable = await pool.query(
+      "SELECT to_regclass('payload.users') AS relation",
+    );
+    const internal = usersTable.rows[0]?.relation
+      ? await pool.query(
+          "SELECT id,to_jsonb(u)->>'role' AS role FROM payload.users u WHERE lower(email)=$1 LIMIT 2",
+          [email],
+        )
+      : { rows: [] };
+    if (internal.rows.length > 1)
+      throw new Error(
+        'The internal owner account is ambiguous. No changes made.',
+      );
+    const internalAccount = internal.rows[0]
+      ? {
+          id: String(internal.rows[0].id),
+          role:
+            typeof internal.rows[0].role === 'string' &&
+            /^[a-zA-Z0-9_-]{1,64}$/.test(internal.rows[0].role)
+              ? internal.rows[0].role
+              : 'not-modeled',
+        }
+      : null;
     console.log(
-      JSON.stringify({ verifiedAdultAccount: true, organizations: results }),
+      JSON.stringify({
+        verifiedAdultAccount: account.rowCount === 1,
+        organizations: results,
+        internalAccount,
+      }),
     );
   } else {
     const client = await pool.connect();

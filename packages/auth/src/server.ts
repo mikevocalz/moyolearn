@@ -13,7 +13,6 @@ import Stripe from 'stripe';
 import { Pool } from 'pg';
 import { authorizeReference, isBillingRole, isPlanName, resolvePrices } from './billing-plans.ts';
 import { verifiedPaidInvoice, type VerifiedBillingPayment } from './billing-payment.ts';
-export { readBillingPreflight } from './billing-payment.ts';
 import {
   hostFromHeaderValues,
   permitsLoginAtHost,
@@ -24,6 +23,7 @@ import {
   sendResetPasswordEmailFor,
   sendVerificationEmailFor,
 } from './auth-email.ts';
+export { readBillingPreflight } from './billing-payment.ts';
 
 /** Doc 06 §6: learner sessions expire sooner than adult ones. */
 const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
