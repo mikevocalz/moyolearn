@@ -40,6 +40,8 @@ import type {
   HomeworkSubmissionSummary,
   HomeworkSubmissionView,
   PracticeSetView,
+  PriorWork,
+  PriorWorkRevision,
   QuestionCrop,
   QuestionOutcome,
   QuestionRevision,
@@ -81,6 +83,8 @@ export interface NewQuestionRow {
   readonly text: string;
   readonly revisions: readonly QuestionRevision[];
   readonly crop: QuestionCrop | null;
+  readonly priorWork: PriorWork;
+  readonly priorWorkRevisions: readonly PriorWorkRevision[];
 }
 
 export interface NewSubmissionRow {
@@ -137,6 +141,16 @@ export type ReviseHomeworkQuestion = (
   questionId: string,
   revision: QuestionRevision,
 ) => Promise<HomeworkQuestionView | null>;
+export type ReviseHomeworkPriorWork = (
+  learnerAuthId: string,
+  submissionId: string,
+  questionId: string,
+  revision: PriorWorkRevision,
+) => Promise<
+  | { readonly kind: 'revised'; readonly question: HomeworkQuestionView }
+  | { readonly kind: 'locked' }
+  | { readonly kind: 'not-found' }
+>;
 export type StartHomeworkSubmission = (
   learnerAuthId: string,
   submissionId: string,
@@ -182,6 +196,7 @@ export interface HomeworkPorts {
   readonly loadSubmission: LoadHomeworkSubmission;
   readonly listSubmissions: ListHomeworkSubmissions;
   readonly reviseQuestion: ReviseHomeworkQuestion;
+  readonly revisePriorWork: ReviseHomeworkPriorWork;
   readonly startSubmission: StartHomeworkSubmission;
   readonly advanceSubmission: AdvanceHomeworkSubmission;
   readonly issueEvidence: IssueHomeworkEvidence;
@@ -305,6 +320,10 @@ export function submissionRowFrom(
         : count(raw.sourceNumber, `questions[${orderIndex}].sourceNumber`, 0);
     const confidence =
       typeof raw.confidence === 'number' && raw.confidence >= 0 && raw.confidence <= 1 ? raw.confidence : null;
+    const priorWork = priorWorkFrom(raw.priorWork);
+    if (raw.priorWork !== undefined && (ctx.isLearner || learnerAuthId === ctx.learnerId)) {
+      throw new Error('Forbidden');
+    }
     const revision = randomUUID();
     /*
       Two revisions when OCR read the page: the machine's reading and the
@@ -325,6 +344,10 @@ export function submissionRowFrom(
       text: body,
       revisions,
       crop: cropFrom(raw.crop, now),
+      priorWork,
+      priorWorkRevisions: raw.priorWork === undefined ? [] : [{
+        priorWork, source: 'guardian', createdAt,
+      }],
     };
   });
 
@@ -340,10 +363,23 @@ export function submissionRowFrom(
   };
 }
 
+function priorWorkFrom(value: unknown): PriorWork {
+  if (value === undefined) return 'none';
+  if (value !== 'none' && value !== 'partial' && value !== 'complete') {
+    throw new HomeworkInputInvalid('priorWork must be none, partial or complete');
+  }
+  return value;
+}
+
 function reviseFrom(body: unknown): ReviseQuestionInput {
   if (!isRecord(body)) throw new HomeworkInputInvalid('body must be an object');
   if (body.author !== 'learner' && body.author !== 'guardian') {
     throw new HomeworkInputInvalid('author must be learner or guardian');
+  }
+  if ('priorWork' in body) {
+    if (body.author !== 'guardian') throw new Error('Forbidden');
+    if ('text' in body) throw new HomeworkInputInvalid('revise text and priorWork separately');
+    return { priorWork: priorWorkFrom(body.priorWork), author: 'guardian' };
   }
   return { text: text(body.text, 'text', MAX_TEXT), author: body.author };
 }
@@ -421,6 +457,17 @@ export async function reviseQuestionFor(
 ): Promise<HomeworkQuestionView> {
   const input = reviseFrom(body);
   const owner = await ownerFor(ctx, submissionId, ports);
+  if ('priorWork' in input) {
+    if (ctx.isLearner || owner === ctx.learnerId) throw new Error('Forbidden');
+    const outcome = await ports.revisePriorWork(owner, submissionId, questionId, {
+      priorWork: input.priorWork,
+      source: 'guardian',
+      createdAt: now.toISOString(),
+    });
+    if (outcome.kind === 'not-found') throw new HomeworkNotFound();
+    if (outcome.kind === 'locked') throw new HomeworkInputInvalid('priorWork can only be changed before tutoring starts');
+    return outcome.question;
+  }
   const revision: QuestionRevision = {
     revision: randomUUID(),
     text: input.text,

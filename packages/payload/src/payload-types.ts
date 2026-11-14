@@ -637,13 +637,19 @@ export interface HomeworkQuestion {
     | boolean
     | null;
   cropExpiresAt?: string | null;
-  outcome:
-    | 'unattempted'
-    | 'skipped'
-    | 'attempted'
-    | 'supported-with-hints'
-    | 'solved-independently'
-    | 'unresolved';
+  priorWork: 'none' | 'partial' | 'complete';
+  priorWorkConfidence?: number | null;
+  priorWorkSource?: ('detected' | 'guardian') | null;
+  priorWorkRevisions:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  outcome: 'unattempted' | 'skipped' | 'attempted' | 'supported-with-hints' | 'solved-independently' | 'unresolved';
   attempts: number;
   hintsUsed: number;
   misconceptionTags:
@@ -1469,6 +1475,10 @@ export interface HomeworkQuestionsSelect<T extends boolean = true> {
   revisions?: T;
   crop?: T;
   cropExpiresAt?: T;
+  priorWork?: T;
+  priorWorkConfidence?: T;
+  priorWorkSource?: T;
+  priorWorkRevisions?: T;
   outcome?: T;
   attempts?: T;
   hintsUsed?: T;
