@@ -366,7 +366,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   // rather than waiting for the learner to type something first.
   const opened = useRef(false);
   useEffect(() => {
-    if (!problem || allPriorDone || !resumed || opened.current) return;
+    // Reopening an all-marked sheet is owned by presentWorksheetQuestion below.
+    // Do not also issue a first-visit greeting when that sheet is unticked.
+    if (allPriorDone) { opened.current = true; return; }
+    if (!problem || !resumed || opened.current) return;
     /*
       ONLY WHEN THERE IS NOTHING TO RESUME.
 

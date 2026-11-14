@@ -1,4 +1,10 @@
 'use client';
+// Mobbin: https://mobbin.com/screens/1f2a7306-e592-4627-9bd6-e5f943251b8c (Slack iOS: open and completed items retain their title and identifying detail) ·
+// https://mobbin.com/screens/054dcddf-43f1-4e84-9d42-1ae63a06504b (Slack iOS: checked items remain readable and reviewable) ·
+// https://mobbin.com/screens/9e6f7794-da2f-4315-ade0-4d498d46e253 (Slack iOS: a named item and its metadata stay beside the completion control).
+// Previews inspected during PR completion; cross-domain structure only. Moyo
+// keeps one question list and its semantic controls, without Slack's filter tabs.
+// SOT: docs/design/homework-prior-work-handoff.md
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button, Text, useInstanceStore, useStore } from '@acme/ui';

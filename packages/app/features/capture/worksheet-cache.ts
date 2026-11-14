@@ -288,12 +288,20 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         try {
           const result = await client.advance(record.confirmed.submissionId, move);
           if (!isSelected(learnerAuthId, epoch)) return;
+          const latest = load(learnerAuthId);
+          if (!latest || latest.confirmed.submissionId !== record.confirmed.submissionId) return;
+          // More moves or a transcription revision may have landed while this
+          // request waited. Confirm only its first move and retain the rest.
+          record = latest;
           const rest = record.pending.slice(1);
           const confirmed = adoptCursor(applyMove(record.confirmed, move, now()), result);
           record = { ...record, confirmed, pending: rest };
           commit(record, learnerAuthId, rest.length === 0 ? 'confirmed' : 'pending', epoch);
         } catch (error) {
           if (!isSelected(learnerAuthId, epoch)) return;
+          const latest = load(learnerAuthId);
+          if (!latest || latest.confirmed.submissionId !== record.confirmed.submissionId) return;
+          record = latest;
           if (error instanceof StaleCursorError) {
             // Another device moved first. Its cursor wins; every local move after
             // the refused one assumed the old cursor, so they go too.

@@ -242,6 +242,49 @@ test('a delayed hydrate cannot discard an offline cursor move or its pending syn
   assert.equal(store.getState().status, 'pending');
 });
 
+test('moves queued while an earlier advance is awaiting confirmation are all sent in order', async () => {
+  const { store, server } = setup();
+  await store.getState().begin('learner-1', input());
+  const advance = server.client.advance;
+  let resumeFirst!: () => void;
+  const waiting = new Promise<void>((resolve) => { resumeFirst = resolve; });
+  let first = true;
+  server.client.advance = async (id, move) => {
+    if (first) { first = false; await waiting; }
+    return advance(id, move);
+  };
+  const firstMove = store.getState().advance(step);
+  const secondMove = store.getState().advance(step);
+  assert.equal(store.getState().current?.currentIndex, 2);
+  assert.equal(store.getState().pending.length, 2);
+  resumeFirst();
+  await Promise.all([firstMove, secondMove]);
+  assert.equal(server.net.advanceCalls, 2);
+  assert.equal(server.rows.get('sub-1')?.currentIndex, 2);
+  assert.equal(store.getState().current?.currentIndex, 2);
+  assert.equal(store.getState().pending.length, 0);
+});
+
+test('a delayed failed advance retains every move queued during the request', async () => {
+  const { store, server } = setup();
+  await store.getState().begin('learner-1', input());
+  const advance = server.client.advance;
+  let failFirst!: (reason: Error) => void;
+  server.client.advance = async () => new Promise<AdvanceResult>((_, reject) => { failFirst = reject; });
+  const firstMove = store.getState().advance(step);
+  const secondMove = store.getState().advance(step);
+  failFirst(new TypeError('Failed to fetch'));
+  await Promise.all([firstMove, secondMove]);
+  assert.equal(store.getState().current?.currentIndex, 2);
+  assert.equal(store.getState().pending.length, 2);
+  assert.equal(store.getState().status, 'pending');
+  server.client.advance = advance;
+  await store.getState().hydrate('learner-1');
+  assert.equal(server.net.advanceCalls, 2);
+  assert.equal(store.getState().pending.length, 0);
+  assert.equal(store.getState().current?.currentIndex, 2);
+});
+
 function setup() {
   const storage = fakeStorage();
   const server = fakeServer();

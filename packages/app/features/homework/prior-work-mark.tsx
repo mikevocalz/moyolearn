@@ -1,4 +1,10 @@
 'use client';
+// Mobbin: https://mobbin.com/screens/1f2a7306-e592-4627-9bd6-e5f943251b8c (Slack iOS: checked and unchecked indicators accompany readable item labels) ·
+// https://mobbin.com/screens/054dcddf-43f1-4e84-9d42-1ae63a06504b (Slack iOS: completed items retain visible text) ·
+// https://mobbin.com/screens/9e6f7794-da2f-4315-ade0-4d498d46e253 (Slack iOS: the empty control stays beside its named item).
+// Previews inspected during PR completion; structure only. The control remains
+// Moyo's existing Checkbox and the mark makes no correctness or grading claim.
+// SOT: docs/design/homework-prior-work-handoff.md
 
 import { Checkbox, Text } from '@acme/ui';
 import type { PriorWork } from './homework.types.ts';
