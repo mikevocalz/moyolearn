@@ -666,6 +666,296 @@ test('legacy and unproven queued orders are quarantined by both migration and fi
   }
 });
 
+test('Stripe journal facts stay raw while each frozen Signal payment uses ISO units and survives repeat migration', async () => {
+  const saved = await linkedBillingInquiry();
+  const cases = [
+    ['USD', 4900, 4900],
+    ['JPY', 700, 700],
+    ['KWD', 12345, 12345],
+    ['ISK', 70000, 700],
+    ['UGX', 70000, 700],
+    ['MGA', 700, 70000],
+    ['HUF', 1045, 1045],
+    ['TWD', 80045, 80045],
+  ];
+  const before = [];
+  for (const [currency, raw, iso] of cases) {
+    const invoice = paidReceipt({
+      invoiceId: `in_Units${currency}`,
+      currency,
+      amountCents: raw,
+    });
+    await repository.saveVerifiedPayment(org, invoice);
+    await repository.saveVerifiedPayment(org, invoice);
+    const stored = (
+      await pool.query(
+        'SELECT amount_cents,currency,occurred_at,error_code FROM payload.marketing_verified_payments WHERE org_id=$1 AND id=$2',
+        [org, invoice.invoiceId],
+      )
+    ).rows[0];
+    assert.equal(stored.amount_cents, raw);
+    assert.equal(stored.currency, currency);
+    assert.equal(
+      new Date(stored.occurred_at).toISOString(),
+      invoice.occurredAt,
+    );
+    assert.equal(stored.error_code, null);
+    const event = (
+      await pool.query(
+        'SELECT event FROM payload.marketing_outbox WHERE org_id=$1 AND source_id=$2',
+        [org, `moyo.invoice:${invoice.invoiceId}`],
+      )
+    ).rows[0].event;
+    assert.deepEqual(event.amount, { amountCents: iso, currency });
+    assert.equal(event.sourceId, `moyo.invoice:${invoice.invoiceId}`);
+    assert.equal(event.occurredAt, invoice.occurredAt);
+    assert.equal(
+      await repository.marketingTransaction((client) =>
+        repository.hasVerifiedOrderReceipt(client, org, saved.id, event),
+      ),
+      true,
+    );
+    if (raw !== iso)
+      assert.equal(
+        await repository.marketingTransaction((client) =>
+          repository.hasVerifiedOrderReceipt(client, org, saved.id, {
+            ...event,
+            amount: { amountCents: raw, currency },
+          }),
+        ),
+        false,
+      );
+    before.push(event);
+  }
+  const migration = await readFile(
+    new URL(
+      '../../../../packages/payload/migrations/signaliq_marketing_additive.sql',
+      import.meta.url,
+    ),
+    'utf8',
+  );
+  await pool.query(migration);
+  await pool.query(migration);
+  await repository.reconcileVerifiedPayments(org);
+  const after = (
+    await pool.query(
+      "SELECT event,state FROM payload.marketing_outbox WHERE org_id=$1 AND event->>'kind'='order' ORDER BY source_id",
+      [org],
+    )
+  ).rows;
+  assert.equal(after.length, cases.length);
+  assert.ok(after.every((row) => row.state === 'pending'));
+  assert.deepEqual(
+    after.map((row) => row.event),
+    before.sort((a, b) => a.sourceId.localeCompare(b.sourceId)),
+  );
+});
+
+test('fractional ISO units and multiplied overflow remain private reviewable facts without blocking valid payments', async () => {
+  await linkedBillingInquiry();
+  for (const [currency, raw] of [
+    ['ISK', 501],
+    ['UGX', 1],
+    ['MGA', 21474837],
+  ]) {
+    const invoice = paidReceipt({
+      invoiceId: `in_InvalidUnits${currency}`,
+      currency,
+      amountCents: raw,
+    });
+    await repository.saveVerifiedPayment(org, invoice);
+    await repository.saveVerifiedPayment(org, invoice);
+    const row = (
+      await pool.query(
+        'SELECT amount_cents,error_code FROM payload.marketing_verified_payments WHERE org_id=$1 AND id=$2',
+        [org, invoice.invoiceId],
+      )
+    ).rows[0];
+    assert.deepEqual(row, {
+      amount_cents: raw,
+      error_code: 'invoice_amount_unrepresentable',
+    });
+  }
+  assert.equal((await repository.listInquiries(org))[0].billing_attention, 3);
+  await repository.reconcileVerifiedPayments(org);
+  assert.equal(
+    await count('marketing_outbox', "WHERE event->>'kind'='order'"),
+    0,
+  );
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({
+      invoiceId: 'in_MgaMax',
+      currency: 'MGA',
+      amountCents: 21474836,
+    }),
+  );
+  const valid = (
+    await pool.query(
+      "SELECT event FROM payload.marketing_outbox WHERE source_id='moyo.invoice:in_MgaMax'",
+    )
+  ).rows[0].event;
+  assert.deepEqual(valid.amount, { amountCents: 2147483600, currency: 'MGA' });
+  // A pre-fix raw receipt may have no unit error yet. Reconciliation must hold
+  // that receipt too, without throwing and rolling back the other valid work.
+  await pool.query(
+    "UPDATE payload.marketing_verified_payments SET error_code=null WHERE id='in_InvalidUnitsISK'",
+  );
+  await repository.reconcileVerifiedPayments(org);
+  assert.equal(
+    (
+      await pool.query(
+        "SELECT error_code FROM payload.marketing_verified_payments WHERE id='in_InvalidUnitsISK'",
+      )
+    ).rows[0].error_code,
+    'invoice_amount_unrepresentable',
+  );
+  assert.equal(
+    await count('marketing_outbox', "WHERE event->>'kind'='order'"),
+    1,
+  );
+});
+
+test('private invoice repair compares original Stripe units and cannot double-convert or rewrite financial facts', async () => {
+  await linkedBillingInquiry();
+  const original = paidReceipt({
+    invoiceId: 'in_MgaRepair',
+    currency: 'MGA',
+    amountCents: 700,
+    evidenceStatus: 'incomplete',
+  });
+  await repository.saveVerifiedPayment(org, original);
+  await repository.repairPaymentEvidence(org, async () => ({
+    ...original,
+    evidenceStatus: 'verified',
+  }));
+  const event = (
+    await pool.query(
+      "SELECT event FROM payload.marketing_outbox WHERE source_id='moyo.invoice:in_MgaRepair'",
+    )
+  ).rows[0].event;
+  assert.deepEqual(event.amount, { amountCents: 70000, currency: 'MGA' });
+  await repository.saveVerifiedPayment(org, {
+    ...original,
+    evidenceStatus: 'verified',
+  });
+  assert.deepEqual(
+    (
+      await pool.query(
+        "SELECT event FROM payload.marketing_outbox WHERE source_id='moyo.invoice:in_MgaRepair'",
+      )
+    ).rows[0].event,
+    event,
+  );
+  const invalidRepair = paidReceipt({
+    invoiceId: 'in_IskRepair',
+    currency: 'ISK',
+    amountCents: 70000,
+    evidenceStatus: 'incomplete',
+  });
+  await repository.saveVerifiedPayment(org, invalidRepair);
+  await repository.repairPaymentEvidence(org, async () => ({
+    ...invalidRepair,
+    amountCents: 700,
+    evidenceStatus: 'verified',
+  }));
+  const row = (
+    await pool.query(
+      "SELECT amount_cents,currency,error_code FROM payload.marketing_verified_payments WHERE id='in_IskRepair'",
+    )
+  ).rows[0];
+  assert.deepEqual(row, {
+    amount_cents: 70000,
+    currency: 'ISK',
+    error_code: 'invoice_evidence_changed',
+  });
+  assert.equal(
+    await count(
+      'marketing_outbox',
+      "WHERE source_id='moyo.invoice:in_IskRepair'",
+    ),
+    0,
+  );
+});
+
+test('legacy unconverted orders are quarantined without rewriting their source ID or immutable receipt', async () => {
+  await linkedBillingInquiry();
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({
+      invoiceId: 'in_IskLegacyUnits',
+      currency: 'ISK',
+      amountCents: 70000,
+    }),
+  );
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({
+      invoiceId: 'in_MgaLegacyUnits',
+      currency: 'MGA',
+      amountCents: 700,
+    }),
+  );
+  await pool.query(
+    "UPDATE payload.marketing_outbox SET event=jsonb_set(event,'{amount,amountCents}','70000') WHERE source_id='moyo.invoice:in_IskLegacyUnits'",
+  );
+  await pool.query(
+    await readFile(
+      new URL(
+        '../../../../packages/payload/migrations/signaliq_marketing_additive.sql',
+        import.meta.url,
+      ),
+      'utf8',
+    ),
+  );
+  assert.equal(
+    await count(
+      'marketing_outbox',
+      "WHERE source_id='moyo.invoice:in_IskLegacyUnits' AND state='blocked' AND event IS NULL AND error_code='invoice_evidence_unverified'",
+    ),
+    1,
+  );
+  await pool.query(
+    "UPDATE payload.marketing_outbox SET state='accepted',event=jsonb_set(event,'{amount,amountCents}','700') WHERE source_id='moyo.invoice:in_MgaLegacyUnits'",
+  );
+  await pool.query(
+    "UPDATE payload.marketing_outbox SET state='delivered',event=null WHERE source_id LIKE 'moyo.inquiry:%'",
+  );
+  const fetchMock = mock.method(globalThis, 'fetch', async () => {
+    throw new Error('Unconverted order must not be sent or polled');
+  });
+  try {
+    await service.drainMarketingOutbox();
+    assert.equal(fetchMock.mock.callCount(), 0);
+    assert.equal(
+      await count(
+        'marketing_outbox',
+        "WHERE source_id='moyo.invoice:in_MgaLegacyUnits' AND state='blocked' AND event IS NULL AND error_code='invoice_evidence_unverified'",
+      ),
+      1,
+    );
+  } finally {
+    fetchMock.mock.restore();
+  }
+  await repository.reconcileVerifiedPayments(org);
+  assert.equal(
+    await count(
+      'marketing_outbox',
+      "WHERE source_id IN ('moyo.invoice:in_IskLegacyUnits','moyo.invoice:in_MgaLegacyUnits')",
+    ),
+    2,
+  );
+  const facts = (
+    await pool.query(
+      'SELECT id,amount_cents FROM payload.marketing_verified_payments ORDER BY id',
+    )
+  ).rows;
+  assert.deepEqual(facts, [
+    { id: 'in_IskLegacyUnits', amount_cents: 70000 },
+    { id: 'in_MgaLegacyUnits', amount_cents: 700 },
+  ]);
+});
+
 test('public body/origin limits reject untrusted requests without storing a contact', async () => {
   const request = (origin, body) =>
     new Request('https://app.moyolearn.com/api/marketing/inquiries', {

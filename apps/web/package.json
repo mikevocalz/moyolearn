@@ -25,7 +25,7 @@
     "voice:check": "node --conditions=react-server --import tsx scripts/voice-check.mts",
     "voice:bake": "NODE_OPTIONS=--conditions=react-server tsx scripts/voice-bake.mts",
     "avatar:assets": "node scripts/copy-avatar-assets.mjs",
-    "marketing:test": "node --test lib/marketing/contract.test.ts lib/marketing/delivery.test.ts",
+    "marketing:test": "node --test lib/marketing/contract.test.ts lib/marketing/delivery.test.ts lib/marketing/payment-units.test.ts lib/marketing/sync-route.test.ts",
     "marketing:test:db": "node --test lib/marketing/marketing.integration.test.mjs"
   },
   "dependencies": {

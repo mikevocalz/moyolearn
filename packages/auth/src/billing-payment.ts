@@ -3,7 +3,7 @@
 // SOT-KEYWORDS: stripe verified invoice paid minimal payment projection
 import Stripe from 'stripe';
 
-const maxPaymentCents = 2147483647; // PostgreSQL integer, shared with the receipt validator.
+const maxPaymentCents = 2147483647; // Raw Stripe units in the PostgreSQL integer receipt column.
 const referenceId = (value: string | { id: string } | null | undefined) =>
   typeof value === 'string' ? value : value?.id;
 
@@ -46,6 +46,8 @@ function projectPaidInvoice(
     invoiceId: invoice.id,
     customerId,
     subscriptionId,
+    // Preserve this verified fact verbatim. The Signal projection converts units
+    // separately; receipt replay and private repair compare the original amount.
     amountCents: invoice.amount_paid,
     currency: invoice.currency.toUpperCase(),
     occurredAt: new Date(

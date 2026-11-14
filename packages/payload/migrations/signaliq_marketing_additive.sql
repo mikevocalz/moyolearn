@@ -56,7 +56,13 @@ AND NOT EXISTS(SELECT 1 FROM payload.marketing_verified_payments p
   JOIN payload.marketing_inquiries i ON i.org_id=p.org_id AND i.stripe_customer_id=p.customer_id
   JOIN better_auth.subscription s ON s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=i.billing_reference_id
   WHERE p.org_id=o.org_id AND i.id=o.inquiry_id AND o.source_id='moyo.invoice:'||p.id AND p.evidence_status='verified' AND p.moyo_price_seen=true AND p.error_code IS NULL
-  AND o.event->'amount'->'amountCents'=to_jsonb(p.amount_cents) AND o.event->'amount'->>'currency'=p.currency
+  -- Journal facts retain Stripe units; Signal orders use ISO minor units.
+  -- Match payment-units.ts exactly. Never rewrite a frozen earlier projection.
+  AND o.event->'amount'->'amountCents'=to_jsonb(CASE
+    WHEN p.currency IN ('ISK','UGX') AND p.amount_cents%100=0 THEN p.amount_cents/100
+    WHEN p.currency='MGA' AND p.amount_cents<=21474836 THEN p.amount_cents*100
+    WHEN p.currency NOT IN ('ISK','UGX','MGA') THEN p.amount_cents
+    ELSE NULL END) AND o.event->'amount'->>'currency'=p.currency
   AND (o.event->>'occurredAt')::timestamptz=p.occurred_at);
 CREATE INDEX IF NOT EXISTS marketing_verified_payment_customer ON payload.marketing_verified_payments(org_id,customer_id);
 -- No public Supabase access: these tables belong to the existing server DB role.

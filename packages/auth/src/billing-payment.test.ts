@@ -150,6 +150,20 @@ test('paid cents must fit the real integer receipt column', () => {
     null,
   );
 });
+test('verified invoice projection preserves Stripe units for immutable currency evidence', () => {
+  for (const [currency, amount] of [
+    ['isk', 70000],
+    ['ugx', 70000],
+    ['mga', 700],
+  ] as const) {
+    const event = invoiceFixture();
+    event.data.object.currency = currency;
+    event.data.object.amount_paid = amount;
+    const receipt = verifiedPaidInvoice(event, ['price_Moyo']);
+    assert.equal(receipt?.amountCents, amount);
+    assert.equal(receipt?.currency, currency.toUpperCase());
+  }
+});
 test('private repair reads complete line evidence and never rewrites the original paid time', async () => {
   const invoice = invoiceFixture().data.object;
   invoice.lines.has_more = true;

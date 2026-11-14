@@ -17,6 +17,7 @@ import {
   updateEvent,
 } from './contract.ts';
 import type { BusinessEvent, InquiryInput, InquiryUpdate } from './contract.ts';
+import { stripeInvoiceToIsoMinor } from './payment-units.ts';
 
 let pool: Pool | undefined;
 function connection() {
@@ -373,6 +374,19 @@ async function enqueuePayment(
   inquiryId: string,
   input: MarketingPayment,
 ) {
+  // Keep the journal and immutable evidence identity in Stripe's original units.
+  // Only the frozen Signal outcome uses the general ISO minor-unit contract.
+  const amountMinor = stripeInvoiceToIsoMinor(
+    input.amountCents,
+    input.currency,
+  );
+  if (amountMinor === null) {
+    await client.query(
+      "UPDATE payload.marketing_verified_payments SET error_code='invoice_amount_unrepresentable' WHERE org_id=$1 AND id=$2",
+      [orgId, input.invoiceId],
+    );
+    return;
+  }
   await enqueue(client, orgId, inquiryId, {
     sourceId: `moyo.invoice:${input.invoiceId}`,
     kind: 'order',
@@ -382,7 +396,7 @@ async function enqueuePayment(
     path: '/for-schools',
     inquirySourceId: inquirySourceId(inquiryId),
     summary: 'Stripe confirmed a paid Moyo subscription invoice.',
-    amount: { amountCents: input.amountCents, currency: input.currency },
+    amount: { amountCents: amountMinor, currency: input.currency },
   });
 }
 const paymentIdentity = (payment: MarketingPayment) =>
@@ -459,11 +473,13 @@ export async function saveVerifiedPayment(
       }
     }
     const evidenceError =
-      input.evidenceStatus === 'verified'
-        ? null
-        : input.evidenceStatus === 'incomplete'
-          ? 'invoice_evidence_incomplete'
-          : 'invoice_price_or_subscription_mismatch';
+      stripeInvoiceToIsoMinor(input.amountCents, input.currency) === null
+        ? 'invoice_amount_unrepresentable'
+        : input.evidenceStatus === 'verified'
+          ? null
+          : input.evidenceStatus === 'incomplete'
+            ? 'invoice_evidence_incomplete'
+            : 'invoice_price_or_subscription_mismatch';
     // Durable before the subscription association or inquiry billing link exists.
     // Proof can improve, but a previously verified receipt is never weakened by a
     // later configuration change. Core payment facts cannot be rewritten on replay.
@@ -474,6 +490,7 @@ export async function saveVerifiedPayment(
       evidence_status=CASE WHEN marketing_verified_payments.evidence_status='verified' THEN 'verified' ELSE excluded.evidence_status END,
       moyo_price_seen=marketing_verified_payments.moyo_price_seen OR excluded.moyo_price_seen,
       error_code=CASE WHEN marketing_verified_payments.error_code='invoice_evidence_changed' THEN marketing_verified_payments.error_code
+        WHEN excluded.error_code='invoice_amount_unrepresentable' THEN excluded.error_code
         WHEN marketing_verified_payments.evidence_status='verified' THEN NULL ELSE excluded.error_code END`,
       [
         input.invoiceId,
@@ -516,21 +533,25 @@ export async function hasVerifiedOrderReceipt(
   )
     return false;
   const result = await client.query(
-    `SELECT 1 FROM payload.marketing_verified_payments p JOIN payload.marketing_inquiries i
+    `SELECT p.amount_cents,p.currency FROM payload.marketing_verified_payments p JOIN payload.marketing_inquiries i
     ON i.org_id=p.org_id AND i.stripe_customer_id=p.customer_id
     WHERE p.org_id=$1 AND i.id=$2 AND p.id=$3 AND p.evidence_status='verified' AND p.moyo_price_seen=true AND p.error_code IS NULL
-    AND p.amount_cents=$4 AND p.currency=$5 AND p.occurred_at=$6::timestamptz
+    AND p.currency=$4 AND p.occurred_at=$5::timestamptz
     AND EXISTS(SELECT 1 FROM better_auth.subscription s WHERE s."stripeSubscriptionId"=p.subscription_id AND s."stripeCustomerId"=p.customer_id AND s."referenceId"=i.billing_reference_id)`,
     [
       orgId,
       inquiryId,
       event.sourceId.slice('moyo.invoice:'.length),
-      event.amount.amountCents,
       event.amount.currency,
       event.occurredAt,
     ],
   );
-  return Boolean(result.rowCount);
+  const payment = result.rows[0];
+  return Boolean(
+    payment &&
+    stripeInvoiceToIsoMinor(payment.amount_cents, payment.currency) ===
+      event.amount.amountCents,
+  );
 }
 
 /** One bounded private verification attempt per worker run; no raw invoice body is retained. */

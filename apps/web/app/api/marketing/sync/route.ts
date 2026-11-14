@@ -10,10 +10,21 @@ export async function GET(request: Request) {
   if (!secret || request.headers.get('authorization') !== `Bearer ${secret}`)
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   try {
-    return Response.json(await drainMarketingOutbox(recheckMoyoPaidInvoice), {
+    const result = await drainMarketingOutbox(recheckMoyoPaidInvoice);
+    console.info(
+      JSON.stringify({
+        event: 'moyo.marketing.sync',
+        state: result.state,
+        processed: result.processed,
+      }),
+    );
+    return Response.json(result, {
       headers: { 'Cache-Control': 'no-store' },
     });
   } catch {
+    console.error(
+      JSON.stringify({ event: 'moyo.marketing.sync', state: 'failed' }),
+    );
     return Response.json(
       { error: 'Marketing delivery could not finish.' },
       { status: 503 },
