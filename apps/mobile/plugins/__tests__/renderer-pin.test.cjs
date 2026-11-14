@@ -28,14 +28,33 @@ test('foreign digest guards before and after the owned block remain byte-identic
  assert.throws(()=>updateRendererPin(owned+'\n'+owned),/duplicate renderer pin owner/);
  assert.throws(()=>updateRendererPin(owned.replace('moyoViroRendererAar.withInputStream','foreign.withInputStream')),/renderer-owned input stream/);
 });
-test('renderer provenance checksum matches exact candidate archive and retains baseline proof',()=>{
+test('previous renderer retains its complete baseline proof',()=>{
  const pin=require(path.join(root,'vendors/viro-renderer-0ea780701.provenance.json'));
  const sha=(p)=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'vendors',p))).digest('hex');
- assert.equal(sha(pin.file),rendererSha256);assert.equal(sha(pin.baseline_file),pin.original_aar_sha256);
+ assert.equal(sha(pin.file),pin.aar_sha256);assert.equal(sha(pin.baseline_file),pin.original_aar_sha256);
  assert.deepEqual(pin.changed_members,['jni/arm64-v8a/libviro_renderer.so']);
  assert.equal(pin.source_commit,'0ea78070138a3357858af5d702e8fdbb095d0e6a');
  assert.equal(pin.source_baseline,'82ad61e74549073a9dc8ba95ede70f0f854889fc');
  assert.ok(pin.defined_symbols_after>=pin.defined_symbols_before);
  assert.deepEqual(pin.missing_jni_symbols,[]);assert.deepEqual(pin.missing_strong_symbols,[]);assert.deepEqual(pin.new_undefined_symbols,[]);
  assert.deepEqual(pin.needed_before,pin.needed_after);assert.ok(pin.load_alignments.every(n=>n>=16384));
+});
+test('hands renderer pin retains the prior ABI, baseline and bridge version',()=>{
+ const pin=require(path.join(root,'vendors/viro-renderer-1471b3faf.provenance.json'));
+ const previous=require(path.join(root,'vendors/viro-renderer-0ea780701.provenance.json'));
+ const sha=(p)=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'vendors',p))).digest('hex');
+ assert.equal(sha(pin.file),rendererSha256);
+ assert.equal(sha(previous.file),pin.baseline_aar_sha256);
+ assert.equal(pin.source_baseline,previous.source_commit);
+ assert.equal(pin.source_commit,'1471b3faf4470b91710db573a37634e4ab65161c');
+ assert.equal(pin.abi_pass,true);
+ assert.deepEqual(pin.missing_exports,[]);assert.deepEqual(pin.missing_jni,[]);assert.deepEqual(pin.new_undefined,[]);
+ assert.deepEqual(pin.baseline_elf.needed,pin.renderer_elf.needed);
+ assert.deepEqual(pin.baseline_elf.soname,pin.renderer_elf.soname);
+ assert.equal(pin.renderer_elf.aarch64,true);
+ assert.ok(pin.renderer_elf.load_alignments.every(n=>n>=16384));
+ assert.deepEqual(pin.changed_members,['jni/arm64-v8a/libviro_renderer.so']);
+ const mobile=require(path.join(root,'apps/mobile/package.json'));
+ const bridge=require(path.join(root,'node_modules/@reactvision/react-viro/package.json'));
+ assert.equal(mobile.dependencies['@reactvision/react-viro'],bridge.version);
 });
