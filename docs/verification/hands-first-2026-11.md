@@ -16,7 +16,19 @@ All 307 native build tasks completed using installed NDK 27.1.12297006 and CMake
 
 The renderer pin and prebuild updater reference the new artifact and checksum. The Tutor Room explicitly sets `handTrackingEnabled`. The mobile package declaration now matches the existing resolved `3.0.1-moyo.1` bridge tarball/root override. The bridge's click/drag/controller source fields are already typed as numbers; no new event API or bridge tarball was needed. Frozen offline lockfile verification passed without lockfile changes.
 
-No scene geometry, app window dimensions, orientation, manifest metadata or board drawing authority was changed. The existing board-pointer and stylus arbitration remain the sole drawing paths. Renderer/config regression tests passed 16 cases; the merged-APK manifest case was skipped because no fresh APK exists. Source inspection does not replace that skipped build check.
+No scene geometry, app window dimensions, orientation, manifest metadata or board drawing authority was changed. The existing board-pointer and stylus arbitration remain the sole drawing paths. The original local renderer/config run passed 16 cases and skipped the merged-APK manifest case because that machine had no fresh APK. The later CI build below supersedes the APK-build gap, but did not run that manifest assertion.
+
+## PR completion and packaging evidence
+
+GitHub Actions [Android native run 43563693132](https://github.com/mikevocalz/moyolearn/actions/runs/43563693132/job/132352759920) built merge revision `81546678f2ce6b8a3ed9f60d6a2c3ae46e181ae2`, combining PR head `34fe959130077759e992256fa50c34087b96ee9f` with release base `599456a794ec54aee8444488043c6683a67f7d4a`: `:app:assembleQuestDebug` completed successfully on 2026-11-14 at 06:24 UTC. The run uploaded diagnostic reports only. Its APK was not retained, and it did not run the merged-manifest assertion or inspect the packaged renderer. Build success alone does not establish either check or physical-device acceptance.
+
+The updated Android workflow runs the existing renderer/config tests after assembly with `MOYO_REQUIRE_MERGED_QUEST_MANIFEST=1`. Missing generated manifests now fail that CI step instead of skipping it. `tooling/verify-quest-apk.mjs` verifies the selected AAR checksum, its renderer member against provenance, and the renderer extracted from the actual APK. If AGP strips symbols, the verifier reproduces that transform with the workflow's pinned NDK tool before comparing hashes. A prior or modified renderer fails verification.
+
+Only after those checks succeed, CI retains the debug APK, output metadata, merged manifest and checksum report for seven days under `quest-debug-<checkout SHA>`. The report records the exact checkout, renderer source commit and APK hash. This is a development APK that needs Metro; it is not a standalone competition build or a device acceptance result. No private environment file, signing credential or broad build directory is included in that artifact.
+
+Follow-up validation in the Linux checkout: all five APK-verification tests passed, including a real host ELF strip and rejection of an altered ELF. The existing plugin suite passed 16 tests and skipped only the unavailable local merged manifest; a separate strict-mode run correctly rejected that missing manifest instead of skipping. Workflow YAML parsing, Node syntax and whitespace checks passed. Independent extraction of both AARs confirmed only `jni/arm64-v8a/libviro_renderer.so` changed, all 9,750 baseline exports remain, no new undefined symbols were added, and dependencies plus 16 KiB LOAD alignment match. The C++14 host regression from the committed native source patch passed with `-Wall -Wextra -Werror`. These are host/source checks; the updated post-build CI checks and device installation require their own results.
+
+Skills read for the follow-up: the pinned `mikevocalz-foldable-layouts` skill (blob `69a051ad0a924f778ed54f9222fe8af0c5eef701`) and Expo `expo-dev-client` (blob `a155ce90b6b4c6b8d3b276e3771a8ca8d02e1b07`). The existing Expo flavor build, Viro pin/provenance, config tests and board-input authority remain the implementation seams; app-window and navigation policies are unaffected by the packaging checks.
 
 ## Runtime evidence and remaining work
 
@@ -32,4 +44,4 @@ Direct-touch ink is not implemented. Existing native plane-drag calculations can
 - Native arm64 build completed with exit 0. ABI/archive checks passed.
 - App/mobile/web/Payload TypeScript checks passed after exact dependency repair.
 - Existing unit/server suites and local pin/config tests are recorded in the homework and gate reports; they do not establish hands behavior.
-- Source review was independent of the native author. Device input, frame pacing, APK/manifest generation and release approval remain pending.
+- Source review was independent of the native author. The initial Quest APK build has now passed in CI. Packaged-renderer and manifest qualification in the updated workflow, device input, frame pacing and release approval remain pending.

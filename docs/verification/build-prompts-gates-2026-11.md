@@ -3,6 +3,8 @@
 Date: initial audit 2026-11-14 UTC; follow-up source review 2026-11-14 America/New_York.
 Reviewer: independent verifier subagent E. This reviewer writes no feature code.
 
+PR completion follow-up: Quest CI subsequently assembled the candidate merge revision successfully in [Android run 43563693132](https://github.com/mikevocalz/moyolearn/actions/runs/43563693132/job/132352759920). That run retained diagnostics only; packaged-renderer and manifest verification plus physical acceptance were still absent. The updated packaging workflow and independently repeated source/ABI checks are recorded in `hands-first-2026-11.md`. This supersedes the initial APK-build gap below, not any hardware gate.
+
 ## Verdict
 
 Historical device baseline: Quest 3S `340YC10GC3014S` became reachable through Argent. Installed `com.moyolearn.app` reported version 1.0.0/code 1, last updated 2026-11-03 10:46:33. Launch timed out; subsequent accessibility inspection and activity metadata confirmed MainActivity foreground with React Native “Unable to load script” redbox. User confirmed the requested controllers-off-and-unpaired setup; hand input was not exercised. Dependency restoration encountered network errors and ENOSPC. Safe cache/build-output recovery and resulting space are recorded in `disk-recovery-2026-11.md`; this supersedes the initial no-cleanup state.
