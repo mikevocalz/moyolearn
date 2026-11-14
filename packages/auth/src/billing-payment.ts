@@ -91,6 +91,7 @@ export async function readBillingPreflight(
       ? inspectBillingStep(async () => {
           const price = await stripe.prices.retrieve(priceId);
           return {
+            id: price.id,
             currency: price.currency.toUpperCase(),
             live: price.livemode,
           };

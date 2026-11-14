@@ -7,7 +7,10 @@
   "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
-    "./config": "./src/payload.config.ts"
+    "./config": "./src/payload.config.ts",
+    "./marketing-contract": "./src/marketing/contract.ts",
+    "./marketing-delivery": "./src/marketing/delivery.ts",
+    "./marketing-server": "./src/marketing/server.ts"
   },
   "scripts": {
     "lint": "eslint",
@@ -20,7 +23,10 @@
     "payload": "catalog:",
     "pg": "catalog:",
     "sharp": "catalog:",
-    "@seshuk/payload-storage-bunny": "3.0.0"
+    "@seshuk/payload-storage-bunny": "3.0.0",
+    "zod": "catalog:",
+    "zustand": "catalog:",
+    "@tanstack/react-start": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

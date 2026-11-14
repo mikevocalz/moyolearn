@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { marketingIdentityAccess } from '../marketing/marketing-access.ts';
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -22,6 +23,13 @@ export const Users: CollectionConfig = {
   */
   versions: false,
   auth: true,
+  // Preserve Payload's internal-staff gate while protecting the exact IDs
+  // entrusted with Moyo sales. A different staff session cannot take over an
+  // allowlisted account by changing its password, nor delete/recreate its ID.
+  access: {
+    update: ({ req }) => marketingIdentityAccess(req.user, 'update'),
+    delete: ({ req }) => marketingIdentityAccess(req.user, 'delete'),
+  },
   admin: { useAsTitle: 'email' },
   fields: [
     { name: 'name', type: 'text' },

@@ -38,6 +38,14 @@ test('intake requires explicit adult/contact consent and rejects student/freefor
     true,
     'request can be answered without optional SignalIQ sharing',
   );
+  assert.equal(
+    inquiryInput.safeParse({
+      ...input,
+      email: `${'a'.repeat(64)}@${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(63)}.com`,
+    }).success,
+    false,
+    'email must also fit SignalIQ’s 254-character boundary',
+  );
 });
 test('organizations must be explicitly submitted; family inquiries cannot acquire a company', () => {
   assert.equal(
@@ -50,6 +58,7 @@ test('organizations must be explicitly submitted; family inquiries cannot acquir
   );
   const record = inquiryRow.parse({
     id: input.requestId,
+    prospect_id: input.requestId,
     org_id: 'moyo-sales',
     request_id: input.requestId,
     contact_name: input.name,

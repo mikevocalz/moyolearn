@@ -7,6 +7,9 @@ import { registerHooks } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
 const database = process.env.MOYO_MARKETING_TEST_DATABASE_URL;
 if (
@@ -18,7 +21,7 @@ if (
     'Run against the isolated localhost moyo_test database only.',
   );
 process.env.DATABASE_URL = database;
-process.env.MOYO_MARKETING_ORG_ID = 'synthetic-moyo-sales';
+process.env.MOYO_MARKETING_ADMIN_IDS = '1';
 process.env.MOYO_MARKETING_RATE_SECRET = 'synthetic-test-rate-secret';
 process.env.SIGNALIQ_BUSINESS_ENDPOINT =
   'https://synthetic-signal.invalid/api/ingest/v1/business-events';
@@ -32,43 +35,8 @@ const pool = new Pool({
 });
 const url = (path) => new URL(path, import.meta.url).href;
 const data = (source) => `data:text/javascript,${encodeURIComponent(source)}`;
-const fixture = {
-  role: 'owner',
-  subscriptions: [
-    {
-      plan: 'ops-studio',
-      status: 'active',
-      referenceId: 'synthetic-moyo-sales',
-      periodEnd: null,
-      seats: null,
-    },
-  ],
-  session: {
-    user: {
-      id: 'synthetic-owner',
-      orgId: 'synthetic-moyo-sales',
-      guardianManaged: false,
-    },
-  },
-};
-const key = Symbol.for('moyo.marketing.integration-test');
-globalThis[key] = fixture;
-const state =
-  "const fixture=globalThis[Symbol.for('moyo.marketing.integration-test')];";
-const aliases = {
-  'server-only': data('export {};'),
-  '@acme/auth/server': data(
-    `${state} export const readMembershipRole=async()=>fixture.role; export const readSubscriptions=async()=>fixture.subscriptions;`,
-  ),
-  '@acme/app/server': data(
-    `export {protectedOperation} from ${JSON.stringify(url('../../../../packages/app/core/protected-operation.ts'))};`,
-  ),
-  '@acme/auth/membership': url('../../../../packages/auth/src/membership.ts'),
-  '@acme/auth/entitlements': url(
-    '../../../../packages/auth/src/entitlements.ts',
-  ),
-  '@acme/auth/host-tenant': url('../../../../packages/auth/src/host-tenant.ts'),
-};
+const fixture = { user: { id: 1, collection: 'users' } };
+const aliases = { 'server-only': data('export {};') };
 const hooks = registerHooks({
   resolve(specifier, context, next) {
     return aliases[specifier]
@@ -79,8 +47,25 @@ const hooks = registerHooks({
 const repository = await import('./marketing.repository.ts');
 const service = await import('./marketing.service.ts');
 const { inquiryInput } = await import('./contract.ts');
-const auth = { api: { getSession: async () => fixture.session } };
-const headers = new Headers({ host: 'app.moyolearn.com' });
+const headers = new Headers({
+  host: 'admin.moyolearn.com',
+  origin: 'https://admin.moyolearn.com',
+});
+const internalRequest = (body, {headers:requestHeaders,...extra} = {}) =>
+  Object.assign(
+    new Request(
+      'https://admin.moyolearn.com/payload-api/moyo-sales/inquiries',
+      {
+        method: body ? 'POST' : 'GET',
+        headers: requestHeaders??new Headers([
+          ...headers,
+          ...(body ? [['Content-Type', 'application/json']] : []),
+        ]),
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      },
+    ),
+    { user: fixture.user, ...extra },
+  );
 const input = (patch = {}) =>
   inquiryInput.parse({
     requestId: randomUUID(),
@@ -98,7 +83,7 @@ const update = (action, fields = {}) => ({
   action,
   ...fields,
 });
-const org = 'synthetic-moyo-sales';
+const org = 'moyo-platform-sales';
 const count = async (table, where = '', args = []) =>
   Number(
     (
@@ -136,23 +121,10 @@ beforeEach(async () => {
   await pool.query(
     'TRUNCATE payload.marketing_inquiries,payload.marketing_updates,payload.marketing_outbox,payload.marketing_rate_limits,payload.marketing_verified_payments,better_auth.subscription,better_auth.organization,better_auth."user" CASCADE',
   );
-  fixture.role = 'owner';
-  fixture.session = {
-    user: { id: 'synthetic-owner', orgId: org, guardianManaged: false },
-  };
-  fixture.subscriptions = [
-    {
-      plan: 'ops-studio',
-      status: 'active',
-      referenceId: org,
-      periodEnd: null,
-      seats: null,
-    },
-  ];
+  fixture.user = { id: 1, collection: 'users' };
 });
 after(async () => {
   hooks.deregister();
-  delete globalThis[key];
   await pool.end();
 });
 
@@ -201,8 +173,63 @@ test('unconsented inquiries stay in Moyo and rate limits are transactional', asy
   );
   assert.equal(await count('marketing_outbox'), 0);
 });
-test('tenant, non-owner and learner boundaries run before protected reads or writes; withdrawal survives expired plan', async () => {
+
+test('a new repeat inquiry reuses only the exact submitted adult prospect and freezes old delivery payloads', async () => {
+  const first = input({ organizationDomain: 'school.example' });
+  const second = { ...first, requestId: randomUUID() };
+  const [a, b] = await Promise.all([
+    repository.saveInquiry(org, first, 'rate-a'),
+    repository.saveInquiry(org, second, 'rate-b'),
+  ]);
+  assert.notEqual(a.id, b.id);
+  const rows = (
+    await pool.query(
+      'SELECT source_id,event FROM payload.marketing_outbox ORDER BY source_id',
+    )
+  ).rows;
+  assert.equal(rows.length, 2);
+  assert.equal(
+    rows[0].event.organization.externalId,
+    rows[1].event.organization.externalId,
+  );
+  const original = JSON.stringify(rows);
+  await repository.saveInquiry(org, first, 'rate-a');
+  assert.equal(
+    JSON.stringify(
+      (
+        await pool.query(
+          'SELECT source_id,event FROM payload.marketing_outbox ORDER BY source_id',
+        )
+      ).rows,
+    ),
+    original,
+  );
+  await repository.saveInquiry(
+    org,
+    input({
+      organizationName: 'Another explicitly supplied school',
+      organizationDomain: 'another.example',
+    }),
+    'rate-c',
+  );
+  assert.equal(
+    Number(
+      (
+        await pool.query(
+          'SELECT count(DISTINCT prospect_id) AS count FROM payload.marketing_inquiries',
+        )
+      ).rows[0].count,
+    ),
+    2,
+  );
+});
+test('internal identity, ID allowlist, origin and fixed source scope guard every sales operation', async () => {
   const saved = await repository.saveInquiry(org, input(), 'rate');
+  await repository.saveInquiry(
+    'synthetic-customer-tenant',
+    input(),
+    'other-rate',
+  );
   await assert.rejects(
     repository.saveInquiryUpdate(
       'other-tenant',
@@ -212,38 +239,59 @@ test('tenant, non-owner and learner boundaries run before protected reads or wri
     ),
     { status: 404 },
   );
-  fixture.session.user.orgId = 'other-tenant';
-  await assert.rejects(service.marketingInbox(auth, headers), { status: 403 });
-  fixture.session.user.orgId = org;
-  fixture.role = 'teacher';
-  await assert.rejects(service.marketingInbox(auth, headers));
-  fixture.role = 'owner';
-  fixture.session.user.guardianManaged = true;
-  await assert.rejects(service.marketingInbox(auth, headers), { status: 403 });
-  fixture.session.user.guardianManaged = false;
-  fixture.subscriptions = [];
-  const request = (body) =>
-    new Request('https://app.moyolearn.com/api/ops/marketing/inquiries', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+  fixture.user = null;
+  await assert.rejects(service.marketingInbox(internalRequest()), {
+    status: 401,
+  });
+  fixture.user = { id: 2, collection: 'users' };
+  await assert.rejects(service.marketingInbox(internalRequest()), {
+    status: 403,
+  });
+  fixture.user = { id: 1, collection: 'customer-users' };
+  await assert.rejects(service.marketingInbox(internalRequest()), {
+    status: 403,
+  });
+  fixture.user = { id: 1, collection: 'users' };
+  await assert.rejects(
+    service.marketingInbox(
+      internalRequest(null, {
+        headers: new Headers({ host: 'app.moyolearn.com' }),
+      }),
+    ),
+    { status: 403 },
+  );
+  const inbox = await service.marketingInbox(internalRequest());
+  assert.equal(inbox.inquiries.length, 1);
+  assert.equal(inbox.inquiries[0].id, saved.id);
   await assert.rejects(
     service.updateMarketingInquiry(
-      auth,
-      headers,
+      internalRequest(update('progress', { stage: 'contacted' }), {
+        headers: new Headers({
+          host: 'admin.moyolearn.com',
+          origin: 'https://evil.invalid',
+          'Content-Type': 'application/json',
+        }),
+      }),
       saved.id,
-      request(update('progress', { stage: 'contacted' })),
     ),
+    { status: 403 },
   );
   await service.updateMarketingInquiry(
-    auth,
-    headers,
+    internalRequest(update('progress', { stage: 'contacted' })),
     saved.id,
-    request(update('withdraw')),
+  );
+  assert.equal(
+    (await pool.query('SELECT actor_id FROM payload.marketing_updates')).rows[0]
+      .actor_id,
+    'payload:1',
+  );
+  await service.updateMarketingInquiry(
+    internalRequest(update('withdraw')),
+    saved.id,
   );
   assert.equal((await repository.listInquiries(org))[0].signal_consent, false);
 });
+
 test('queued remote acceptance requires status polling; only processed removes retained contact payload', async () => {
   await repository.saveInquiry(org, input(), 'rate');
   const sourceEventId = randomUUID();
@@ -430,4 +478,167 @@ test('Supabase public API roles have no grants to the new sales tables', async (
         ).rows[0].allowed,
         false,
       );
+});
+
+test('release preflight reads only the exact verified adult owner and schema apply is repeatable', async () => {
+  await pool.query(`INSERT INTO better_auth."user"(id,name,email,"emailVerified") VALUES('synthetic-preflight-owner','Synthetic owner','preflight-owner@example.invalid',true),('synthetic-other-owner','Other synthetic owner','other-owner@example.invalid',true);
+    INSERT INTO better_auth.organization(id,name,slug,"createdAt") VALUES('synthetic-owner-org','Synthetic owner organization','synthetic-owner-org',now()),('synthetic-other-org','Other synthetic organization','synthetic-other-org',now());
+    INSERT INTO better_auth.member(id,"organizationId","userId",role,"createdAt") VALUES('synthetic-membership','synthetic-owner-org','synthetic-preflight-owner','owner',now()),('synthetic-other-membership','synthetic-other-org','synthetic-other-owner','owner',now());
+    INSERT INTO better_auth.subscription(id,plan,"referenceId",status) VALUES('synthetic-owner-sub','ops-studio','synthetic-owner-org','active')`);
+  const run = promisify(execFile);
+  const script = fileURLToPath(
+    new URL('../../scripts/marketing-migrate.mts', import.meta.url),
+  );
+  const options = {
+    env: {
+      ...process.env,
+      MOYO_MARKETING_OWNER_EMAIL: 'preflight-owner@example.invalid',
+    },
+    timeout: 20000,
+  };
+  const result = await run(
+    process.execPath,
+    ['--import', 'tsx', script, '--preflight'],
+    options,
+  );
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.verifiedAdultAccount, true);
+  assert.equal(report.organizations.length, 1);
+  assert.equal(report.organizations[0].id, 'synthetic-owner-org');
+  assert.equal(report.organizations[0].writeGranted, true);
+  assert.equal(result.stdout.includes('synthetic-other-org'), false);
+  await run(process.execPath, ['--import', 'tsx', script, '--apply'], options);
+  assert.equal(
+    await count('marketing_inquiries'),
+    0,
+    'schema-only release step creates no customer records',
+  );
+});
+
+test('an in-flight inquiry delivery serializes with withdrawal and cannot resurrect consent', async () => {
+  const saved = await repository.saveInquiry(org, input(), 'rate');
+  let releaseResponse;
+  let announceStarted;
+  const started = new Promise((resolve) => {
+    announceStarted = resolve;
+  });
+  const responseReady = new Promise((resolve) => {
+    releaseResponse = resolve;
+  });
+  const fetchMock = mock.method(globalThis, 'fetch', async (url, options) => {
+    if (String(url).endsWith('/withdrawals'))
+      return Response.json({
+        state: 'withdrawn',
+        requestId: JSON.parse(options.body).requestId,
+      });
+    announceStarted();
+    await responseReady;
+    return Response.json({ sourceEventId: randomUUID(), state: 'processed' });
+  });
+  try {
+    const draining = service.drainMarketingOutbox();
+    await started;
+    let withdrawn = false;
+    const withdrawal = repository
+      .saveInquiryUpdate(org, 'synthetic-owner', saved.id, update('withdraw'))
+      .then(() => {
+        withdrawn = true;
+      });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    assert.equal(
+      withdrawn,
+      false,
+      'sender owns the inquiry row while request is in flight',
+    );
+    releaseResponse();
+    await Promise.all([draining, withdrawal]);
+    await service.drainMarketingOutbox();
+    assert.equal(
+      (await repository.listInquiries(org))[0].signal_consent,
+      false,
+    );
+    assert.equal(
+      await count(
+        'marketing_outbox',
+        "WHERE operation='withdrawal' AND state='delivered'",
+      ),
+      1,
+    );
+    assert.equal(await count('marketing_outbox', 'WHERE event IS NOT NULL'), 0);
+    await assert.rejects(
+      repository.saveInquiryUpdate(
+        org,
+        'synthetic-owner',
+        saved.id,
+        update('progress', { stage: 'contacted' }),
+      ),
+      { status: 409 },
+    );
+  } finally {
+    releaseResponse();
+    fetchMock.mock.restore();
+  }
+});
+
+test('explicit recovery posts the exact accepted source event again; terminal suppression cannot retry', async () => {
+  const saved = await repository.saveInquiry(org, input(), 'rate');
+  const sourceEventId = randomUUID();
+  const sent = [];
+  const fetchMock = mock.method(globalThis, 'fetch', async (url, options) => {
+    sent.push({ method: options.method, body: options.body });
+    return Response.json({
+      sourceEventId,
+      state:
+        sent.length === 1
+          ? 'queued'
+          : sent.length === 2
+            ? 'blocked'
+            : 'processed',
+      ...(sent.length === 2 ? { reason: 'pipeline_mapping_invalid' } : {}),
+    });
+  });
+  try {
+    await service.drainMarketingOutbox();
+    await pool.query(
+      'UPDATE payload.marketing_outbox SET next_attempt_at=now()',
+    );
+    await service.drainMarketingOutbox();
+    let row = (
+      await pool.query(
+        'SELECT state,source_event_id FROM payload.marketing_outbox',
+      )
+    ).rows[0];
+    assert.equal(row.state, 'blocked');
+    assert.equal(row.source_event_id, sourceEventId);
+    await repository.saveInquiryUpdate(
+      org,
+      'synthetic-owner',
+      saved.id,
+      update('retry-delivery'),
+    );
+    await service.drainMarketingOutbox();
+    assert.deepEqual(
+      sent.map((entry) => entry.method),
+      ['POST', 'GET', 'POST'],
+    );
+    assert.equal(sent[0].body, sent[2].body);
+    row = (await pool.query('SELECT state FROM payload.marketing_outbox'))
+      .rows[0];
+    assert.equal(row.state, 'delivered');
+    await pool.query(
+      "UPDATE payload.marketing_outbox SET state='blocked',error_code='source_consent_withdrawn',event=$1::jsonb",
+      [sent[0].body],
+    );
+    await assert.rejects(
+      repository.saveInquiryUpdate(
+        org,
+        'synthetic-owner',
+        saved.id,
+        update('retry-delivery'),
+      ),
+      { status: 409 },
+    );
+  } finally {
+    fetchMock.mock.restore();
+  }
 });

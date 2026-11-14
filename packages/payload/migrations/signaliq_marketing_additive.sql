@@ -3,7 +3,7 @@
 -- SOT-KEYWORDS: marketing signaliq inquiry outbox additive schema consent
 -- No learner, household, session-content or raw payment records are copied.
 CREATE TABLE IF NOT EXISTS payload.marketing_inquiries (
-  id uuid PRIMARY KEY, org_id varchar NOT NULL, request_id uuid NOT NULL,
+  id uuid PRIMARY KEY, org_id varchar NOT NULL, request_id uuid NOT NULL, prospect_id uuid NOT NULL,
   request_fingerprint varchar NOT NULL, contact_name varchar(200) NOT NULL,
   email varchar(320) NOT NULL, audience varchar NOT NULL CHECK (audience IN ('school','tutoring-business','parent')),
   organization_name varchar(200) NOT NULL DEFAULT '', organization_domain varchar(253) NOT NULL DEFAULT '',
@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS payload.marketing_inquiries (
   withdrawn_at timestamptz, stripe_customer_id varchar, billing_reference_id varchar,
   created_at timestamptz NOT NULL DEFAULT now(), UNIQUE(org_id, request_id), UNIQUE(org_id,id)
 );
+ALTER TABLE payload.marketing_inquiries ADD COLUMN IF NOT EXISTS prospect_id uuid;
+UPDATE payload.marketing_inquiries SET prospect_id=id WHERE prospect_id IS NULL;
+ALTER TABLE payload.marketing_inquiries ALTER COLUMN prospect_id SET NOT NULL;
+CREATE INDEX IF NOT EXISTS marketing_inquiries_prospect ON payload.marketing_inquiries(org_id,email,audience,organization_name,organization_domain);
 CREATE UNIQUE INDEX IF NOT EXISTS marketing_inquiries_billing_key
   ON payload.marketing_inquiries(org_id,stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;
 CREATE TABLE IF NOT EXISTS payload.marketing_updates (

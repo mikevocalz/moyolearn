@@ -54,7 +54,7 @@ export function SchoolInquiry() {
         }
         onChangeText={(text) => {
           pending.current = null;
-          state.setState({ [key]: text.slice(0, key === 'email' ? 320 : 200) });
+          state.setState({ [key]: text });
         }}
         onSubmitEditing={() => void submit()}
         className={inputClass}
@@ -90,6 +90,7 @@ export function SchoolInquiry() {
     if (
       !value.name.trim() ||
       !/^\S+@\S+\.\S+$/.test(value.email) ||
+      value.email.length > 254 ||
       !value.adult ||
       !value.contactConsent ||
       (value.audience !== 'parent' && !value.organizationName.trim())

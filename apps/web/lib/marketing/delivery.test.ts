@@ -104,7 +104,7 @@ test('timeout, invalid acknowledgment, source rejection and processing failure r
         reason: 'consent_withdrawn',
       }),
     ),
-    { state: 'blocked', error: 'consent_withdrawn' },
+    { state: 'blocked', error: 'source_consent_withdrawn' },
   );
 });
 test('withdrawal receipt is bound to its stable request ID', async () => {

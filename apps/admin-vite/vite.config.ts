@@ -93,6 +93,41 @@ export default defineConfig(
             is built in the first place.
           */
           ...pluginOptions.tanstackStart,
+          // Payload's own callback allows some internal package crossings.
+          // Our sales modules carry TanStack's server marker and must never be
+          // covered by that allowance, including a direct client deep import.
+          importProtection: {
+            ...pluginOptions.tanstackStart.importProtection,
+            behavior: { dev: 'error', build: 'error' },
+            client: {
+              ...pluginOptions.tanstackStart.importProtection?.client,
+              specifiers: [
+                ...(pluginOptions.tanstackStart.importProtection?.client
+                  ?.specifiers ?? []),
+                '@acme/payload/marketing-server',
+              ],
+              files: [
+                ...(pluginOptions.tanstackStart.importProtection?.client
+                  ?.files ?? []),
+                /\/packages\/payload\/src\/marketing\/(?:server|marketing-access|marketing\.service|marketing\.repository|endpoints)\.ts$/,
+              ],
+            },
+            onViolation: (violation) => {
+              if (
+                violation &&
+                typeof violation === 'object' &&
+                'envType' in violation &&
+                violation.envType === 'client' &&
+                'resolved' in violation &&
+                typeof violation.resolved === 'string' &&
+                /\/packages\/payload\/src\/marketing\//.test(violation.resolved)
+              )
+                return true;
+              return pluginOptions.tanstackStart.importProtection?.onViolation?.(
+                violation,
+              );
+            },
+          },
           /*
             Explicit, though it is also the default. Deployment §3.2 item 2 is
             law here and nowhere more so than in the app that serves ONLY the
