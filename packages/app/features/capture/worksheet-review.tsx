@@ -7,6 +7,7 @@ import { ScrollView, View } from '@acme/ui/tw';
 import { extractWorksheetQuestions, MAX_WORKSHEET_QUESTIONS, type WorksheetQuestion } from './worksheet-questions.ts';
 import type { CapturePage } from './types.ts';
 import { buttonSizeForBand, type AgeBand } from './age-band.ts';
+import { PriorWorkMark } from '../homework/prior-work-mark';
 
 interface ReviewState {
   questions: WorksheetQuestion[];
@@ -22,6 +23,7 @@ export interface WorksheetReviewProps {
   pages: readonly CapturePage[];
   subject: string;
   ageBand: AgeBand;
+  allowPriorWork?: boolean;
   onBack: () => void;
   onConfirm: (questions: WorksheetQuestion[], instructions: string) => void;
 }
@@ -31,6 +33,7 @@ export function WorksheetReview({
   pages,
   subject,
   ageBand,
+  allowPriorWork = false,
   onBack,
   onConfirm,
 }: WorksheetReviewProps) {
@@ -80,6 +83,10 @@ export function WorksheetReview({
           Compare each one with your worksheet. Tap Correct to fix numbers, signs,
           fractions, handwriting, or question order before Natalie begins.
         </Text>
+        {allowPriorWork ? <Text variant="body" tone="muted">
+          {questions.length} problems, {questions.filter((q) => q.priorWork === 'complete').length} already done.
+          Mark work your child finished before this upload. This skips it without checking the answer.
+        </Text> : null}
         {warning ? (
           <View className="rounded-card border-2 border-border bg-surface-sunken p-3">
             <Text variant="body">{warning}</Text>
@@ -114,6 +121,13 @@ export function WorksheetReview({
                 <Text variant="caption" tone="muted">Page {question.sourcePage}</Text>
               </View>
               <Text variant="body" className="text-text">{question.text || 'Needs correction'}</Text>
+              {allowPriorWork ? <PriorWorkMark
+                value={question.priorWork ?? 'none'}
+                questionNumber={question.sourceNumber ?? i + 1}
+                onChange={(priorWork) => store.setState((state) => ({
+                  questions: state.questions.map((q) => q.id === question.id ? { ...q, priorWork } : q),
+                }))}
+              /> : null}
               <View className="flex-row flex-wrap gap-element">
                 <Button
                   title="Earlier"

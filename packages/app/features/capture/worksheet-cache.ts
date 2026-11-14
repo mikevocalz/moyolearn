@@ -135,10 +135,11 @@ export function applyMove(
         }
       : q,
   );
-  const next = questions[move.expectedIndex + 1];
+  const nextIndex = questions.findIndex((question, index) => index > move.expectedIndex && question.priorWork !== 'complete');
+  const next = questions[nextIndex];
   // Past the last question the server keeps the cursor on it and marks the work complete.
   return next
-    ? { ...view, questions, currentIndex: move.expectedIndex + 1, currentQuestionId: next.questionId, status: 'in-progress' }
+    ? { ...view, questions, currentIndex: nextIndex, currentQuestionId: next.questionId, status: 'in-progress' }
     : { ...view, questions, status: 'complete' };
 }
 
@@ -179,8 +180,9 @@ export function toWorksheetQuestion(question: HomeworkQuestionView): WorksheetQu
 
 /** The exact text handed to `setProblem` for the view's current question. */
 export function currentPrompt(view: HomeworkSubmissionView): string | null {
+  if (view.status === 'complete') return null;
   const question = view.questions[view.currentIndex];
-  return question ? questionForTutor(toWorksheetQuestion(question), view) : null;
+  return question && question.priorWork !== 'complete' ? questionForTutor(toWorksheetQuestion(question), view) : null;
 }
 
 /**
@@ -256,6 +258,7 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
   const now = () => (ports.now ? ports.now() : new Date()).toISOString();
   // One flush at a time: two overlapping flushes would send the same move twice.
   const flushing = new Map<number, Promise<void>>();
+  const starting = new Set<number>();
 
   return (set, get) => {
     let selectionEpoch = 0;
@@ -455,13 +458,22 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         const epoch = selectionEpoch;
         const record = load(ownerId);
         if (record === null || record.confirmed.tutorSessionId === tutorSessionId) return;
+        if (starting.has(epoch)) return;
+        starting.add(epoch);
         try {
+          await flush(ownerId, epoch);
+          if (!isSelected(ownerId, epoch) || load(ownerId)?.pending.length) return;
+          set({ status: 'syncing' });
           const view = await client.startSubmission(record.confirmed.submissionId, { tutorSessionId });
           if (!isSelected(ownerId, epoch)) return;
-          const latest = load(ownerId) ?? record;
-          commit({ ...latest, confirmed: { ...latest.confirmed, tutorSessionId: view.tutorSessionId } }, ownerId, get().status, epoch);
-        } catch {
-          // Unlinked is not wrong, only less useful to the report; the screen retries on its next session id.
+          const latest = load(ownerId);
+          if (!latest || latest.confirmed.submissionId !== view.submissionId) return;
+          if (view.learnerAuthId !== ownerId) throw new ApiError(403);
+          commit({ ...latest, confirmed: view, pending: [] }, ownerId, 'confirmed', epoch);
+        } catch (error) {
+          if (isSelected(ownerId, epoch)) set({ status: isRetryableError(error) ? 'pending' : 'error' });
+        } finally {
+          starting.delete(epoch);
         }
       },
 
@@ -469,6 +481,7 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         const { ownerId, current } = get();
         if (ownerId === null || current === null || current.status === 'complete') return get().status;
         const epoch = selectionEpoch;
+        if (starting.has(epoch)) return get().status;
         const record = load(ownerId);
         if (record === null) return get().status;
         const move: AdvanceInput = {
