@@ -8,6 +8,30 @@ permissions:
   contents: read
 
 jobs:
+  # Migration and crop-retention checks use synthetic data in a freshly created
+  # Unix-socket-only cluster. No production credentials or .env files are read.
+  homework-database:
+    name: homework migration and crop retention
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install local PostgreSQL test binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql
+      - name: Require isolated migration and retention verification
+        env:
+          MOYO_PG_TEST_REQUIRED: '1'
+          MOYO_PG_TEST_REPOSITORY: '1'
+        run: node --test packages/payload/src/migrations/homework-prior-work.test.mjs
+
   # Whole-graph gate. This is the only job that runs typecheck/lint/test, and it
   # is deliberately NOT the only job that builds — see `web-app` below for why.
   ci:
