@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint && node scripts/build-globe-geometry.mjs --check && node scripts/build-photography.mjs --check",
     "typecheck": "tsc --noEmit",
+    "test:analytics": "node --test src/lib/signaliq-marketing.test.ts",
     "globe:geometry": "node scripts/build-globe-geometry.mjs",
     "globe:check": "node scripts/build-globe-geometry.mjs --check",
     "photography": "node scripts/build-photography.mjs",

@@ -56,6 +56,10 @@ export const privacy = {
       title: 'Your choices',
       body: `Cancel, export, or delete your data anytime. Email ${EMAIL}.`,
     },
+    {
+      title: 'Optional schools-page analytics',
+      body: 'Our public /for-schools page offers optional SignalIQ analytics, off until you opt in. It records visits with a random browser identifier, the page path, event time, and technical request metadata. SignalIQ receives your network address when the browser connects. We do not send query strings, page titles, referring pages, form contents, names, email addresses, or learning activity. Your browser stores your choice, and SignalIQ stores its anonymous identifier only after consent. Turn analytics off below to stop future collection and clear that identifier when browser storage is accessible. Global Privacy Control keeps analytics off. Turning it off does not delete events already received; contact us to request deletion.',
+    },
   ],
 } as const;
 

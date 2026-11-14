@@ -10,6 +10,7 @@ import { Main } from '@acme/ui/primitives';
 import { SiteNav } from '@/components/site-nav';
 import { SiteFooter } from '@/components/site-footer';
 import { SchoolsChapter } from '@/components/chapters/schools';
+import { MarketingAnalyticsConsent } from '@/components/marketing-analytics-consent';
 
 const SITE_ORIGIN = 'https://moyolearn.com';
 const TITLE = 'For schools — Moyo';
@@ -33,6 +34,7 @@ function ForSchoolsPage() {
       <SiteNav />
       <Main role="main" className="bg-moyo-paper pb-40">
         <SchoolsChapter />
+        <MarketingAnalyticsConsent />
       </Main>
       <SiteFooter />
     </>
