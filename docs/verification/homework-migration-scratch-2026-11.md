@@ -16,7 +16,7 @@ For environments that prohibit listening sockets, `MOYO_PG_TEST_MODE=single` exe
 
 The SQL sequence uses the checked-in files directly:
 
-1. `src/migrations/fixtures/homework-admin-lock.sql` creates `payload` and a minimal `payload_locked_documents_rels` table. This satisfies the original homework migration's admin-lock column/foreign-key additions; it is not a full Payload schema bootstrap.
+1. `src/migrations/fixtures/homework-admin-lock.sql` creates `payload` and minimal admin-lock tables. These satisfy the original homework migration's relation additions and the real Payload update path's lock cleanup. Their columns were checked against the initialized adapter schema without opening a database connection. This is not a full Payload schema bootstrap.
 2. `migrations/homework_additive.sql` creates the existing homework schema.
 3. `src/migrations/fixtures/homework-legacy.sql` inserts synthetic legacy data and snapshots the complete question row, including its crop and attempted outcome.
 4. `migrations/homework_prior_work_additive.sql` runs once. Assertions require defaults `none`/null/empty history and exact preservation of all legacy fields. A guardian mark and generic source history are then written and snapshotted.
