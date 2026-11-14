@@ -3,7 +3,7 @@
  * SOT: docs/site/signaliq-marketing-consent.md
  * SOT-KEYWORDS: schools optional analytics consent privacy zustand
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useStore } from 'zustand';
 import { Button, Link, Paragraph, View } from '@acme/ui/primitives';
 import { Container, Heading } from '@acme/ui/typography';
@@ -21,9 +21,7 @@ const configuration = marketingConfiguration(
 
 /** A visible, optional choice. Privacy-page mounting never qualifies for a page event. */
 export function MarketingAnalyticsConsent() {
-  const storeRef = useRef<ReturnType<typeof createMarketingConsentStore> | null>(null);
-  if (storeRef.current === null) storeRef.current = createMarketingConsentStore(configuration !== null);
-  const store = storeRef.current;
+  const store = useMemo(() => createMarketingConsentStore(configuration !== null), []);
   const controller = useRef<ReturnType<typeof createMarketingAnalytics> | null>(null);
   const consented = useStore(store, (state) => state.consented);
   const status = useStore(store, (state) => state.status);

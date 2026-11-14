@@ -13,7 +13,7 @@ import {
 const configuration = marketingConfiguration('public-test-key', 'https://analytics.example/api/ingest/v1/events')!;
 const settled = () => new Promise<void>((resolve) => setImmediate(resolve));
 
-function harness(input: { path?: string; consent?: boolean; gpc?: boolean; pending?: boolean; configured?: boolean; pendingFlush?: boolean } = {}) {
+function harness(input: { path?: string; consent?: boolean; gpc?: boolean; pending?: boolean; configured?: boolean; pendingFlush?: boolean; teardownThrows?: boolean } = {}) {
   let path = input.path ?? '/for-schools';
   let consent = input.consent ?? false;
   let gpc = input.gpc ?? false;
@@ -32,11 +32,17 @@ function harness(input: { path?: string; consent?: boolean; gpc?: boolean; pendi
       created.push(options);
       return {
         page: (page: { path: string }) => { pages.push(page); },
-        setConsent: (value: boolean) => { grants.push(value); },
+        setConsent: (value: boolean) => {
+          grants.push(value);
+          if (!value && input.teardownThrows) throw new Error('Synthetic SDK revocation failure');
+        },
         flush: () => input.pendingFlush && !rejectFlush
           ? new Promise<void>((_, reject) => { rejectFlush = reject; })
           : Promise.resolve(),
-        dispose: () => { disposed += 1; },
+        dispose: () => {
+          disposed += 1;
+          if (input.teardownThrows) throw new Error('Synthetic SDK disposal failure');
+        },
       };
     },
   };
@@ -65,7 +71,8 @@ function harness(input: { path?: string; consent?: boolean; gpc?: boolean; pendi
     counts: () => ({ disposed, unlistened }),
     path: (value: string, notify = true) => { path = value; if (notify) environmentChanged(); },
     gpc: (value: boolean, notify = true) => { gpc = value; if (notify) environmentChanged(); },
-    preference: (value: boolean) => { consent = value; preferenceChanged(); },
+    preference: (value: boolean, notify = true) => { consent = value; if (notify) preferenceChanged(); },
+    environmentChanged: () => environmentChanged(),
   };
 }
 
@@ -132,16 +139,38 @@ test('revocation while the SDK loads aborts it and ignores a late completion', a
   assert.deepEqual(h.store.getState(), { consented: false, status: 'off' });
 });
 
-test('GPC and route are rechecked after an asynchronous load', async () => {
-  for (const change of ['gpc', 'path'] as const) {
+test('consent, GPC and route are rechecked after an asynchronous load', async () => {
+  for (const change of ['consent', 'gpc', 'path'] as const) {
     const h = harness({ pending: true, consent: true });
     // Change without a browser notification to exercise the post-load guard itself.
-    if (change === 'gpc') h.gpc(true, false); else h.path('/learner/private', false);
+    if (change === 'consent') h.preference(false, false);
+    else if (change === 'gpc') h.gpc(true, false);
+    else h.path('/learner/private', false);
     h.resolveLoad();
     await settled();
     assert.equal(h.created.length, 0);
     assert.equal(h.pages.length, 0);
   }
+});
+
+test('focus and visibility refreshes recover a missed cross-tab denial', async () => {
+  const h = harness({ consent: true });
+  await settled();
+  h.preference(false, false);
+  h.environmentChanged();
+  assert.deepEqual(h.grants, [true, false]);
+  assert.deepEqual(h.store.getState(), { consented: false, status: 'off' });
+  assert.equal(h.counts().disposed, 1);
+  h.controller.dispose();
+});
+
+test('SDK teardown failures cannot interrupt revocation or leak browser listeners', async () => {
+  const h = harness({ consent: true, teardownThrows: true });
+  await settled();
+  assert.doesNotThrow(() => h.controller.setConsent(false));
+  assert.deepEqual(h.store.getState(), { consented: false, status: 'off' });
+  assert.doesNotThrow(() => h.controller.dispose());
+  assert.deepEqual(h.counts(), { disposed: 1, unlistened: 1 });
 });
 
 test('cross-tab denial, route exit and teardown revoke the client and release listeners', async () => {
@@ -241,4 +270,29 @@ test('explicit denial removes only the documented SDK identifier without loading
   } as unknown as Window;
   browserMarketingEnvironment(browser).writeConsent(false);
   assert.deepEqual([...entries], [['unrelated', 'keep'], [MARKETING_CONSENT_KEY, 'denied']]);
+});
+
+test('a blocked storage write keeps an explicit visit choice until a preference event', () => {
+  let storageListener: ((event: StorageEvent) => void) | undefined;
+  const browser = {
+    localStorage: {
+      getItem: () => 'denied',
+      setItem: () => { throw new Error('Synthetic storage quota failure'); },
+      removeItem() {},
+    },
+    addEventListener(name: string, callback: (event: StorageEvent) => void) {
+      if (name === 'storage') storageListener = callback;
+    },
+    removeEventListener() {},
+    document: { addEventListener() {}, removeEventListener() {} },
+  } as unknown as Window;
+  const environment = browserMarketingEnvironment(browser);
+  assert.equal(environment.readConsent(), false);
+  environment.writeConsent(true);
+  assert.equal(environment.readConsent(), true);
+  assert.equal(browserMarketingEnvironment(browser).readConsent(), false);
+  const unlisten = environment.listen(() => {}, () => {});
+  storageListener?.({ key: MARKETING_CONSENT_KEY } as StorageEvent);
+  assert.equal(environment.readConsent(), false);
+  unlisten();
 });

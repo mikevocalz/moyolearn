@@ -99,7 +99,9 @@ export function createMarketingAnalytics(options: {
     const previous = client;
     client = null;
     if (previous) {
-      try { previous.setConsent(false); } finally { previous.dispose(); }
+      // A broken optional SDK must not prevent the other teardown steps.
+      try { previous.setConsent(false); } catch { /* Still attempt disposal. */ }
+      try { previous.dispose(); } catch { /* Local ownership is already revoked. */ }
     }
   };
   const update = (status: MarketingConsentState['status']) => store.setState({ consented, status });
@@ -142,6 +144,7 @@ export function createMarketingAnalytics(options: {
       if (disposed || pending.signal.aborted) return;
       loading = null;
       // Consent, GPC and path can change while the external script loads.
+      consented = environment.readConsent();
       if (!consented || environment.globalPrivacyControl() || !marketingPath(environment.pathname())) {
         refresh();
         return;
@@ -162,10 +165,11 @@ export function createMarketingAnalytics(options: {
     });
   };
 
-  const unlisten = environment.listen(() => {
+  const refreshPreference = () => {
     consented = environment.readConsent();
     refresh();
-  }, refresh);
+  };
+  const unlisten = environment.listen(refreshPreference, refreshPreference);
   refresh();
 
   return {
@@ -176,20 +180,23 @@ export function createMarketingAnalytics(options: {
       environment.writeConsent(consented);
       refresh();
     },
-    refresh,
+    refresh: refreshPreference,
     /** Revoke immediately and release this mounted session; safe to call repeatedly. */
     dispose() {
       if (disposed) return;
       disposed = true;
-      stop();
-      unlisten();
+      try { stop(); } finally { unlisten(); }
     },
   };
 }
 
 /** Browser boundary: no storage access or script request occurs during SSR. */
 export function browserMarketingEnvironment(browser: Window): MarketingEnvironment {
+  // A failed storage write still allows an explicit choice for this visit.
+  // A later cross-tab preference event supersedes that in-memory fallback.
+  let visitConsent: boolean | null = null;
   const readConsent = () => {
+    if (visitConsent !== null) return visitConsent;
     try { return browser.localStorage.getItem(MARKETING_CONSENT_KEY) === 'granted'; }
     catch { return false; }
   };
@@ -198,8 +205,10 @@ export function browserMarketingEnvironment(browser: Window): MarketingEnvironme
     globalPrivacyControl: () => (browser.navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl === true,
     readConsent,
     writeConsent(consented) {
-      try { browser.localStorage.setItem(MARKETING_CONSENT_KEY, consented ? 'granted' : 'denied'); }
-      catch { /* This visit can still make a choice when browser storage is unavailable. */ }
+      try {
+        browser.localStorage.setItem(MARKETING_CONSENT_KEY, consented ? 'granted' : 'denied');
+        visitConsent = null;
+      } catch { visitConsent = consented; }
       if (!consented) {
         try { browser.localStorage.removeItem(SIGNALIQ_ANONYMOUS_KEY); }
         catch { /* Storage may be unavailable; denial still prevents SDK loading/sending. */ }
@@ -243,7 +252,10 @@ export function browserMarketingEnvironment(browser: Window): MarketingEnvironme
     listen(preferenceChanged, environmentChanged) {
       const storage = (event: StorageEvent) => {
         // The localStorage getter can throw. readConsent() fails closed instead.
-        if (event.key === MARKETING_CONSENT_KEY || event.key === null) preferenceChanged();
+        if (event.key === MARKETING_CONSENT_KEY || event.key === null) {
+          visitConsent = null;
+          preferenceChanged();
+        }
       };
       browser.addEventListener('storage', storage);
       browser.addEventListener('focus', environmentChanged);

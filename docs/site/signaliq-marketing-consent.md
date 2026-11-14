@@ -39,6 +39,11 @@ back/forward navigation recheck the choice/GPC/path. Pending script loads are
 aborted on denial or route exit and late completions cannot create a client.
 Browser storage failures leave the choice effective for the current visit;
 subsequent visits default off.
+Focus, visibility and asynchronous SDK completion also re-read the stored
+choice, so a missed storage event cannot leave an old grant active. If a write
+fails, the explicit choice remains in this mounted browser environment only;
+a later preference event supersedes that fallback. SDK teardown exceptions do
+not interrupt disposal attempts or release of the browser listeners.
 
 ## Configuration and preview
 
@@ -70,7 +75,7 @@ configuration. If a deployment-level CSP is present, add only the approved
 SignalIQ origin to `script-src` and `connect-src` while preserving the rest of
 the policy. Do not weaken it to `*` or add `unsafe-inline` for this feature.
 
-Run `pnpm --filter web-vite test:analytics`,
+Run `pnpm --filter web-vite test` (also included in the workspace test task),
 `pnpm --filter web-vite typecheck`, and `pnpm --filter web-vite lint` with the
 workspace's installed dependencies. The focused test command uses Node 24's
 built-in TypeScript stripping and test runner; no test dependency is added.
