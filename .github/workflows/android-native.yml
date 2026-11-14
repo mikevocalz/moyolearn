@@ -27,11 +27,35 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
       - name: Test real CMake and Ninja pool scheduling
         run: python3 tooling/test-native-compile-pools.py --cmake "$ANDROID_HOME/cmake/3.22.1/bin/cmake" --ninja "$ANDROID_HOME/cmake/3.22.1/bin/ninja"
+      - name: Test APK renderer verification
+        run: node --test tooling/verify-quest-apk.test.mjs
       - name: Assemble Quest debug app
         working-directory: apps/mobile/android
         env:
           ORG_GRADLE_PROJECT_moyoNativeJobPool: '2'
         run: bash "$GITHUB_WORKSPACE/tooling/run-with-resource-heartbeat.sh" bash gradlew :app:assembleQuestDebug --stacktrace --max-workers=1 --no-parallel -PreactNativeArchitectures=arm64-v8a '-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'
+      - name: Verify generated Quest manifest and renderer pin
+        env:
+          MOYO_REQUIRE_MERGED_QUEST_MANIFEST: '1'
+        run: node --test apps/mobile/plugins/__tests__/*.test.cjs
+      - name: Verify the packaged Quest renderer
+        run: >-
+          node tooling/verify-quest-apk.mjs
+          --apk apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk
+          --strip-tool "$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+          --output apps/mobile/android/app/build/outputs/apk/quest/debug/renderer-verification.json
+      - name: Keep verified Quest candidate for device acceptance
+        uses: actions/upload-artifact@v4
+        with:
+          name: quest-debug-${{ github.sha }}
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk
+            apps/mobile/android/app/build/outputs/apk/quest/debug/output-metadata.json
+            apps/mobile/android/app/build/outputs/apk/quest/debug/renderer-verification.json
+            apps/mobile/android/app/build/intermediates/merged_manifests/questDebug/processQuestDebugManifest/AndroidManifest.xml
       - name: Verify generated native compile and link pools
         if: always()
         run: node tooling/verify-native-compile-pools.mjs

@@ -1538,6 +1538,7 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
       {immersive ? (
         <ViroXRSceneNavigator
           initialScene={INITIAL_SCENE}
+          handTrackingEnabled
           /*
             ALL THREE POST-PROCESS PASSES OFF, not just HDR.
 
