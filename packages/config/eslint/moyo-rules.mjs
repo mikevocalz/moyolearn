@@ -9,29 +9,44 @@
  * would be three files and a build step to say the same twenty lines.
  */
 
-/** `import 'server-only'` must be the first statement — not merely present. */
+/** The framework's compiler-recognized server marker must be the first statement. */
 const serverOnlyFirst = {
   meta: {
     type: 'problem',
-    docs: { description: "require `import 'server-only'` as the first statement" },
-    schema: [],
+    docs: {
+      description: "require `import 'server-only'` as the first statement",
+    },
+    schema: [
+      {
+        type: 'object',
+        properties: { runtime: { enum: ['react', 'tanstack'] } },
+        additionalProperties: false,
+      },
+    ],
     messages: {
       missing:
-        "Repositories and services must open with `import 'server-only'`. On native the leak " +
+        'Repositories and services must open with the configured server-only marker. On native the leak ' +
         'this catches is Payload credentials and inference keys ending up readable in an app binary.',
       notFirst:
-        "`import 'server-only'` must be the FIRST statement — anything above it is evaluated " +
+        'The configured server-only marker must be the FIRST statement — anything above it is evaluated ' +
         'before the guard, which is exactly the code you need guarded.',
     },
   },
   create(context) {
+    const marker =
+      context.options[0]?.runtime === 'tanstack'
+        ? '@tanstack/react-start/server-only'
+        : 'server-only';
     return {
       Program(node) {
         const isServerOnly = (s) =>
-          s.type === 'ImportDeclaration' && s.specifiers.length === 0 && s.source.value === 'server-only';
+          s.type === 'ImportDeclaration' &&
+          s.specifiers.length === 0 &&
+          s.source.value === marker;
         const at = node.body.findIndex(isServerOnly);
         if (at === -1) context.report({ node, messageId: 'missing' });
-        else if (at !== 0) context.report({ node: node.body[at], messageId: 'notFirst' });
+        else if (at !== 0)
+          context.report({ node: node.body[at], messageId: 'notFirst' });
       },
     };
   },
@@ -58,7 +73,9 @@ const sotHeader = {
       Program(node) {
         const source = context.sourceCode ?? context.getSourceCode();
         // Header = the comments before the first statement (or the whole file if it has none).
-        const header = node.body.length ? source.getCommentsBefore(node.body[0]) : source.getAllComments();
+        const header = node.body.length
+          ? source.getCommentsBefore(node.body[0])
+          : source.getAllComments();
         const all = header.length ? header : source.getAllComments();
         if (!all.some((c) => c.value.includes('SOT-KEYWORDS:'))) {
           context.report({ node, messageId: 'missing' });

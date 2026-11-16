@@ -19,12 +19,14 @@
     "bunny:verify:video": "tsx scripts/bunny-verify-video.mts",
     "tutor:verify": "tsx scripts/tutor-check.mts",
     "sweep:verify": "tsx scripts/sweep-verify.mts",
-    "test": "pnpm voice:test && pnpm campaigns:test && node --conditions=react-server --import tsx --test lib/chemistry-request.test.ts",
+    "test": "pnpm voice:test && pnpm campaigns:test && node --conditions=react-server --import tsx --test lib/chemistry-request.test.ts && pnpm marketing:test",
     "campaigns:test": "node --test lib/campaigns/*.test.ts lib/campaigns/*.test.mjs",
     "voice:test": "node --conditions=react-server --import tsx --test lib/voice-baked.test.ts",
     "voice:check": "node --conditions=react-server --import tsx scripts/voice-check.mts",
     "voice:bake": "NODE_OPTIONS=--conditions=react-server tsx scripts/voice-bake.mts",
-    "avatar:assets": "node scripts/copy-avatar-assets.mjs"
+    "avatar:assets": "node scripts/copy-avatar-assets.mjs",
+    "marketing:test": "node --test lib/marketing/contract.test.ts lib/marketing/delivery.test.ts lib/marketing/payment-units.test.ts lib/marketing/sync-route.test.ts",
+    "marketing:test:db": "node --test lib/marketing/marketing.integration.test.mjs"
   },
   "dependencies": {
     "@acme/app": "workspace:*",

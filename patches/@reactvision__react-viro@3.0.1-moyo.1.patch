@@ -876,3 +876,26 @@ index 21c54d6..517fe8c 100644
 +        it.name.startsWith('bundle') && it.name.endsWith('Aar') && !it.name.endsWith('LocalLintAar')
      }.configureEach { enabled = false }
  }
+diff --git a/plugins/withViroAndroid.ts b/plugins/withViroAndroid.ts
+--- a/plugins/withViroAndroid.ts
++++ b/plugins/withViroAndroid.ts
+@@ -54 +54 @@
+-      fs.readFile(mainApplicationPath, "utf-8", (err, data) => {
++      await fs.promises.readFile(mainApplicationPath, "utf-8").then(async (data) => {
+@@ -153,3 +153 @@
+-        fs.writeFile(mainApplicationPath, data, "utf-8", function (err) {
+-          if (err) console.log("Error writing MainApplication.java");
+-        });
++        await fs.promises.writeFile(mainApplicationPath, data, "utf-8");
+diff --git a/dist/plugins/withViroAndroid.js b/dist/plugins/withViroAndroid.js
+--- a/dist/plugins/withViroAndroid.js
++++ b/dist/plugins/withViroAndroid.js
+@@ -34 +34 @@
+-            fs_1.default.readFile(mainApplicationPath, "utf-8", (err, data) => {
++            await fs_1.default.promises.readFile(mainApplicationPath, "utf-8").then(async (data) => {
+@@ -95,4 +95 @@
+-                fs_1.default.writeFile(mainApplicationPath, data, "utf-8", function (err) {
+-                    if (err)
+-                        console.log("Error writing MainApplication.java");
+-                });
++                await fs_1.default.promises.writeFile(mainApplicationPath, data, "utf-8");

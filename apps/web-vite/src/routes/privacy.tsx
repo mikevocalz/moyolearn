@@ -9,6 +9,7 @@ import { Paragraph } from '@acme/ui/primitives';
 import { SitePage } from '@/components/site-page';
 import { PageSection } from '@/components/page-section';
 import { privacy } from '@/copy/content-pages';
+import { MarketingAnalyticsConsent } from '@/components/marketing-analytics-consent';
 
 const SITE_ORIGIN = 'https://moyolearn.com';
 const TITLE = 'Privacy — Moyo';
@@ -33,6 +34,7 @@ function PrivacyPage() {
           <Paragraph className="text-site-body text-moyo-ink">{section.body}</Paragraph>
         </PageSection>
       ))}
+      <MarketingAnalyticsConsent />
     </SitePage>
   );
 }

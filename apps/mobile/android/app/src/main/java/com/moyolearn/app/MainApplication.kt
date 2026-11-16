@@ -36,8 +36,19 @@ class MainApplication : Application(), ReactApplication {
           // add(MyReactNativePackage())
             // expo-pico-core: PicoCorePackage registration
             add(PicoCorePackage(PicoXRPlatform.PICO_OS5))
+          // Moyo: register Viro only when the mobile process ABI can load it.
+          // Android adjusts nativeLibraryDir for the selected process ABI,
+          // including native bridges. The advertised device ABI list does not.
+          val viroNativeAbi = this@MainApplication.applicationInfo.nativeLibraryDir?.substringAfterLast('/')
+          val viroLoader = this@MainApplication.classLoader as? dalvik.system.BaseDexClassLoader
+          val omitUnsupportedMobileViro = BuildConfig.FLAVOR == "mobile" &&
+              (viroNativeAbi == "x86" || viroNativeAbi == "x86_64") &&
+              viroLoader != null && viroLoader.findLibrary("viro_renderer") == null
+          if (!omitUnsupportedMobileViro) {
             add(ReactViroPackage(ReactViroPackage.ViroPlatform.AR))
             add(ReactViroPackage(ReactViroPackage.ViroPlatform.QUEST))
+          }
+          // Moyo: end native Viro registration.
 
         }
     )

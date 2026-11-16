@@ -11,7 +11,7 @@
   },
   "scripts": {
     "lint": "eslint",
-    "test": "node --test src/tenancy/*.test.ts src/retention/*.test.mjs",
+    "test": "node --conditions=react-server --test src/tenancy/*.test.ts src/retention/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -20,7 +20,12 @@
     "payload": "catalog:",
     "pg": "catalog:",
     "sharp": "catalog:",
-    "@seshuk/payload-storage-bunny": "3.0.0"
+    "@seshuk/payload-storage-bunny": "3.0.0",
+    "zod": "catalog:",
+    "zustand": "catalog:",
+    "@tanstack/react-start": "catalog:",
+    "@acme/app": "workspace:*",
+    "server-only": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
