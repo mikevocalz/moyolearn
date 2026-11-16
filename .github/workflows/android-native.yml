@@ -22,6 +22,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify Expo Android publication metadata
         run: node --test tooling/expo-android-publication.test.mjs
+      - name: Verify PICO service flavor isolation
+        run: node --test apps/mobile/plugins/__tests__/pico-platform-dependencies.test.cjs
       - name: Install pinned native toolchain
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
@@ -63,7 +65,7 @@ jobs:
           java-version: '17'
       - run: pnpm install --frozen-lockfile
       - name: Verify runtime acceptance contracts
-        run: node --test tooling/native-runtime-smoke.test.mjs
+        run: node --test tooling/native-runtime-smoke.test.mjs apps/mobile/plugins/__tests__/pico-platform-dependencies.test.cjs
       - name: Install pinned native toolchain
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'

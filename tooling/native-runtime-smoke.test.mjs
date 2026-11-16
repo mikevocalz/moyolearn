@@ -3,10 +3,11 @@
 // SOT-KEYWORDS: native runtime acceptance evidence emulator simulator tests
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import {
-  AGENT_DEVICE, anonymousApiReply, assertAndroidEmulator, runtimeEnvironment,
+  AGENT_DEVICE, anonymousApiReply, assertAndroidEmulator, metroEnvironment, runtimeEnvironment,
   selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
@@ -68,6 +69,31 @@ test('Metro cannot inherit production application URLs, telemetry, or demo-auth 
   assert.equal(environment.EXPO_PUBLIC_SENTRY_DSN, '');
   assert.equal(environment.EXPO_PUBLIC_SENTRY_DSN_MOBILE, '');
   assert.equal(environment.PATH, '/toolchain');
+});
+
+test('Metro keeps Node settings and resolves a real localhost listener on the IPv4 bridge', () => {
+  const inherited = '--max-old-space-size=256 --dns-result-order=verbatim';
+  const environment = metroEnvironment({ ...process.env, NODE_OPTIONS: inherited });
+  assert.equal(environment.NODE_OPTIONS, `${inherited} --dns-result-order=ipv4first`);
+  const child = spawnSync(process.execPath, ['--input-type=module', '-e', `
+    import { createServer } from 'node:http';
+    const server = createServer((_request, response) => response.end('packager-status:running'));
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, 'localhost', resolve);
+    });
+    try {
+      const address = server.address();
+      const response = await fetch('http://127.0.0.1:' + address.port, { signal: AbortSignal.timeout(2000) });
+      console.log(JSON.stringify({ address: address.address, status: await response.text() }));
+    } finally {
+      server.closeAllConnections();
+      await new Promise((resolve) => server.close(resolve));
+    }
+  `], { env: environment, encoding: 'utf8', timeout: 10_000 });
+  assert.equal(child.error, undefined);
+  assert.equal(child.status, 0, child.stderr);
+  assert.deepEqual(JSON.parse(child.stdout), { address: '127.0.0.1', status: 'packager-status:running' });
 });
 
 test('requires actual non-skipped test cases and every execution screenshot', () => {

@@ -73,6 +73,7 @@
  */
 const { mergeQuestImmersiveActivity } = require('./quest-immersive-activity');
 const { updateRendererPin, rendererPath, rendererSha256 } = require('./renderer-pin');
+const { scopePicoPlatformDependencies } = require('./pico-platform-dependencies');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -194,6 +195,18 @@ function withViroFlavorStrategy(config) {
     }
 
     gradleConfig.modResults.contents = contents.replace(anchor, `$1\n        ${strategy}`);
+    return gradleConfig;
+  });
+}
+
+// This mod is registered before the PICO plugin so its action runs after the
+// generated PPS dependency block, just like the existing Viro repairs above.
+function withPicoPlatformDependencyScope(config) {
+  return withAppBuildGradle(config, (gradleConfig) => {
+    if (gradleConfig.modResults.language !== 'groovy') {
+      throw new Error('PICO Platform Service dependency scope requires Groovy app/build.gradle');
+    }
+    gradleConfig.modResults.contents = scopePicoPlatformDependencies(gradleConfig.modResults.contents);
     return gradleConfig;
   });
 }
@@ -399,6 +412,6 @@ function withExpoDeviceFlavors(config) {
 
 module.exports = function withViroAndroidLinkage(config) {
   return withHeadtrackingOnHeadsetsOnly(
-    withExpoDeviceFlavors(withVrActivityOffTheLauncher(withViroCppRuntime(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config)))))),
+    withExpoDeviceFlavors(withVrActivityOffTheLauncher(withViroCppRuntime(withViroDebugVariants(withPicoPlatformDependencyScope(withViroFlavorStrategy(withViroSettingsPaths(config))))))),
   );
 };

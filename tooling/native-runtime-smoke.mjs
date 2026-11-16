@@ -64,6 +64,16 @@ export function runtimeEnvironment(base) {
   };
 }
 
+export function metroEnvironment(base) {
+  return {
+    ...runtimeEnvironment(base),
+    // Expo's --localhost binds the first resolved localhost address. Keep it
+    // on IPv4 to match the readiness URL and adb reverse, without exposing it
+    // on a LAN interface or discarding existing Node memory/debug settings.
+    NODE_OPTIONS: [base.NODE_OPTIONS, '--dns-result-order=ipv4first'].filter(Boolean).join(' '),
+  };
+}
+
 export function verifyRuntimeEvidence(junit, screenshotNames) {
   const suites = [...junit.matchAll(/<testsuite\b([^>]*)>/g)];
   const cases = [...junit.matchAll(/<testcase\b/g)];
@@ -235,7 +245,7 @@ async function main() {
     await command(process.execPath, [agent, 'install', APP_ID, artifact, ...deviceFlags], { log, timeout: 500_000 });
     server = await startAnonymousApi(apiLog);
     metro = spawn('pnpm', ['--filter', 'mobile', 'exec', 'expo', 'start', '--localhost', '--port', String(METRO_PORT)], {
-      cwd: ROOT, env: runtimeEnvironment(process.env), detached: true, stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: ROOT, env: metroEnvironment(process.env), detached: true, stdio: ['ignore', 'pipe', 'pipe'],
     });
     metro.stdout.pipe(metroLog, { end: false }); metro.stderr.pipe(metroLog, { end: false });
     metro.on('error', (error) => { log.write(`Metro process error: ${error.message}\n`); });
