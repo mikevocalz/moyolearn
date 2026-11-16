@@ -28,6 +28,11 @@ process.env.SIGNALIQ_BUSINESS_ENDPOINT =
 process.env.SIGNALIQ_BUSINESS_KEY = 'synthetic-not-a-live-key';
 process.env.NEXT_PUBLIC_AUTH_MODE = 'live';
 process.env.NODE_ENV = 'test';
+process.env.CRON_SECRET = 'synthetic-cron-secret';
+const cronRequest = () =>
+  new Request('https://app.example.invalid/api/marketing/sync', {
+    headers: { authorization: 'Bearer synthetic-cron-secret' },
+  });
 const pool = new Pool({
   connectionString: database,
   max: 3,
@@ -44,9 +49,14 @@ const hooks = registerHooks({
       : next(specifier, context);
   },
 });
-const repository = await import('./marketing.repository.ts');
+const repository =
+  await import('../../../../packages/app/marketing/repository/marketing.repository.ts');
 const service = await import('./marketing.service.ts');
 const { inquiryInput } = await import('./contract.ts');
+const { setOperationSink } =
+  await import('../../../../packages/app/core/telemetry.ts');
+const operationRecords = [];
+setOperationSink((record) => operationRecords.push(record));
 const headers = new Headers({
   host: 'admin.moyolearn.com',
   origin: 'https://admin.moyolearn.com',
@@ -120,12 +130,14 @@ before(async () => {
   await pool.query(migration);
 });
 beforeEach(async () => {
+  operationRecords.length = 0;
   await pool.query(
     'TRUNCATE payload.marketing_inquiries,payload.marketing_updates,payload.marketing_outbox,payload.marketing_rate_limits,payload.marketing_verified_payments,better_auth.subscription,better_auth.organization,better_auth."user" CASCADE',
   );
   fixture.user = { id: 1, collection: 'users' };
 });
 after(async () => {
+  setOperationSink(null);
   hooks.deregister();
   await pool.end();
 });
@@ -174,6 +186,51 @@ test('unconsented inquiries stay in Moyo and rate limits are transactional', asy
     update('progress', { stage: 'contacted' }),
   );
   assert.equal(await count('marketing_outbox'), 0);
+});
+
+test('the most recently recorded booking wins an earlier reschedule; progress cannot replace it', async () => {
+  const saved = await repository.saveInquiry(org, input(), 'reschedule-rate');
+  const later = new Date(Date.now() + 7 * 86400000).toISOString();
+  const earlier = new Date(Date.now() + 86400000).toISOString();
+  const oldId = '00000000-0000-4000-8000-000000000001';
+  const newId = '00000000-0000-4000-8000-000000000002';
+  await service.updateMarketingInquiry(
+    internalRequest(
+      update('booking', { requestId: oldId, scheduledAt: later }),
+    ),
+    saved.id,
+  );
+  await service.updateMarketingInquiry(
+    internalRequest(
+      update('booking', { requestId: newId, scheduledAt: earlier }),
+    ),
+    saved.id,
+  );
+  await pool.query(
+    "UPDATE payload.marketing_updates SET created_at = CASE id WHEN $1::uuid THEN now()-interval '2 seconds' ELSE now()-interval '1 second' END WHERE inquiry_id=$2",
+    [oldId, saved.id],
+  );
+  assert.equal(
+    Date.parse((await repository.listInquiries(org))[0].scheduled_at),
+    Date.parse(earlier),
+  );
+  await service.updateMarketingInquiry(
+    internalRequest(update('progress', { stage: 'contacted' })),
+    saved.id,
+  );
+  assert.equal(
+    Date.parse((await repository.listInquiries(org))[0].scheduled_at),
+    Date.parse(earlier),
+  );
+  // Timestamp equality has an explicit stable tie-breaker, rather than row-plan order.
+  await pool.query(
+    "UPDATE payload.marketing_updates SET created_at='2026-01-01T00:00:00Z' WHERE inquiry_id=$1 AND action='booking'",
+    [saved.id],
+  );
+  assert.equal(
+    Date.parse((await repository.listInquiries(org))[0].scheduled_at),
+    Date.parse(earlier),
+  );
 });
 
 test('a new repeat inquiry reuses only the exact submitted adult prospect and freezes old delivery payloads', async () => {
@@ -307,7 +364,7 @@ test('queued remote acceptance requires status polling; only processed removes r
     });
   });
   try {
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     let row = (
       await pool.query('SELECT state,event FROM payload.marketing_outbox')
     ).rows[0];
@@ -316,7 +373,7 @@ test('queued remote acceptance requires status polling; only processed removes r
     await pool.query(
       'UPDATE payload.marketing_outbox SET next_attempt_at=now()',
     );
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     row = (await pool.query('SELECT state,event FROM payload.marketing_outbox'))
       .rows[0];
     assert.equal(row.state, 'delivered');
@@ -331,7 +388,7 @@ test('withdrawal after an unconfirmed send deletes queued PII and delivers an id
   const timeout = mock.method(globalThis, 'fetch', async () => {
     throw new Error('response lost after accept');
   });
-  await service.drainMarketingOutbox();
+  await service.drainMarketingOutbox(cronRequest());
   timeout.mock.restore();
   const withdrawal = update('withdraw');
   await repository.saveInquiryUpdate(
@@ -367,7 +424,7 @@ test('withdrawal after an unconfirmed send deletes queued PII and delivers an id
     });
   });
   try {
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     assert.equal(
       await count(
         'marketing_outbox',
@@ -652,7 +709,7 @@ test('legacy and unproven queued orders are quarantined by both migration and fi
     throw new Error('An unproven order must never leave Moyo.');
   });
   try {
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     assert.equal(fetchMock.mock.callCount(), 0);
     assert.equal(
       await count(
@@ -925,7 +982,7 @@ test('legacy unconverted orders are quarantined without rewriting their source I
     throw new Error('Unconverted order must not be sent or polled');
   });
   try {
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     assert.equal(fetchMock.mock.callCount(), 0);
     assert.equal(
       await count(
@@ -1063,7 +1120,7 @@ test('an in-flight inquiry delivery serializes with withdrawal and cannot resurr
     return Response.json({ sourceEventId: randomUUID(), state: 'processed' });
   });
   try {
-    const draining = service.drainMarketingOutbox();
+    const draining = service.drainMarketingOutbox(cronRequest());
     await started;
     let withdrawn = false;
     const withdrawal = repository
@@ -1079,7 +1136,7 @@ test('an in-flight inquiry delivery serializes with withdrawal and cannot resurr
     );
     releaseResponse();
     await Promise.all([draining, withdrawal]);
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     assert.equal(
       (await repository.listInquiries(org))[0].signal_consent,
       false,
@@ -1125,11 +1182,11 @@ test('explicit recovery posts the exact accepted source event again; terminal su
     });
   });
   try {
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     await pool.query(
       'UPDATE payload.marketing_outbox SET next_attempt_at=now()',
     );
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     let row = (
       await pool.query(
         'SELECT state,source_event_id FROM payload.marketing_outbox',
@@ -1143,7 +1200,7 @@ test('explicit recovery posts the exact accepted source event again; terminal su
       saved.id,
       update('retry-delivery'),
     );
-    await service.drainMarketingOutbox();
+    await service.drainMarketingOutbox(cronRequest());
     assert.deepEqual(
       sent.map((entry) => entry.method),
       ['POST', 'GET', 'POST'],

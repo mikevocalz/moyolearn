@@ -1,9 +1,9 @@
 // The sales allowlist is ineffective if another internal user can seize its IDs.
-// SOT: ../collections/Users.ts · ../marketing/marketing-access.ts
+// SOT: ../collections/Users.ts · ../../../app/marketing/permissions/marketing.permissions.ts
 // SOT-KEYWORDS: marketing identity credential update delete access regression
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { marketingIdentityAccess } from '../marketing/marketing-access.ts';
+import { marketingIdentityAccess } from '@acme/app/marketing-access';
 import { Users } from '../collections/Users.ts';
 
 test('configured sales identities cannot be changed by other staff or deleted through the public API', () => {

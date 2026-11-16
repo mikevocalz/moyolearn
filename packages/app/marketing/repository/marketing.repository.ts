@@ -1,5 +1,5 @@
-import '@tanstack/react-start/server-only';
-// Native Payload REST uses TanStack's compiler-enforced server boundary.
+import 'server-only';
+// The domain owns persistence; both server hosts consume its public service entry.
 // Moyo's own adult sales intake; never a copy of customer organizations' CRM.
 // SOT: packages/payload/migrations/signaliq_marketing_additive.sql
 // SOT-KEYWORDS: marketing repository inquiry transaction outbox consent billing
@@ -13,11 +13,19 @@ import {
   inquirySourceId,
   inquirySummary,
   MarketingError,
+  paymentInput,
   RECOVERABLE_DELIVERY_ERRORS,
   updateEvent,
-} from './contract.ts';
-import type { BusinessEvent, InquiryInput, InquiryUpdate } from './contract.ts';
-import { stripeInvoiceToIsoMinor } from './payment-units.ts';
+} from '../schemas/marketing.schema.ts';
+import type {
+  BusinessEvent,
+  InquiryInput,
+  InquiryUpdate,
+  MarketingPayment,
+} from '../schemas/marketing.schema.ts';
+import { stripeInvoiceToIsoMinor } from '../payment-units.ts';
+import { deliveryItem } from '../delivery.ts';
+import type { DeliveryItem, deliverItem } from '../delivery.ts';
 
 let pool: Pool | undefined;
 function connection() {
@@ -150,7 +158,7 @@ export async function saveInquiry(
 export async function listInquiries(orgId: string) {
   const result = await connection().query(
     `SELECT to_jsonb(summary) AS record FROM (SELECT i.id,i.contact_name,i.email,i.audience,i.organization_name,i.created_at,i.signal_consent,i.withdrawn_at,i.billing_reference_id,
-    (SELECT max(scheduled_at) FROM payload.marketing_updates u WHERE u.org_id=i.org_id AND u.inquiry_id=i.id) AS scheduled_at,
+    (SELECT scheduled_at FROM payload.marketing_updates u WHERE u.org_id=i.org_id AND u.inquiry_id=i.id AND u.action='booking' ORDER BY u.created_at DESC,u.id DESC LIMIT 1) AS scheduled_at,
     (SELECT count(*)::int FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.inquiry_id=i.id AND state IN ('pending','accepted')) AS pending,
     (SELECT count(*)::int FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.inquiry_id=i.id AND state IN ('blocked','failed') AND error_code IS DISTINCT FROM 'consent_withdrawn') AS attention,
     (SELECT error_code FROM payload.marketing_outbox o WHERE o.org_id=i.org_id AND o.inquiry_id=i.id AND error_code IS NOT NULL AND error_code <> 'consent_withdrawn' ORDER BY created_at DESC LIMIT 1) AS last_error,
@@ -325,24 +333,6 @@ export async function saveInquiryUpdate(
   });
 }
 
-const paymentInput = z
-  .object({
-    invoiceId: z.string().regex(/^in_[a-zA-Z0-9]+$/),
-    customerId: z.string().regex(/^cus_[a-zA-Z0-9]+$/),
-    subscriptionId: z.string().regex(/^sub_[a-zA-Z0-9]+$/),
-    amountCents: z.number().int().positive().max(2147483647),
-    currency: z.string().regex(/^[A-Z]{3}$/),
-    occurredAt: z.iso.datetime(),
-    live: z.boolean(),
-    evidenceStatus: z.enum(['verified', 'incomplete', 'mismatch']),
-    moyoPriceSeen: z.boolean(),
-  })
-  .strict()
-  .refine(
-    (payment) => payment.evidenceStatus !== 'verified' || payment.moyoPriceSeen,
-    'Verified Moyo evidence must include a configured plan price.',
-  );
-export type MarketingPayment = z.infer<typeof paymentInput>;
 const paymentFromRow = z
   .object({
     id: z.string(),
@@ -616,4 +606,96 @@ export async function connectionStatus(orgId: string) {
     [orgId],
   );
   return result.rows.map((row) => connectionCount.parse(row.record));
+}
+
+export type { MarketingPayment } from '../schemas/marketing.schema.ts';
+
+/** Expired buckets contain only one-way request hashes, never contact or address data. */
+export async function pruneMarketingRateLimits(): Promise<void> {
+  await marketingTransaction(async (client) => {
+    await client.query(
+      "DELETE FROM payload.marketing_rate_limits WHERE window_start<now()-interval '2 days'",
+    );
+  });
+}
+
+/** Keep the lock across delivery so withdrawal cannot race a stale contact export. */
+export async function deliverNextMarketingItem(
+  orgId: string,
+  deliver: (
+    item: DeliveryItem,
+    accepted: boolean,
+  ) => ReturnType<typeof deliverItem>,
+): Promise<boolean> {
+  return marketingTransaction(async (client) => {
+    const result = await client.query(
+      `SELECT o.*,i.signal_consent,i.withdrawn_at FROM payload.marketing_outbox o JOIN payload.marketing_inquiries i ON i.org_id=o.org_id AND i.id=o.inquiry_id
+        WHERE o.org_id=$1 AND o.state IN ('pending','accepted') AND o.next_attempt_at<=now()
+        AND (o.operation='withdrawal' OR o.source_id='moyo.inquiry:'||i.id::text OR EXISTS(
+          SELECT 1 FROM payload.marketing_outbox parent WHERE parent.org_id=o.org_id AND parent.inquiry_id=o.inquiry_id
+          AND parent.source_id='moyo.inquiry:'||i.id::text AND parent.state='delivered'))
+        ORDER BY o.created_at,o.id LIMIT 1 FOR UPDATE OF o,i SKIP LOCKED`,
+      [orgId],
+    );
+    const row = result.rows[0];
+    if (!row) return false;
+    if (
+      row.operation !== 'withdrawal' &&
+      (!row.signal_consent || row.withdrawn_at)
+    ) {
+      await client.query(
+        "UPDATE payload.marketing_outbox SET state='blocked',event=null,error_code='consent_withdrawn' WHERE id=$1 AND org_id=$2",
+        [row.id, orgId],
+      );
+      return true;
+    }
+    const parsed = deliveryItem.safeParse({
+      operation: row.operation,
+      event: row.event,
+    });
+    if (!parsed.success) {
+      await client.query(
+        "UPDATE payload.marketing_outbox SET state='failed',error_code='invalid_stored_event' WHERE id=$1 AND org_id=$2",
+        [row.id, orgId],
+      );
+      return true;
+    }
+    if (
+      parsed.data.operation === 'business-event' &&
+      parsed.data.event.kind === 'order' &&
+      !(await hasVerifiedOrderReceipt(
+        client,
+        orgId,
+        row.inquiry_id,
+        parsed.data.event,
+      ))
+    ) {
+      await client.query(
+        "UPDATE payload.marketing_outbox SET state='blocked',event=null,error_code='invoice_evidence_unverified' WHERE id=$1 AND org_id=$2",
+        [row.id, orgId],
+      );
+      return true;
+    }
+    const outcome = await deliver(parsed.data, row.state === 'accepted');
+    const nextState =
+      outcome.state === 'retry'
+        ? row.attempts >= 19
+          ? 'failed'
+          : row.state
+        : outcome.state;
+    const delay = Math.min(3600, 30 * 2 ** Math.min(row.attempts, 7));
+    await client.query(
+      `UPDATE payload.marketing_outbox SET state=$1::varchar,attempts=attempts+1,next_attempt_at=now()+($2::int*interval '1 second'),source_event_id=coalesce($3,source_event_id),error_code=$4,
+        delivered_at=CASE WHEN $1::varchar='delivered' THEN now() ELSE delivered_at END,event=CASE WHEN $1::varchar='delivered' THEN null ELSE event END WHERE id=$5 AND org_id=$6`,
+      [
+        nextState,
+        delay,
+        'sourceEventId' in outcome ? outcome.sourceEventId : null,
+        'error' in outcome ? outcome.error : null,
+        row.id,
+        orgId,
+      ],
+    );
+    return true;
+  });
 }

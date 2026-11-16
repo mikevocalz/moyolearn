@@ -47,6 +47,7 @@ import viteReact from '@vitejs/plugin-react';
 import rsc from '@vitejs/plugin-rsc';
 import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
+import { sharedServerBoundary } from './server-boundary.ts';
 
 const src = fileURLToPath(new URL('./src', import.meta.url));
 
@@ -74,6 +75,7 @@ export default defineConfig(
   withPayload(
     ({ pluginOptions }) => ({
       plugins: [
+        sharedServerBoundary(),
         /*
           One copy of each. `@vitejs/plugin-rsc` is a hard singleton — two
           instances load two module registries and the admin's Flight payload
@@ -94,7 +96,7 @@ export default defineConfig(
           */
           ...pluginOptions.tanstackStart,
           // Payload's own callback allows some internal package crossings.
-          // Our sales modules carry TanStack's server marker and must never be
+          // Our shared sales marker is translated for this compiler and must never be
           // covered by that allowance, including a direct client deep import.
           importProtection: {
             ...pluginOptions.tanstackStart.importProtection,
@@ -104,12 +106,14 @@ export default defineConfig(
               specifiers: [
                 ...(pluginOptions.tanstackStart.importProtection?.client
                   ?.specifiers ?? []),
-                '@acme/payload/marketing-server',
+                '@acme/app/marketing',
+                '@acme/app/marketing-access',
               ],
               files: [
                 ...(pluginOptions.tanstackStart.importProtection?.client
                   ?.files ?? []),
-                /\/packages\/payload\/src\/marketing\/(?:server|marketing-access|marketing\.service|marketing\.repository|endpoints)\.ts$/,
+                /\/packages\/app\/marketing\/(?:index\.ts|(?:services|repository|permissions)\/)/,
+                /\/packages\/app\/core\/protected-operation\.ts$/,
               ],
             },
             onViolation: (violation) => {
@@ -120,7 +124,9 @@ export default defineConfig(
                 violation.envType === 'client' &&
                 'resolved' in violation &&
                 typeof violation.resolved === 'string' &&
-                /\/packages\/payload\/src\/marketing\//.test(violation.resolved)
+                /\/packages\/app\/(?:marketing\/(?:index\.ts|(?:services|repository|permissions)\/)|core\/protected-operation\.ts)/.test(
+                  violation.resolved,
+                )
               )
                 return true;
               return pluginOptions.tanstackStart.importProtection?.onViolation?.(

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { marketingIdentityAccess } from '../marketing/marketing-access.ts';
+import { marketingIdentityAccess } from '@acme/app/marketing';
 
 export const Users: CollectionConfig = {
   slug: 'users',

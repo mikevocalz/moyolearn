@@ -60,6 +60,7 @@ const CRM_ROOTS = [
   'apps/web/lib/families.repository.ts',
   'apps/web/lib/org.repository.ts',
   'apps/web/lib/marketing',
+  'packages/app/marketing',
   'packages/payload/src/marketing',
   'apps/web/app/api/marketing/inquiries',
 ];

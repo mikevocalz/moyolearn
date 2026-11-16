@@ -7,9 +7,14 @@ import { registerHooks } from 'node:module';
 
 const data = (source: string) =>
   `data:text/javascript,${encodeURIComponent(source)}`;
+const contractUrl = data(
+  `export class MarketingError extends Error { constructor(message,status) { super(message); this.status=status; } }`,
+);
 const serviceUrl = data(`
+  import { MarketingError } from '@/lib/marketing/contract';
   export const fixture = { calls: 0, result: { state: 'ready', processed: 0 }, error: null };
-  export async function drainMarketingOutbox(inspect) {
+  export async function drainMarketingOutbox(request, inspect) {
+    if (request.headers.get('authorization') !== 'Bearer synthetic-cron-secret') throw new MarketingError('Unauthorized', 401);
     fixture.calls++;
     if (typeof inspect !== 'function') throw new Error('Missing invoice repair adapter');
     if (fixture.error) throw fixture.error;
@@ -18,6 +23,7 @@ const serviceUrl = data(`
 `);
 const aliases: Record<string, string> = {
   '@/lib/marketing/marketing.service': serviceUrl,
+  '@/lib/marketing/contract': contractUrl,
   '@acme/auth/server': data('export function recheckMoyoPaidInvoice() {}'),
 };
 const hooks = registerHooks({

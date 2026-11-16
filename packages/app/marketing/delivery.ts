@@ -2,7 +2,7 @@
 // SOT: docs/site/signaliq-business-connection.md
 // SOT-KEYWORDS: signaliq delivery receipt retry timeout server key
 import { z } from 'zod';
-import { businessEvent, receipt } from './contract.ts';
+import { businessEvent, receipt } from './schemas/marketing.schema.ts';
 
 export function deliveryConfiguration(endpoint?: string, key?: string) {
   if (!endpoint || !key?.trim()) return null;

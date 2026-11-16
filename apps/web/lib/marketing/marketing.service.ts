@@ -1,5 +1,5 @@
 import 'server-only';
-// Shared native Payload sales domain; Next retains its server/client import boundary.
+// Next's service facade uses the shared protected domain, never the persistence package.
 // SOT: docs/site/signaliq-business-connection.md
-// SOT-KEYWORDS: marketing shared payload domain entry
-export * from '@acme/payload/marketing-server';
+// SOT-KEYWORDS: marketing shared domain service boundary
+export * from '@acme/app/marketing';

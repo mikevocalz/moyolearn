@@ -15,8 +15,8 @@ import {
   Gutter,
   TextInput,
 } from '@payloadcms/ui';
-import { marketingInboxResponse } from '../marketing/contract.ts';
-import type { InquirySummary, InquiryUpdate } from '../marketing/contract.ts';
+import { marketingInboxResponse } from '@acme/app/marketing-contract';
+import type { InquirySummary, InquiryUpdate } from '@acme/app/marketing-contract';
 import type { z } from 'zod';
 import './marketing-inquiries.css';
 

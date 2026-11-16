@@ -2,8 +2,8 @@
 // SOT: docs/site/signaliq-business-connection.md · node_modules/payload/dist/utilities/createPayloadRequest.js
 // SOT-KEYWORDS: marketing internal payload endpoints same origin authorization
 import type { Endpoint } from 'payload';
-import { marketingInbox, updateMarketingInquiry } from './marketing.service.ts';
-import { MarketingError } from './contract.ts';
+import { marketingInbox, updateMarketingInquiry } from '@acme/app/marketing';
+import { MarketingError } from '@acme/app/marketing-contract';
 
 const privateHeaders = {
   'Cache-Control': 'private, no-store',

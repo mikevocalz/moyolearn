@@ -4,9 +4,8 @@
 import type { AdminViewServerProps, ServerProps } from 'payload';
 import { DefaultTemplate } from '@payloadcms/ui/rsc';
 import { Banner, Button, Gutter } from '@payloadcms/ui';
-import { marketingInbox } from '../marketing/marketing.service.ts';
-import { isMarketingAdministrator } from '../marketing/marketing-access.ts';
-import { MarketingError } from '../marketing/contract.ts';
+import { marketingInbox, isMarketingAdministrator } from '@acme/app/marketing';
+import { MarketingError } from '@acme/app/marketing-contract';
 import { MarketingInquiriesClient } from './MarketingInquiriesClient';
 
 export async function MarketingInquiriesView(props: AdminViewServerProps) {

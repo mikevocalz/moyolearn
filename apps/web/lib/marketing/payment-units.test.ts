@@ -3,7 +3,7 @@
 // SOT-KEYWORDS: marketing currency payment conversion regression
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stripeInvoiceToIsoMinor } from '../../../../packages/payload/src/marketing/payment-units.ts';
+import { stripeInvoiceToIsoMinor } from '../../../../packages/app/marketing/payment-units.ts';
 
 test('invoice compatibility units become ISO units without changing the currency value', () => {
   const cases: [string, number, number, number, string][] = [

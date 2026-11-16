@@ -1,4 +1,4 @@
-// Shared native Payload sales domain; Next retains its server/client import boundary.
+// Pure shared marketing contract, without a persistence dependency.
 // SOT: docs/site/signaliq-business-connection.md
-// SOT-KEYWORDS: marketing shared payload domain entry
-export * from '@acme/payload/marketing-delivery';
+// SOT-KEYWORDS: marketing shared contract entry
+export * from '@acme/app/marketing-delivery';

@@ -30,7 +30,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Module exports, protected learner routes and the motion-duration gate
-        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs
+        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs tooling/check-machine-routes.test.mjs tooling/check-store-separation.test.mjs
       - name: Prepare avatar assets for repository guards
         run: node apps/web/scripts/copy-avatar-assets.mjs
       - name: Repository guards and workspace lint

@@ -288,3 +288,22 @@ export class MarketingError extends Error {
     this.status = status;
   }
 }
+
+export const paymentInput = z
+  .object({
+    invoiceId: z.string().regex(/^in_[a-zA-Z0-9]+$/),
+    customerId: z.string().regex(/^cus_[a-zA-Z0-9]+$/),
+    subscriptionId: z.string().regex(/^sub_[a-zA-Z0-9]+$/),
+    amountCents: z.number().int().positive().max(2147483647),
+    currency: z.string().regex(/^[A-Z]{3}$/),
+    occurredAt: z.iso.datetime(),
+    live: z.boolean(),
+    evidenceStatus: z.enum(['verified', 'incomplete', 'mismatch']),
+    moyoPriceSeen: z.boolean(),
+  })
+  .strict()
+  .refine(
+    (payment) => payment.evidenceStatus !== 'verified' || payment.moyoPriceSeen,
+    'Verified Moyo evidence must include a configured plan price.',
+  );
+export type MarketingPayment = z.infer<typeof paymentInput>;
