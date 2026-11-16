@@ -81,6 +81,14 @@ leaves `*LocalLintAar` enabled; both shims build it. The same patch also carries
 the visionOS module changes and the `moyoViroRendererAar` override that were
 already in it.
 
+The Android MainApplication generator now awaits its read and write in both
+the TypeScript source and compiled plugin. Its previous callback IO returned
+from the dangerous mod before Expo's following MainApplication provider ran,
+so a fresh prebuild could read stale package registrations and a late write
+could overwrite the app's repairs. The package version stays pinned. The
+single-process Expo compiler regression covers fresh and repeated generation;
+remove this correction when the generator awaits its IO upstream.
+
 ## `expo-sharing@58.0.22`
 
 **Why:** `ios/ResolveUrlContentDetails.swift` uses `URL`, `URLRequest`,

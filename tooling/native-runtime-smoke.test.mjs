@@ -4,13 +4,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   AGENT_DEVICE, IOS_STARTUP_BUDGET, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, metroEnvironment, runtimeEnvironment,
-  retainAgentDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
+  retainAgentDiagnostics, retainAndroidFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
 const file = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
@@ -174,6 +174,53 @@ test('retains only documented diagnostic logs without daemon credentials or syml
   for (const path of [...privateFiles, 'sessions/foreign/runner.log', 'sessions/default/requests/escape.ndjson']) assert.equal(existsSync(join(destination, path)), false);
   assert.equal(readFileSync(join(destination, 'sessions/default/runner.log'), 'utf8'), 'xcodebuild timing');
   assert.deepEqual(await retainAgentDiagnostics(join(root, 'missing'), destination), []);
+});
+
+test('Android failure diagnostics refuse unverified targets before invoking adb', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'moyo-android-target-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const target of [undefined, { kind: 'Android emulator', serial: 'physical-usb-id', abis: ['x86_64'] },
+    { kind: 'Android emulator', serial: 'emulator-5554', abis: ['arm64-v8a'] }]) {
+    await assert.rejects(retainAndroidFailureDiagnostics(target, join(root, 'artifacts')), /already-verified CI emulator/);
+  }
+  assert.equal(existsSync(join(root, 'artifacts')), false);
+});
+
+test('failed Android diagnostic collection stays bounded and still retains the other OS report', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'moyo-android-diagnostics-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = join(root, 'bin'); mkdirSync(bin);
+  const calls = join(root, 'calls.jsonl');
+  const adb = join(bin, 'adb');
+  writeFileSync(adb, `#!${process.execPath}
+    const fs = require('node:fs');
+    const args = process.argv.slice(2);
+    fs.appendFileSync(${JSON.stringify(calls)}, JSON.stringify(args) + '\\n');
+    if (args.includes('logcat')) {
+      process.stdout.write('crash-diagnostic\\n' + 'x'.repeat(600 * 1024));
+      process.exitCode = 17;
+    } else { console.log('app-exit-reason'); }
+  `);
+  chmodSync(adb, 0o755);
+  const destination = join(root, 'artifacts');
+  const result = await retainAndroidFailureDiagnostics(assertAndroidEmulator('emulator-5554', '1', 'x86_64,arm64-v8a'), destination, {
+    env: { ...runtimeEnvironment(process.env), PATH: bin },
+  });
+  assert.deepEqual(readFileSync(calls, 'utf8').trim().split('\n').map(JSON.parse), [
+    ['-s', 'emulator-5554', 'logcat', '-b', 'crash', '-d', '-v', 'threadtime', '-t', '400'],
+    ['-s', 'emulator-5554', 'shell', 'dumpsys', 'activity', 'exit-info', 'com.moyolearn.app'],
+  ]);
+  assert.deepEqual(result.files, ['android-crash.log', 'android-app-exit-info.log']);
+  assert.equal(result.warnings.length, 1);
+  assert.match(result.warnings[0], /android-crash-buffer failed \(17\)/);
+  const crash = readFileSync(join(destination, result.files[0]));
+  assert.ok(crash.length < 513 * 1024);
+  assert.match(crash.toString(), /crash-diagnostic/);
+  assert.match(crash.toString(), /truncated at 512 KiB/);
+  const exit = readFileSync(join(destination, result.files[1]), 'utf8');
+  assert.match(exit, /app-exit-reason/);
+  assert.match(exit, /"timeoutMs":20000/);
+  assert.match(exit, /"timedOut":false/);
 });
 
 test('requires actual non-skipped test cases and every execution screenshot', () => {

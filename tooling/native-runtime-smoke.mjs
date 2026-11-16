@@ -113,6 +113,39 @@ export async function retainAgentDiagnostics(stateDir, destination) {
   return copied.sort();
 }
 
+// A failed launch can leave only the Android launcher in the UI hierarchy.
+// Capture the OS crash/exit evidence while the verified temporary emulator is
+// still alive; never turn a diagnostic failure into a replacement test result.
+export async function retainAndroidFailureDiagnostics(device, destination, { env = runtimeEnvironment(process.env) } = {}) {
+  if (device?.kind !== 'Android emulator' || !/^emulator-\d+$/.test(device.serial)
+    || !device.abis?.includes('x86_64')) {
+    throw new Error('Android failure diagnostics require the already-verified CI emulator');
+  }
+  await mkdir(destination, { recursive: true });
+  const files = []; const warnings = [];
+  const diagnostics = [
+    ['android-crash.log', 'android-crash-buffer', ['logcat', '-b', 'crash', '-d', '-v', 'threadtime', '-t', '400']],
+    ['android-app-exit-info.log', 'android-app-exit-info', ['shell', 'dumpsys', 'activity', 'exit-info', APP_ID]],
+  ];
+  for (const [name, phase, args] of diagnostics) {
+    const chunks = []; let bytes = 0; let truncated = false;
+    const log = { write: (chunk) => {
+      const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      const remaining = Math.max(0, 512 * 1024 - bytes);
+      if (remaining === 0) { truncated ||= data.length > 0; return; }
+      if (data.length > remaining) truncated = true;
+      const retained = data.subarray(0, remaining);
+      chunks.push(retained); bytes += retained.length;
+    } };
+    await command('adb', ['-s', device.serial, ...args], { env, log, phase, timeout: 20_000 })
+      .catch((error) => { warnings.push(error.message); });
+    if (truncated) chunks.push(Buffer.from('\n[diagnostic output truncated at 512 KiB]\n'));
+    await writeFile(join(destination, name), Buffer.concat(chunks));
+    files.push(name);
+  }
+  return { files, warnings };
+}
+
 export function verifyRuntimeEvidence(junit, screenshotNames) {
   const suites = [...junit.matchAll(/<testsuite\b([^>]*)>/g)];
   const cases = [...junit.matchAll(/<testcase\b/g)];
@@ -335,6 +368,11 @@ async function main() {
   } catch (error) {
     receipt.status = 'failed'; receipt.failure = error.message; failure = error;
   } finally {
+    if (failure && receipt.device?.kind === 'Android emulator') {
+      await retainAndroidFailureDiagnostics(receipt.device, artifacts)
+        .then((diagnostics) => { receipt.androidFailureDiagnostics = diagnostics; })
+        .catch((error) => { receipt.androidDiagnosticsWarning = error.message; });
+    }
     await stopMetro(metro);
     if (server) { server.closeAllConnections(); await new Promise((done) => server.close(done)); }
     if (agent && agentEnv) {
