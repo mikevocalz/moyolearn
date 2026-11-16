@@ -5,9 +5,9 @@
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createReadStream, createWriteStream, readdirSync, statSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -17,6 +17,8 @@ const APP_ID = 'com.moyolearn.app';
 const METRO_PORT = 8081;
 const API_PORT = 39001;
 const FLOW = join(ROOT, 'tooling/fixtures/native-runtime/render-lifecycle.yaml');
+export const IOS_STARTUP_BUDGET = Object.freeze({ daemonMs: 120_000, bootMs: 600_000, processMs: 750_000 });
+export const RUNTIME_TEST_BUDGET = Object.freeze({ flowMs: 600_000, reportingMs: 60_000, processMs: 780_000 });
 export const AGENT_DEVICE = Object.freeze({
   version: '0.21.37',
   url: 'https://registry.npmjs.org/agent-device/-/agent-device-0.21.37.tgz',
@@ -74,6 +76,43 @@ export function metroEnvironment(base) {
   };
 }
 
+export function agentEnvironment(base, stateDir) {
+  return {
+    ...runtimeEnvironment(base),
+    AGENT_DEVICE_STATE_DIR: stateDir,
+    AGENT_DEVICE_EXEC_TRACE: '1',
+    AGENT_DEVICE_DAEMON_STARTUP_TIMEOUT_MS: String(IOS_STARTUP_BUDGET.daemonMs),
+  };
+}
+
+// Device state also contains daemon credentials and ownership registrations.
+// Retain only the pinned tool's documented diagnostic files, never its state.
+export async function retainAgentDiagnostics(stateDir, destination) {
+  const copied = [];
+  const inspect = async (path) => {
+    try { return await lstat(path); } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+  };
+  const entries = async (path) => (await inspect(path))?.isDirectory() ? readdir(path, { withFileTypes: true }) : [];
+  const copy = async (relativePath) => {
+    const source = join(stateDir, relativePath);
+    if (!(await inspect(source))?.isFile()) return;
+    const target = join(destination, relativePath);
+    await mkdir(dirname(target), { recursive: true });
+    await copyFile(source, target);
+    copied.push(relativePath);
+  };
+  await copy('daemon.log');
+  for (const session of await entries(join(stateDir, 'sessions'))) {
+    if (!session.isDirectory()) continue;
+    const relative = join('sessions', session.name);
+    await copy(join(relative, 'runner.log'));
+    for (const request of await entries(join(stateDir, relative, 'requests'))) {
+      if (request.isFile() && request.name.endsWith('.ndjson')) await copy(join(relative, 'requests', request.name));
+    }
+  }
+  return copied.sort();
+}
+
 export function verifyRuntimeEvidence(junit, screenshotNames) {
   const suites = [...junit.matchAll(/<testsuite\b([^>]*)>/g)];
   const cases = [...junit.matchAll(/<testcase\b/g)];
@@ -109,8 +148,17 @@ async function hashFile(path) {
   return hash.digest('hex');
 }
 
-function command(executable, args, { env = runtimeEnvironment(process.env), log, timeout = 120_000, cwd = ROOT } = {}) {
+export function command(executable, args, {
+  env = runtimeEnvironment(process.env), log, timeout = 120_000, cwd = ROOT,
+  phase = `${basename(executable)} ${args[0] ?? ''}`.trim(),
+} = {}) {
   return new Promise((resolveResult, reject) => {
+    const started = Date.now();
+    let timedOut = false;
+    const record = (event, details = {}) => log?.write(`[native-command] ${JSON.stringify({
+      phase, event, at: new Date().toISOString(), elapsedMs: Date.now() - started, timeoutMs: timeout, ...details,
+    })}\n`);
+    record('start');
     const child = spawn(executable, args, { cwd, env, stdio: ['ignore', 'pipe', 'pipe'] });
     let output = '';
     const capture = (data) => {
@@ -119,12 +167,18 @@ function command(executable, args, { env = runtimeEnvironment(process.env), log,
       if (output.length < 2_000_000) output += data.toString();
     };
     child.stdout.on('data', capture); child.stderr.on('data', (data) => log?.write(data));
-    const timer = setTimeout(() => child.kill('SIGTERM'), timeout);
-    const killTimer = setTimeout(() => child.kill('SIGKILL'), timeout + 10_000);
-    child.on('error', (error) => { clearTimeout(timer); clearTimeout(killTimer); reject(error); });
+    const timer = setTimeout(() => {
+      timedOut = true; record('deadline', { signal: 'SIGTERM' }); child.kill('SIGTERM');
+    }, timeout);
+    const killTimer = setTimeout(() => { record('force-kill', { signal: 'SIGKILL' }); child.kill('SIGKILL'); }, timeout + 10_000);
+    child.on('error', (error) => {
+      clearTimeout(timer); clearTimeout(killTimer); record('spawn-error', { message: error.message }); reject(error);
+    });
     child.on('close', (code, signal) => {
       clearTimeout(timer); clearTimeout(killTimer);
-      if (code !== 0) reject(new Error(`${executable} ${args[0] ?? ''} failed (${signal ?? code}); see native runtime log`));
+      record('exit', { code, signal, timedOut });
+      if (timedOut) reject(new Error(`${phase} exceeded its ${timeout}ms process deadline (${signal ?? code}); see native runtime log`));
+      else if (code !== 0) reject(new Error(`${phase} failed (${signal ?? code}); see native runtime log`));
       else resolveResult(output.trim());
     });
   });
@@ -203,7 +257,7 @@ async function main() {
     pullRequestHead: process.env.MOYO_PR_HEAD_SHA ?? null,
     runUrl: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
     runAttempt: process.env.GITHUB_RUN_ATTEMPT ?? null,
-    tool: AGENT_DEVICE, appId: APP_ID,
+    tool: AGENT_DEVICE, appId: APP_ID, flowBudget: RUNTIME_TEST_BUDGET,
     pnpmLockSha256: await hashFile(join(ROOT, 'pnpm-lock.yaml')),
     flowSha256: await hashFile(FLOW),
     limitations: [
@@ -214,7 +268,7 @@ async function main() {
       'Positive FPS proves the native render loop executes; retained screenshots still require visual inspection.',
     ],
   };
-  let agent; let metro; let server; let deviceFlags; let failure;
+  let agent; let agentState; let agentEnv; let metro; let server; let deviceFlags; let failure;
   const saveReceipt = () => writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
   try {
     await saveReceipt();
@@ -222,11 +276,11 @@ async function main() {
     const binary = values.platform === 'ios' ? join(artifact, 'Moyo') : artifact;
     receipt.binary = { path: artifact, sha256: await hashFile(binary), size: statSync(binary).size };
     if (values.platform === 'ios') {
-      const bundleId = await command('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleIdentifier', join(artifact, 'Info.plist')]);
+      const bundleId = await command('/usr/libexec/PlistBuddy', ['-c', 'Print :CFBundleIdentifier', join(artifact, 'Info.plist')], { log, phase: 'verify-ios-bundle' });
       if (bundleId !== APP_ID) throw new Error('The built simulator app has a different bundle identifier');
-      const architecture = await command('lipo', ['-archs', binary]);
+      const architecture = await command('lipo', ['-archs', binary], { log, phase: 'verify-ios-architecture' });
       if (process.arch !== 'arm64' || !architecture.split(/\s+/).includes('arm64')) throw new Error('Expected the admitted arm64 simulator app and runner');
-      receipt.device = selectIpad(JSON.parse(await command('xcrun', ['simctl', 'list', 'devices', 'available', '--json'])));
+      receipt.device = selectIpad(JSON.parse(await command('xcrun', ['simctl', 'list', 'devices', 'available', '--json'], { log, phase: 'select-ipad-simulator' })));
       receipt.binary.architectures = architecture;
       deviceFlags = ['--platform', 'ios', '--udid', receipt.device.udid];
     } else {
@@ -241,8 +295,18 @@ async function main() {
     }
     await saveReceipt();
     agent = await installAgent(process.env.RUNNER_TEMP, log);
-    if (values.platform === 'ios') await command(process.execPath, [agent, 'boot', ...deviceFlags, '--timeout', '180000'], { log, timeout: 210_000 });
-    await command(process.execPath, [agent, 'install', APP_ID, artifact, ...deviceFlags], { log, timeout: 500_000 });
+    agentState = await mkdtemp(join(process.env.RUNNER_TEMP, 'moyo-device-state-'));
+    agentEnv = agentEnvironment(process.env, agentState);
+    if (values.platform === 'ios') {
+      receipt.startupBudget = IOS_STARTUP_BUDGET;
+      await saveReceipt();
+      // Daemon attachment precedes the tool's boot deadline. The outer limit
+      // must cover both budgets plus shutdown/scheduling margin on a cold VM.
+      await command(process.execPath, [agent, 'boot', ...deviceFlags, '--timeout', String(IOS_STARTUP_BUDGET.bootMs)], {
+        env: agentEnv, log, phase: 'boot-ipad-simulator', timeout: IOS_STARTUP_BUDGET.processMs,
+      });
+    }
+    await command(process.execPath, [agent, 'install', APP_ID, artifact, ...deviceFlags], { env: agentEnv, log, phase: 'install-native-app', timeout: 500_000 });
     server = await startAnonymousApi(apiLog);
     metro = spawn('pnpm', ['--filter', 'mobile', 'exec', 'expo', 'start', '--localhost', '--port', String(METRO_PORT)], {
       cwd: ROOT, env: metroEnvironment(process.env), detached: true, stdio: ['ignore', 'pipe', 'pipe'],
@@ -255,11 +319,13 @@ async function main() {
     if (!bundle.ok) throw new Error(`Native Metro bundle failed (${bundle.status}); see metro.log`);
     receipt.metroBundleSha256 = createHash('sha256').update(Buffer.from(await bundle.arrayBuffer())).digest('hex');
     const junit = join(artifacts, 'junit.xml');
+    // A long Metro bundle can outlast the daemon's idle window. Its fresh
+    // attachment precedes the unchanged per-attempt test deadline too.
     await command(process.execPath, [agent, 'test', FLOW, '--maestro', ...deviceFlags,
       '--metro-host', '127.0.0.1', '--metro-port', String(METRO_PORT),
-      '--env', `EVIDENCE_DIR=${artifacts}`, '--timeout', '600000', '--retries', '0',
+      '--env', `EVIDENCE_DIR=${artifacts}`, '--timeout', String(RUNTIME_TEST_BUDGET.flowMs), '--retries', '0',
       '--artifacts-dir', join(artifacts, 'attempts'), '--reporter', 'default', '--reporter', `junit:${junit}`,
-    ], { log, timeout: 660_000 });
+    ], { env: agentEnv, log, phase: 'execute-render-lifecycle', timeout: RUNTIME_TEST_BUDGET.processMs });
     receipt.evidence = verifyRuntimeEvidence(await readFile(junit, 'utf8'), readdirSync(artifacts));
     for (const screenshot of receipt.evidence.screenshots) {
       const bytes = await readFile(join(artifacts, screenshot));
@@ -271,11 +337,14 @@ async function main() {
   } finally {
     await stopMetro(metro);
     if (server) { server.closeAllConnections(); await new Promise((done) => server.close(done)); }
-    if (agent) {
-      await command(process.execPath, [agent, 'daemon', 'stop', '--clean'], { log, timeout: 30_000 }).catch((error) => { receipt.cleanupWarning = error.message; });
+    if (agent && agentEnv) {
+      await command(process.execPath, [agent, 'daemon', 'stop', '--clean'], { env: agentEnv, log, phase: 'stop-device-daemon', timeout: 30_000 }).catch((error) => { receipt.cleanupWarning = error.message; });
+      await retainAgentDiagnostics(agentState, join(artifacts, 'device-tool'))
+        .then((files) => { receipt.toolDiagnosticFiles = files; })
+        .catch((error) => { receipt.toolDiagnosticsWarning = error.message; });
     }
     // The Android action owns emulator shutdown. This job owns only its chosen iPad.
-    if (receipt.device?.udid) await command('xcrun', ['simctl', 'shutdown', receipt.device.udid], { log, timeout: 30_000 }).catch(() => {});
+    if (receipt.device?.udid) await command('xcrun', ['simctl', 'shutdown', receipt.device.udid], { log, phase: 'shutdown-ipad-simulator', timeout: 30_000 }).catch(() => {});
     receipt.finishedAt = new Date().toISOString();
     await saveReceipt();
     for (const stream of [log, metroLog, apiLog]) await new Promise((done) => stream.end(done));

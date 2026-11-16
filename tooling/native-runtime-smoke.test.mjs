@@ -4,11 +4,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AGENT_DEVICE, anonymousApiReply, assertAndroidEmulator, metroEnvironment, runtimeEnvironment,
-  selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
+  AGENT_DEVICE, IOS_STARTUP_BUDGET, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, metroEnvironment, runtimeEnvironment,
+  retainAgentDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
 const file = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
@@ -94,6 +96,84 @@ test('Metro keeps Node settings and resolves a real localhost listener on the IP
   assert.equal(child.error, undefined);
   assert.equal(child.status, 0, child.stderr);
   assert.deepEqual(JSON.parse(child.stdout), { address: '127.0.0.1', status: 'packager-status:running' });
+});
+
+test('isolates device state and gives cold boot both daemon and device startup budgets', () => {
+  const environment = agentEnvironment({ AGENT_DEVICE_STATE_DIR: '/unrelated', AGENT_DEVICE_EXEC_TRACE: '0', AGENT_DEVICE_DAEMON_STARTUP_TIMEOUT_MS: '1' }, '/ci-owned/state');
+  assert.equal(environment.AGENT_DEVICE_STATE_DIR, '/ci-owned/state');
+  assert.equal(environment.AGENT_DEVICE_EXEC_TRACE, '1');
+  assert.equal(Number(environment.AGENT_DEVICE_DAEMON_STARTUP_TIMEOUT_MS), IOS_STARTUP_BUDGET.daemonMs);
+  assert.ok(IOS_STARTUP_BUDGET.processMs > IOS_STARTUP_BUDGET.daemonMs + IOS_STARTUP_BUDGET.bootMs);
+  assert.ok(IOS_STARTUP_BUDGET.processMs < 15 * 60_000, 'cold startup remains bounded');
+  assert.equal(RUNTIME_TEST_BUDGET.flowMs, 600_000, 'the rendering flow keeps its existing deadline');
+  assert.equal(RUNTIME_TEST_BUDGET.reportingMs, 60_000);
+  assert.equal(RUNTIME_TEST_BUDGET.processMs, IOS_STARTUP_BUDGET.daemonMs + RUNTIME_TEST_BUDGET.flowMs + RUNTIME_TEST_BUDGET.reportingMs);
+  const harness = file('./native-runtime-smoke.mjs');
+  assert.match(harness, /'--timeout', String\(RUNTIME_TEST_BUDGET.flowMs\), '--retries', '0'/);
+  assert.match(harness, /phase: 'execute-render-lifecycle', timeout: RUNTIME_TEST_BUDGET.processMs/);
+});
+
+function commandLog() {
+  let output = '';
+  return {
+    log: { write: (chunk) => { output += chunk.toString(); } },
+    events: () => output.split('\n').filter((line) => line.startsWith('[native-command] ')).map((line) => JSON.parse(line.slice('[native-command] '.length))),
+    output: () => output,
+  };
+}
+
+test('a real child completing before its deadline records phase, timing and output', async () => {
+  const capture = commandLog();
+  assert.equal(await command(process.execPath, ['-e', 'console.log("ready")'], { phase: 'startup-probe', log: capture.log, timeout: 2000 }), 'ready');
+  const events = capture.events();
+  assert.deepEqual(events.map((event) => event.event), ['start', 'exit']);
+  assert.ok(events.every((event) => event.phase === 'startup-probe' && event.timeoutMs === 2000));
+  assert.ok(events[1].elapsedMs >= 0);
+  assert.equal(events[1].code, 0);
+  assert.equal(events[1].timedOut, false);
+});
+
+test('a harness deadline fails even when the real child handles SIGTERM and exits zero', async () => {
+  const capture = commandLog();
+  await assert.rejects(command(process.execPath, ['-e', `
+    process.on('SIGTERM', () => process.exit(0));
+    console.log('handler-ready');
+    setInterval(() => {}, 1000);
+  `], { phase: 'cold-boot-probe', log: capture.log, timeout: 1500 }), /cold-boot-probe exceeded its 1500ms process deadline/);
+  assert.match(capture.output(), /handler-ready/);
+  const events = capture.events();
+  assert.deepEqual(events.map((event) => event.event), ['start', 'deadline', 'exit']);
+  assert.equal(events.at(-1).code, 0);
+  assert.equal(events.at(-1).timedOut, true);
+});
+
+test('an external SIGTERM remains distinguishable from the harness deadline', async () => {
+  const capture = commandLog();
+  await assert.rejects(command(process.execPath, ['-e', "process.kill(process.pid, 'SIGTERM')"], {
+    phase: 'external-stop-probe', log: capture.log, timeout: 2000,
+  }), /external-stop-probe failed \(SIGTERM\)/);
+  assert.deepEqual(capture.events().map((event) => event.event), ['start', 'exit']);
+  assert.equal(capture.events().at(-1).timedOut, false);
+});
+
+test('retains only documented diagnostic logs without daemon credentials or symlink escapes', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'moyo-device-diagnostics-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const state = join(root, 'state'); const destination = join(root, 'artifacts');
+  const write = (path, contents) => { mkdirSync(join(state, path, '..'), { recursive: true }); writeFileSync(join(state, path), contents); };
+  write('daemon.log', 'daemon startup timing');
+  write('sessions/default/runner.log', 'xcodebuild timing');
+  write('sessions/default/requests/request-1.ndjson', '{"phase":"bootstatus"}\n');
+  const privateFiles = ['daemon.json', 'daemon.lock', 'auth.json', 'sessions/default/session.json', 'sessions/default/requests/token.json', 'cache/runner.log'];
+  for (const path of privateFiles) write(path, 'DO NOT UPLOAD');
+  symlinkSync(join(state, 'auth.json'), join(state, 'sessions/default/requests/escape.ndjson'));
+  symlinkSync(join(state, 'cache'), join(state, 'sessions/foreign'));
+  assert.deepEqual(await retainAgentDiagnostics(state, destination), [
+    'daemon.log', 'sessions/default/requests/request-1.ndjson', 'sessions/default/runner.log',
+  ]);
+  for (const path of [...privateFiles, 'sessions/foreign/runner.log', 'sessions/default/requests/escape.ndjson']) assert.equal(existsSync(join(destination, path)), false);
+  assert.equal(readFileSync(join(destination, 'sessions/default/runner.log'), 'utf8'), 'xcodebuild timing');
+  assert.deepEqual(await retainAgentDiagnostics(join(root, 'missing'), destination), []);
 });
 
 test('requires actual non-skipped test cases and every execution screenshot', () => {
