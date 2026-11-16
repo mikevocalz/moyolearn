@@ -74,6 +74,7 @@
 const { mergeQuestImmersiveActivity } = require('./quest-immersive-activity');
 const { updateRendererPin, rendererPath, rendererSha256 } = require('./renderer-pin');
 const { scopePicoPlatformDependencies } = require('./pico-platform-dependencies');
+const { propagatePicoNativeArchitectures } = require('./pico-native-architectures');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -119,7 +120,7 @@ function withViroSettingsPaths(config) {
       );
     }
 
-    let contents = gradleConfig.modResults.contents;
+    let contents = propagatePicoNativeArchitectures(gradleConfig.modResults.contents);
 
     /*
       Fail loudly rather than silently doing nothing. If the fork stops writing
@@ -146,8 +147,10 @@ function withViroSettingsPaths(config) {
       Groovy reports as `No such property: viroPackageRoot`, at configuration
       time, with no hint that the declaration exists ten lines lower.
     */
-    const firstUse = contents.indexOf(`project(':${VIRO_PROJECTS[0]}').projectDir`);
-    contents = `${contents.slice(0, firstUse)}${VIRO_ROOT_SNIPPET}\n${contents.slice(firstUse)}`;
+    if (!contents.includes('def viroPackageRoot = new File(')) {
+      const firstUse = contents.indexOf(`project(':${VIRO_PROJECTS[0]}').projectDir`);
+      contents = `${contents.slice(0, firstUse)}${VIRO_ROOT_SNIPPET}\n${contents.slice(firstUse)}`;
+    }
 
     for (const name of VIRO_PROJECTS) {
       contents = contents.replace(

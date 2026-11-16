@@ -18,6 +18,8 @@ Metro stays bound to localhost. Its subprocess uses IPv4-first DNS resolution so
 
 The Android app's PICO Platform Service dependencies and version constraints are scoped to the Pico flavor by the existing config-plugin repair. The upstream global declarations otherwise import a PICO service requiring API 28 into the API 26 mobile build. Phone and Quest builds do not need those PICO services; their SDK floors remain unchanged. The checked-in Gradle output and fresh prebuild use the same idempotent transform, which rejects changed ownership markers or unknown declaration forms.
 
+The PICO native module receives the app's `reactNativeArchitectures` property through an explicitly rooted Gradle settings callback. The previous callback's unqualified property lookup read the Settings script and fell back to ARM even for the x86_64 emulator build. Both Android lanes execute a real Gradle regression covering the old failure, x86_64, the default and explicit arm64 requests, and a multi-ABI request using the installed PICO lookup. Expo regeneration preserves the repaired callback, and the headset flavor ABI filters remain unchanged.
+
 ## Evidence and its limits
 
 Each execution uploads `receipt.json`, JUnit, the full tool/Metro logs, per-attempt diagnostics, and five named screenshots: adapter, triangle, cube, resumed cube and cold-launch cube. The receipt records the actual checked-out Git SHA (including a PR merge commit when applicable), PR head, workflow run, pnpm-lock and flow digests, built binary digest, bundled JavaScript digest, exact virtual device and tool pin. It is written as `passed` only after the device test exits successfully, JUnit contains executed passing cases with no skipped/failed cases, and all five PNGs exist. An existing artifact directory is refused to prevent a stale report satisfying another execution.
@@ -36,7 +38,8 @@ Run the focused contracts after the frozen workspace install:
 
 ```sh
 node --test tooling/native-runtime-smoke.test.mjs
-node --test apps/mobile/plugins/__tests__/pico-platform-dependencies.test.cjs
+node --test apps/mobile/plugins/__tests__/pico-*.test.cjs
+node --test tooling/pico-native-architectures.test.mjs
 ```
 
 Those contracts check target selection, evidence rejection, local anonymous API boundaries, tool integrity and preservation of the native workflow gates. They do not represent a launched app or a device pass.

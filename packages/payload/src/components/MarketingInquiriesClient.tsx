@@ -186,10 +186,17 @@ function InquiryCard({
                   disabled={disabled}
                   onClick={() => void update({ action: 'progress', stage })}
                 >
-                  {stage.replaceAll('-', ' ')}
+                  {stage === 'closed'
+                    ? 'Record closure note'
+                    : stage.replaceAll('-', ' ')}
                 </Button>
               ))}
             </Gutter>
+            <p>
+              With optional sharing, these progress notes appear in Signal
+              Customer results after processing. To close a lost deal, use
+              Signal Contacts &amp; deals → Move stage → Closed lost.
+            </p>
             <TextInput
               path={`billing-${inquiry.id}`}
               label="Moyo subscription reference"
@@ -329,6 +336,24 @@ export function MarketingInquiriesClient({
   }, [refresh, invalidateReads]);
   return (
     <section className="moyo-sales">
+      <h2>Where shared records appear in Signal</h2>
+      <p>
+        When optional SignalIQ sharing is allowed and processing is confirmed:
+      </p>
+      <ul>
+        <li>
+          Find inquiry contacts in Contacts &amp; deals, and follow-up items in
+          Follow-ups.
+        </li>
+        <li>
+          Recorded discovery calls appear as bookings in Customer results.
+        </li>
+        <li>
+          Verified paid invoices linked to the inquiry appear as purchases in
+          Customer results. Stripe payments requires a separate account
+          connection.
+        </li>
+      </ul>
       <h2>SignalIQ delivery</h2>
       <p>
         Delivered means SignalIQ confirmed processing. Accepted and pending
