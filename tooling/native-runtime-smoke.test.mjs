@@ -4,12 +4,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:http';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AGENT_DEVICE, IOS_STARTUP_BUDGET, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, metroEnvironment, runtimeEnvironment,
+  AGENT_DEVICE, IOS_STARTUP_BUDGET, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
   retainAgentDiagnostics, retainAndroidFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
@@ -96,6 +98,118 @@ test('Metro keeps Node settings and resolves a real localhost listener on the IP
   assert.equal(child.error, undefined);
   assert.equal(child.status, 0, child.stderr);
   assert.deepEqual(JSON.parse(child.stdout), { address: '127.0.0.1', status: 'packager-status:running' });
+});
+
+async function localHttpServer(t, handler) {
+  let requests = 0;
+  const server = createServer((request, response) => { requests += 1; handler(request, response); });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  t.after(async () => { server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); });
+  return { url: `http://127.0.0.1:${server.address().port}`, requests: () => requests };
+}
+
+test('Metro streams and hashes actual binary chunks after delayed headers under the unchanged total budget', async (t) => {
+  assert.equal(METRO_BUNDLE_TIMEOUT_MS, 360_000);
+  const bytes = Buffer.from([0, 255, 128, 13, 10, 65, 240, 159, 152, 128]);
+  const server = await localHttpServer(t, (_request, response) => {
+    setTimeout(() => { response.writeHead(200); response.write(bytes.subarray(0, 3));
+      setTimeout(() => response.end(bytes.subarray(3)), 80);
+    }, 80);
+  });
+  const capture = commandLog();
+  const result = await hashMetroBundle(server.url + '/bundle', { log: capture.log, timeout: 2000 });
+  assert.equal(result.sha256, createHash('sha256').update(bytes).digest('hex'));
+  assert.equal(result.responseBytes, bytes.length);
+  assert.equal(result.httpStatus, 200);
+  assert.equal(result.timedOut, false);
+  assert.ok(result.elapsedMs >= 140);
+  assert.equal(server.requests(), 1);
+  const events = capture.output().trim().split('\n').map((line) => JSON.parse(line.slice('[native-http] '.length)));
+  assert.deepEqual(events.map((event) => event.event), ['start', 'headers', 'complete']);
+});
+
+test('Metro header stalls fail at the explicit request deadline with the causal code', async (t) => {
+  const server = await localHttpServer(t, () => {});
+  await assert.rejects(hashMetroBundle(server.url, { timeout: 120 }), (error) => {
+    const details = runtimeFailureDetails(error);
+    assert.equal(details.phase, 'fetch-metro-bundle');
+    assert.equal(details.stage, 'headers');
+    assert.equal(details.errorCode, 'ABORT_ERR');
+    assert.equal(details.causeName, 'TimeoutError');
+    assert.equal(details.timedOut, true);
+    assert.ok(details.elapsedMs >= 100 && details.elapsedMs < 2000);
+    return true;
+  });
+  assert.equal(server.requests(), 1);
+});
+
+test('Metro body progress does not reset the total deadline or replace its first abort with a socket reset', async (t) => {
+  const server = await localHttpServer(t, (_request, response) => {
+    let interval;
+    const timer = setTimeout(() => {
+      response.writeHead(200); response.write('started');
+      interval = setInterval(() => response.write('progress'), 20);
+    }, 120);
+    response.once('close', () => { clearTimeout(timer); clearInterval(interval); });
+  });
+  await assert.rejects(hashMetroBundle(server.url, { timeout: 240 }), (error) => {
+    const details = runtimeFailureDetails(error);
+    assert.equal(details.stage, 'body');
+    assert.ok(details.responseBytes > 0);
+    assert.equal(details.errorCode, 'ABORT_ERR');
+    assert.equal(details.causeName, 'TimeoutError');
+    assert.equal(details.timedOut, true);
+    assert.ok(details.elapsedMs >= 220 && details.elapsedMs < 2000);
+    return true;
+  });
+  assert.equal(server.requests(), 1);
+});
+
+test('Metro socket loss and incomplete response bodies fail without a successful digest or retry', async (t) => {
+  const server = await localHttpServer(t, (request, response) => {
+    if (request.url === '/reset') request.socket.destroy();
+    else { response.writeHead(200, { 'content-length': '100' }); response.write('abc'); setImmediate(() => response.destroy()); }
+  });
+  for (const path of ['/reset', '/truncated']) {
+    await assert.rejects(hashMetroBundle(server.url + path, { timeout: 2000 }), (error) => {
+      const details = runtimeFailureDetails(error);
+      assert.equal(details.errorCode, 'ECONNRESET');
+      assert.equal(details.timedOut, false);
+      assert.equal(details.stage, path === '/reset' ? 'headers' : 'body');
+      assert.equal(details.sha256, undefined);
+      return true;
+    });
+  }
+  assert.equal(server.requests(), 2);
+});
+
+test('Metro rejects HTTP errors and redirects without following or retrying them', async (t) => {
+  const server = await localHttpServer(t, (request, response) => {
+    response.writeHead(request.url === '/redirect' ? 302 : request.url === '/target' ? 200 : 503, { location: '/target' });
+    response.end('not a bundle');
+  });
+  for (const [path, status] of [['/redirect', 302], ['/unavailable', 503]]) {
+    await assert.rejects(hashMetroBundle(server.url + path, { timeout: 2000 }), (error) => {
+      const details = runtimeFailureDetails(error);
+      assert.equal(details.errorCode, 'METRO_HTTP_STATUS');
+      assert.equal(details.httpStatus, status);
+      assert.equal(details.timedOut, false);
+      return true;
+    });
+  }
+  assert.equal(server.requests(), 2);
+});
+
+test('failure receipts retain sanitized causal identifiers and snapshot Metro before cleanup changes its state', () => {
+  const error = Object.assign(new TypeError('SECRET message', { cause: Object.assign(new Error('SECRET nested message'), { code: 'UND_ERR_HEADERS_TIMEOUT' }) }), { code: 'SECRET invalid code' });
+  const metro = { exitCode: 1, signalCode: 'SIGKILL' };
+  const details = runtimeFailureDetails(error, metro);
+  metro.exitCode = 0; metro.signalCode = 'SIGTERM';
+  assert.equal(details.causeCode, 'UND_ERR_HEADERS_TIMEOUT');
+  assert.equal(details.errorCode, null);
+  assert.equal(details.metroExitCode, 1);
+  assert.equal(details.metroSignalCode, 'SIGKILL');
+  assert.doesNotMatch(JSON.stringify(details), /SECRET|stack/);
 });
 
 test('isolates device state and gives cold boot both daemon and device startup budgets', () => {

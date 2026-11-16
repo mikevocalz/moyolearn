@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createReadStream, createWriteStream, readdirSync, statSync } from 'node:fs';
 import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
-import { createServer } from 'node:http';
+import { createServer, get as httpGet } from 'node:http';
 import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -19,6 +19,7 @@ const API_PORT = 39001;
 const FLOW = join(ROOT, 'tooling/fixtures/native-runtime/render-lifecycle.yaml');
 export const IOS_STARTUP_BUDGET = Object.freeze({ daemonMs: 120_000, bootMs: 600_000, processMs: 750_000 });
 export const RUNTIME_TEST_BUDGET = Object.freeze({ flowMs: 600_000, reportingMs: 60_000, processMs: 780_000 });
+export const METRO_BUNDLE_TIMEOUT_MS = 360_000;
 export const AGENT_DEVICE = Object.freeze({
   version: '0.21.37',
   url: 'https://registry.npmjs.org/agent-device/-/agent-device-0.21.37.tgz',
@@ -179,6 +180,67 @@ async function hashFile(path) {
   const hash = createHash('sha256');
   for await (const chunk of createReadStream(path)) hash.update(chunk);
   return hash.digest('hex');
+}
+
+const diagnosticIdentifier = (value) => typeof value === 'string' && /^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(value) ? value : null;
+const errorIdentity = (error) => ({
+  errorName: diagnosticIdentifier(error?.name), errorCode: diagnosticIdentifier(error?.code),
+  causeName: diagnosticIdentifier(error?.cause?.name), causeCode: diagnosticIdentifier(error?.cause?.code),
+});
+
+export function runtimeFailureDetails(error, metro) {
+  return {
+    ...(error.nativeRuntimeDetails ?? { phase: 'native-runtime', ...errorIdentity(error) }),
+    // Snapshot before cleanup intentionally stops Metro; a cleanup SIGTERM
+    // must never be mistaken for the process state that caused the failure.
+    metroExitCode: metro?.exitCode ?? null,
+    metroSignalCode: diagnosticIdentifier(metro?.signalCode),
+  };
+}
+
+export async function hashMetroBundle(url, { log, timeout = METRO_BUNDLE_TIMEOUT_MS } = {}) {
+  const target = new URL(url);
+  if (target.protocol !== 'http:' || target.hostname !== '127.0.0.1') throw new Error('Metro bundle preflight requires local HTTP');
+  const started = Date.now();
+  const signal = AbortSignal.timeout(timeout);
+  const hash = createHash('sha256');
+  let request; let firstRequestError; let firstResponseError; let bytes = 0; let httpStatus = null; let stage = 'headers';
+  const timing = () => ({ elapsedMs: Date.now() - started, timeoutMs: timeout, timedOut: signal.aborted, responseBytes: bytes, httpStatus, stage });
+  const record = (event, details = {}) => log?.write(`[native-http] ${JSON.stringify({ phase: 'fetch-metro-bundle', event, at: new Date().toISOString(), ...timing(), ...details })}\n`);
+  record('start');
+  try {
+    // Node's global fetch has an independent 300s Undici headers deadline.
+    // Use one local request with the existing 360s total budget, spanning
+    // headers and body; no pool timeout, redirect, retry or body buffering.
+    const response = await new Promise((resolveResponse, reject) => {
+      request = httpGet(target, { agent: false, signal }, (incoming) => {
+        incoming.once('error', (error) => { firstResponseError ??= error; });
+        resolveResponse(incoming);
+      });
+      request.once('error', (error) => { firstRequestError ??= error; reject(error); });
+    });
+    httpStatus = response.statusCode;
+    stage = 'body';
+    record('headers');
+    if (httpStatus < 200 || httpStatus >= 300) {
+      response.destroy();
+      throw Object.assign(new Error('Metro bundle returned an unsuccessful HTTP status'), { code: 'METRO_HTTP_STATUS' });
+    }
+    for await (const chunk of response) { bytes += chunk.length; hash.update(chunk); }
+    if (!response.complete) throw Object.assign(new Error('Metro bundle HTTP response was incomplete'), { code: 'METRO_INCOMPLETE_RESPONSE' });
+    const result = { sha256: hash.digest('hex'), ...timing() };
+    record('complete');
+    return result;
+  } catch (caught) {
+    // Aborting the request can make the body emit a later ECONNRESET. Keep
+    // the first ABORT_ERR/TimeoutError instead of replacing it during cleanup.
+    const cause = firstRequestError ?? firstResponseError ?? caught;
+    const details = { phase: 'fetch-metro-bundle', ...timing(), ...errorIdentity(cause) };
+    record('failure', errorIdentity(cause));
+    throw Object.assign(new Error(`Metro bundle preflight failed (${details.errorCode ?? details.errorName ?? 'unknown'}); see native runtime log`, { cause }), { nativeRuntimeDetails: details });
+  } finally {
+    request?.destroy();
+  }
 }
 
 export function command(executable, args, {
@@ -348,9 +410,9 @@ async function main() {
     metro.on('error', (error) => { log.write(`Metro process error: ${error.message}\n`); });
     await waitForMetro(metro);
     const bundleUrl = `http://127.0.0.1:${METRO_PORT}/.expo/.virtual-metro-entry.bundle?platform=${values.platform}&dev=true&minify=false`;
-    const bundle = await fetch(bundleUrl, { signal: AbortSignal.timeout(360_000) });
-    if (!bundle.ok) throw new Error(`Native Metro bundle failed (${bundle.status}); see metro.log`);
-    receipt.metroBundleSha256 = createHash('sha256').update(Buffer.from(await bundle.arrayBuffer())).digest('hex');
+    const bundle = await hashMetroBundle(bundleUrl, { log });
+    receipt.metroBundleSha256 = bundle.sha256;
+    receipt.metroBundleRequest = bundle;
     const junit = join(artifacts, 'junit.xml');
     // A long Metro bundle can outlast the daemon's idle window. Its fresh
     // attachment precedes the unchanged per-attempt test deadline too.
@@ -367,6 +429,7 @@ async function main() {
     receipt.status = 'passed';
   } catch (error) {
     receipt.status = 'failed'; receipt.failure = error.message; failure = error;
+    receipt.failureDetails = runtimeFailureDetails(error, metro);
   } finally {
     if (failure && receipt.device?.kind === 'Android emulator') {
       await retainAndroidFailureDiagnostics(receipt.device, artifacts)
