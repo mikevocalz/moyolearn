@@ -54,7 +54,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Module exports, protected learner routes and the motion-duration gate
-        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs tooling/check-machine-routes.test.mjs tooling/check-store-separation.test.mjs
+        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs tooling/check-machine-routes.test.mjs tooling/check-store-separation.test.mjs tooling/check-dev-hatch.test.mjs
       - name: Prepare avatar assets for repository guards
         run: node apps/web/scripts/copy-avatar-assets.mjs
       - name: Repository guards and workspace lint
@@ -65,6 +65,47 @@ jobs:
       # (docs/issues/2026-09-13-turbo-lint-failures.md). The run still exits
       # non-zero, so this reports more without gating less.
       - run: pnpm exec turbo run build typecheck test --continue
+
+  # The release bundle must not carry the QA tooling. `expo export` with
+  # EXPO_PUBLIC_AUTH_MODE=live and no `--dev` is the same Metro pass an EAS
+  # production build runs; the grep is the proof that the `__DEV__`-guarded
+  # `require()`s in packages/app really folded away. Three names, because each
+  # is an export property that survives minification: the persona switch, the
+  # mock session provider, and the fixture persona table.
+  mobile-release-bundle:
+    name: mobile release bundle carries no mock auth
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Export the Android release bundle
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_AUTH_MODE: live
+          EXPO_PUBLIC_APP_URL: https://app.moyolearn.com
+          EXPO_PUBLIC_AUTH_URL: https://app.moyolearn.com
+          CI: '1'
+        run: npx expo export --platform android --output-dir "$RUNNER_TEMP/bundle"
+      - name: Fail if the bundle names the dev persona switch, the mock session or the fixture personas
+        run: |
+          set -euo pipefail
+          status=0
+          for name in DevPersonaSwitch MockSessionProvider PERSONAS; do
+            if grep -rl --include='*.js' --include='*.hbc' -e "$name" "$RUNNER_TEMP/bundle" >/dev/null; then
+              echo "::error::release bundle contains $name"
+              grep -rl --include='*.js' --include='*.hbc' -e "$name" "$RUNNER_TEMP/bundle"
+              status=1
+            else
+              echo "ok  $name is absent from the release bundle"
+            fi
+          done
+          exit $status
 
   marketing-integration:
     name: marketing (transactional PostgreSQL integration)
