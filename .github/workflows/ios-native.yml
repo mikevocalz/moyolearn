@@ -60,7 +60,7 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
       - name: Execute iPad simulator rendering and lifecycle checks
         env:
           MOYO_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
