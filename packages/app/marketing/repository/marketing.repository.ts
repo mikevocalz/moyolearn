@@ -6,6 +6,7 @@ import 'server-only';
 import { createHash, randomUUID } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 import { z } from 'zod';
+import { plansFor } from '@acme/auth/billing-plans';
 import {
   connectionCount,
   inquiryEvent,
@@ -425,6 +426,8 @@ async function enqueueEligiblePayments(
     );
 }
 
+const ORGANIZATION_PLAN_NAMES = plansFor('organization').map((plan) => plan.name);
+
 export async function saveVerifiedPayment(
   orgId: string,
   payment: MarketingPayment,
@@ -439,9 +442,10 @@ export async function saveVerifiedPayment(
     // Incomplete evidence is held privately until an exact canonical association can
     // establish whether it belongs here. It never becomes revenue by customer match.
     if (!input.moyoPriceSeen && input.evidenceStatus !== 'incomplete') {
+      // Organisation plans only: a family subscription never counts as sales revenue.
       const canonical = await client.query(
-        'SELECT 1 FROM better_auth.subscription WHERE "stripeSubscriptionId"=$1 AND "stripeCustomerId"=$2 LIMIT 1',
-        [input.subscriptionId, input.customerId],
+        'SELECT 1 FROM better_auth.subscription WHERE "stripeSubscriptionId"=$1 AND "stripeCustomerId"=$2 AND plan = ANY($3) LIMIT 1',
+        [input.subscriptionId, input.customerId, ORGANIZATION_PLAN_NAMES],
       );
       if (!canonical.rowCount) return;
     }

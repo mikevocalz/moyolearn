@@ -585,6 +585,25 @@ test('an already-linked customer waits for the exact late subscription associati
     ),
   );
 });
+test('a family plan invoice is never recorded as sales revenue', async () => {
+  await pool.query(
+    `INSERT INTO better_auth.subscription(id,plan,"referenceId","stripeCustomerId","stripeSubscriptionId",status) VALUES('family-synthetic','family','synthetic-family-user','cus_Family','sub_Family','active')`,
+  );
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({
+      invoiceId: 'in_Family',
+      customerId: 'cus_Family',
+      subscriptionId: 'sub_Family',
+      evidenceStatus: 'mismatch',
+      moyoPriceSeen: false,
+    }),
+  );
+  assert.equal(
+    await count('marketing_verified_payments', "WHERE id='in_Family'"),
+    0,
+  );
+});
 test('incomplete or mixed invoice evidence stays visible and private repair cannot change the original payment', async () => {
   const saved = await linkedBillingInquiry();
   const invoice = paidReceipt({ evidenceStatus: 'incomplete' });

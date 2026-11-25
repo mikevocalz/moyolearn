@@ -22,9 +22,11 @@
 // SOT-KEYWORDS: summary pipeline test two stage screen deterministic fallback suppress ownership ward feed limit revoke share
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import type { IncidentReport } from '@acme/safety';
 import type { MasteryFact } from '@acme/student-model';
 import type { StoredMessage } from '../tutor/session.types.ts';
 import {
+  excludeIncidentTurns,
   generateSessionSummary,
   guardianSummaryFrom,
   type GenerateSummaryPorts,
@@ -101,6 +103,7 @@ function ports(
     saveSummary: async (report) => {
       saved.push(report);
     },
+    loadSessionIncidents: async () => [],
   };
 }
 
@@ -410,5 +413,127 @@ describe('PR #100 §Report — one row per worksheet question', () => {
     });
     assert.ok(saved[0]?.problems.every((row) => row.questionRef.kind !== 'homework-question'));
     assert.equal(saved[0]?.nextUp, 'Next session picks Fractions back up.');
+  });
+});
+
+// ── Security pass H2: the summary reads the incident record ──────────────────
+
+const turn = (id: string, role: StoredMessage['role'], text: string, createdAt: string): StoredMessage => ({
+  id,
+  role,
+  text,
+  attachments: [],
+  createdAt,
+});
+
+/** An S3 filed against `sess_1`. `messageIds` is what the test varies. */
+const incident = (over: Partial<IncidentReport> = {}): IncidentReport => ({
+  incidentId: 'inc_1',
+  source: 'automated',
+  reporterRole: 'system',
+  reporterId: null,
+  anonymous: false,
+  subjectLearnerId: 'learner_1',
+  relatedSessionId: 'sess_1',
+  relatedEventId: 'evt_1',
+  category: 'safety-concern',
+  severity: 'S3',
+  occurredAt: '2026-08-27T10:12:00.000Z',
+  summary: 'The Safety Plane stopped a turn at 3-input (blocked).',
+  transcriptExcerpt: { sessionId: 'sess_1', messageIds: ['m_flagged'] },
+  attachmentIds: [],
+  immediateActionTaken: null,
+  status: 'new',
+  assigneeId: null,
+  slaDueAt: null,
+  guardianVisible: true,
+  guardianNotifiedAt: null,
+  reviewPagedAt: null,
+  guardianAcknowledgedAt: null,
+  resolution: null,
+  timeline: [],
+  expiresAt: '2026-09-26T10:12:00.000Z',
+  legalHold: null,
+  ...over,
+});
+
+/*
+  Both answers are answer-shaped (`isAnswerCandidate`), so without the
+  exclusion the LAST one — the flagged turn — is the one the report quotes as
+  the child's answer. `34` is the number a child typed in the turn the plane
+  stopped; what matters to the test is only that it is the text an incident
+  names and that it never reaches a parent through this door.
+*/
+const FLAGGED_TEXT = '34';
+const SAFE_TEXT = '3/4';
+const messages = [
+  turn('m_q', 'tutor', 'What is 1/2 + 1/4?', '2026-08-27T10:01:00.000Z'),
+  turn('m_ok', 'learner', SAFE_TEXT, '2026-08-27T10:02:00.000Z'),
+  turn('m_flagged', 'learner', FLAGGED_TEXT, '2026-08-27T10:12:00.000Z'),
+  turn('m_deflect', 'tutor', 'Let’s keep to the problem.', '2026-08-27T10:12:05.000Z'),
+];
+
+function incidentPorts(
+  incidents: readonly IncidentReport[],
+  saved: SessionSummaryReport[],
+): GenerateSummaryPorts {
+  return {
+    ...ports(async () => ({ text: CLEAN_COPY, model: 'test-classifier' }), saved),
+    loadSession: async () => ({ ...session, messages }),
+    loadSessionIncidents: async (sessionId) => {
+      assert.equal(sessionId, 'sess_1', 'incidents must be read for the session being summarised');
+      return incidents;
+    },
+  };
+}
+
+describe('security pass H2 — a turn an S3 incident names is absent from the summary', () => {
+  it('quotes the flagged answer when no incident is filed (the control)', async () => {
+    const saved: SessionSummaryReport[] = [];
+    await generateSessionSummary('sess_1', incidentPorts([], saved));
+    assert.equal(saved[0]?.status, 'published');
+    assert.ok(
+      saved[0]?.problems.some((row) => row.childAnswer === FLAGGED_TEXT),
+      'without an incident the last answer-shaped turn is the one quoted; the test would prove nothing otherwise',
+    );
+  });
+
+  it('drops the turn the incident names by message id, and keeps the rest of the session', async () => {
+    const saved: SessionSummaryReport[] = [];
+    const result = await generateSessionSummary('sess_1', incidentPorts([incident()], saved));
+    assert.equal(result.outcome, 'published', 'an incident on one turn is not a reason to withhold the report');
+    const report = saved[0];
+    assert.ok(report);
+    assert.ok(
+      !JSON.stringify(report).includes(`"${FLAGGED_TEXT}"`),
+      'the turn an S3 was filed about reached the report',
+    );
+    assert.ok(
+      report.problems.some((row) => row.childAnswer === SAFE_TEXT),
+      'the answer before the incident was dropped with it',
+    );
+  });
+
+  it('drops a learner turn inside the window when the automated path names no ids', async () => {
+    // `incidentFromSafetyEvent` leaves `messageIds` empty; the clock is the join.
+    const saved: SessionSummaryReport[] = [];
+    await generateSessionSummary(
+      'sess_1',
+      incidentPorts([incident({ transcriptExcerpt: { sessionId: 'sess_1', messageIds: [] } })], saved),
+    );
+    assert.ok(!JSON.stringify(saved[0]).includes(`"${FLAGGED_TEXT}"`));
+    assert.ok(saved[0]?.problems.some((row) => row.childAnswer === SAFE_TEXT));
+  });
+
+  it('ignores S1 and S2 — a redirect is logged, never withheld from the record (doc 07 §3 layer 4)', () => {
+    const kept = excludeIncidentTurns(messages, [
+      incident({ severity: 'S1', category: 'profanity', transcriptExcerpt: { sessionId: 'sess_1', messageIds: [] } }),
+    ]);
+    assert.deepEqual(kept.map((m) => m.id), messages.map((m) => m.id));
+  });
+
+  it('takes the tutor’s deflection with the turn it answered, and nothing before it', () => {
+    const kept = excludeIncidentTurns(messages, [incident()]);
+    assert.deepEqual(kept.map((m) => m.id), ['m_q', 'm_ok']);
   });
 });
