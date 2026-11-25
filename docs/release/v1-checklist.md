@@ -23,9 +23,9 @@ Status values: `open`, `blocked`, `in review`, `done`. "Done" needs the evidence
 | Guardian signup creates an account (today the account step stores an email only) | lane C | open | device run |
 | OTP, forgot and reset routes exist on mobile (server has no `emailOTP` plugin; verification is link-based) | lane C | open | device run |
 | Parental consent verified server-side (today `DevConsentChannel`, in memory) | lane C | open | server log of a stored consent |
-| One price catalog that matches moyolearn.com (today three disagreeing literal sets) | lane C | open | screenshot per paywall surface |
-| `PlanCard` honours its `tier` prop so business tiers cannot render for a family | lane C | open | unit test plus screenshot |
-| Entitlement states trial, active, lapsed, cancel-at-period-end, restore modelled and tested | lane C | open | `subscription-reader` tests |
+| One price catalog that matches moyolearn.com (today three disagreeing literal sets) | lane C | in source, PR #158 (`packages/auth/src/plan-catalog.ts`); screenshot still owed | screenshot per paywall surface |
+| `PlanCard` honours its `tier` prop so business tiers cannot render for a family | lane C | in source, PR #158 (`packages/ui/plan-card-guard.test.ts`, 5 tests); screenshot still owed | unit test plus screenshot |
+| Entitlement states trial, active, lapsed, cancel-at-period-end, restore modelled and tested | lane C | in source, PR #158 (`packages/auth/src/entitlement-state.test.ts`, 18-row table plus transitions) | `subscription-reader` tests |
 | Signed iOS build on TestFlight, signed Android build on Play internal testing (Android release currently signs with the debug keystore) | Mike (credentials), lane B | blocked | store listing |
 
 ## Quest
