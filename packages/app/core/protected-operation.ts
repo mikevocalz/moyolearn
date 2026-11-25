@@ -201,6 +201,8 @@ const MOCK_SUBSCRIPTIONS: SubscriptionState[] = [
     status: 'active',
     referenceId: MOCK_CTX.learnerId,
     periodEnd: null,
+    trialEnd: null,
+    cancelAtPeriodEnd: false,
     seats: null,
   },
   {
@@ -208,6 +210,8 @@ const MOCK_SUBSCRIPTIONS: SubscriptionState[] = [
     status: 'active',
     referenceId: MOCK_CTX.orgId ?? null,
     periodEnd: null,
+    trialEnd: null,
+    cancelAtPeriodEnd: false,
     seats: null,
   },
 ];
