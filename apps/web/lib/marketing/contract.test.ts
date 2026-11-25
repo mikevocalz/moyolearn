@@ -47,7 +47,7 @@ test('intake requires explicit adult/contact consent and rejects student/freefor
     'email must also fit SignalIQ’s 254-character boundary',
   );
 });
-test('organizations must be explicitly submitted; family inquiries cannot acquire a company', () => {
+test('organizations must be explicitly submitted; families cannot file a sales inquiry', () => {
   assert.equal(
     inquiryInput.safeParse({ ...input, organizationName: '' }).success,
     false,

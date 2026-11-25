@@ -6,7 +6,7 @@
 import { useMemo, useRef } from 'react';
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import { Button, Input, Label, Paragraph, View } from '@acme/ui/primitives';
+import { Button, Input, Label, Link, Paragraph, View } from '@acme/ui/primitives';
 import { Container, Heading } from '@acme/ui/typography';
 import { APP_ORIGIN } from '@/app-links';
 
@@ -93,7 +93,7 @@ export function SchoolInquiry() {
       value.email.length > 254 ||
       !value.adult ||
       !value.contactConsent ||
-      (value.audience !== 'parent' && !value.organizationName.trim())
+      !value.organizationName.trim()
     ) {
       state.setState({
         error:
@@ -111,9 +111,9 @@ export function SchoolInquiry() {
           email: value.email,
           audience: value.audience,
           organizationName:
-            value.audience === 'parent' ? '' : value.organizationName,
+            value.organizationName,
           organizationDomain:
-            value.audience === 'parent' ? '' : value.organizationDomain,
+            value.organizationDomain,
           adult: value.adult,
           contactConsent: value.contactConsent,
           signalConsent: value.signalConsent,
@@ -189,7 +189,6 @@ export function SchoolInquiry() {
           {[
             ['school', 'A school or district'],
             ['tutoring-business', 'A tutoring business'],
-            ['parent', 'My family'],
           ].map(([audience, label]) => (
             <Button
               key={audience}
@@ -206,12 +205,15 @@ export function SchoolInquiry() {
             </Button>
           ))}
         </View>
-        {value.audience !== 'parent' && (
-          <>
-            {textField('organizationName', 'School or business name')}
-            {textField('organizationDomain', 'Website domain (optional)')}
-          </>
-        )}
+        {textField('organizationName', 'School or business name')}
+        {textField('organizationDomain', 'Website domain (optional)')}
+        <Paragraph className="text-site-body text-moyo-ink">
+          Here for your own family? Plans and the free trial are on the{' '}
+          <Link href="/pricing" className="text-moyo-primary underline">
+            pricing page
+          </Link>
+          .
+        </Paragraph>
         {choice('adult', 'I am 18 or older. (Required)')}
         {choice(
           'contactConsent',
