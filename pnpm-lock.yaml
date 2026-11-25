@@ -1075,6 +1075,9 @@ importers:
 
   apps/web-vite:
     dependencies:
+      '@acme/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@acme/avatar':
         specifier: workspace:*
         version: link:../../packages/avatar

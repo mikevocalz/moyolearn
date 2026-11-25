@@ -59,6 +59,7 @@ export type {
 export {
   authorizeReference,
   isBillingRole,
+  isBusinessPlan,
   isPlanName,
   plansFor,
   resolvePrices,
@@ -67,6 +68,7 @@ export {
 } from './src/billing-plans';
 export type {
   BillingRole,
+  BusinessPlanName,
   CustomerType,
   Plan,
   PlanLimits,
@@ -74,15 +76,37 @@ export type {
   ReferenceRequest,
 } from './src/billing-plans';
 export {
+  additionalChildPrice,
+  additionalChildSentence,
+  consumerPlans,
+  consumerTrialDays,
+  coverageSentence,
+  formatUsd,
+  isConsumerPlan,
+  monthlyPrice,
+  monthlyPriceLine,
+  monthlyPriceSentence,
+  CONSUMER_PLAN_ORDER,
+  CONSUMER_PLANS,
+} from './src/plan-catalog';
+export type { ConsumerPlan, ConsumerPlanName } from './src/plan-catalog';
+export {
   can,
   daysLeft,
+  entitlementStateOf,
   entitlementsFor,
+  isEntitledState,
+  resolveEntitlement,
   subscriptionFor,
+  ENTITLED_STATES,
+  ENTITLEMENT_STATES,
   NO_SUBSCRIPTION,
 } from './src/entitlements';
 export type {
   Capability,
+  EntitlementState,
   Entitlements,
+  ResolvedEntitlement,
   SubscriptionState,
   SubscriptionStatus,
 } from './src/entitlements';

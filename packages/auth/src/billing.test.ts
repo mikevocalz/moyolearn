@@ -97,7 +97,7 @@ describe('the catalogue', () => {
   it('splits family from ops by who the customer is', () => {
     assert.deepEqual(
       plansFor('user').map((p) => p.name),
-      ['family-early-bird', 'family'],
+      ['plus', 'family-early-bird', 'family'],
     );
     assert.equal(plansFor('organization').length, 3);
   });

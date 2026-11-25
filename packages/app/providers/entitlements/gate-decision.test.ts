@@ -4,6 +4,12 @@
 // SOT-KEYWORDS: permission gate decision test entitlement loaded pending fallback learner paywall
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import {
+  can,
+  resolveEntitlement,
+  NO_SUBSCRIPTION,
+  type SubscriptionState,
+} from '@acme/auth/entitlements';
 import type { ActiveContextKind } from '../session/types.ts';
 import { gateDecision, type GateInput } from './gate-decision.ts';
 
@@ -76,6 +82,50 @@ describe('permission gate — once the answer is known', () => {
           );
         }
       }
+    }
+  });
+});
+
+describe('permission gate — lapsed and restored, end to end', () => {
+  const NOW = new Date('2026-11-25T12:00:00Z');
+  const row = (over: Partial<SubscriptionState>): SubscriptionState => ({
+    ...NO_SUBSCRIPTION,
+    plan: 'family',
+    referenceId: 'user_1',
+    ...over,
+  });
+  const lapsed = row({ status: 'canceled', periodEnd: '2026-11-01T12:00:00.000Z' });
+  const renewed = row({ status: 'active', periodEnd: '2026-12-20T12:00:00.000Z' });
+
+  const decideFor = (subscriptions: SubscriptionState[], contextKind: ActiveContextKind) => {
+    const { entitlements } = resolveEntitlement(subscriptions, 'user_1', NOW);
+    return gateDecision({
+      loaded: true,
+      allowed: can(entitlements, 'write'),
+      contextKind,
+      hasPending: false,
+    });
+  };
+
+  it('a lapsed family falls back on the guardian surface and renders nothing for the learner', () => {
+    assert.equal(resolveEntitlement([lapsed], 'user_1', NOW).state, 'lapsed');
+    assert.equal(decideFor([lapsed], 'guardian'), 'fallback');
+    assert.equal(decideFor([lapsed], 'learner'), 'nothing');
+  });
+
+  it('a restored family renders children on both surfaces', () => {
+    assert.equal(resolveEntitlement([lapsed, renewed], 'user_1', NOW).state, 'restored');
+    assert.equal(decideFor([lapsed, renewed], 'guardian'), 'children');
+    assert.equal(decideFor([lapsed, renewed], 'learner'), 'children');
+  });
+
+  it('the practice floor never routes through a refusal, lapsed or not', () => {
+    for (const subscriptions of [[lapsed], [lapsed, renewed], []]) {
+      const { entitlements } = resolveEntitlement(subscriptions, 'user_1', NOW);
+      assert.equal(
+        gateDecision({ loaded: true, allowed: can(entitlements, 'practise'), contextKind: 'learner', hasPending: false }),
+        'children',
+      );
     }
   });
 });

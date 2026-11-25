@@ -17,20 +17,20 @@
 
 import { useState } from 'react';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Button, Card, Dial, FadeIn, Heading, PressScale, Text } from '@acme/ui';
-import { trialSchedule, TRIAL_REMINDER_DAYS_BEFORE, type PlanName } from '@acme/auth';
+import { Button, Card, Dial, Heading, PressScale, Text } from '@acme/ui';
+import { trialSchedule, TRIAL_REMINDER_DAYS_BEFORE, type ConsumerPlanName } from '@acme/auth';
 import { formatTrialDate, PAYWALL_OFFERS } from './paywall.data';
 
 export interface PaywallProps {
   /** Starts the trial for the chosen plan. Resolves once the plugin's wrapped
    *  success URL has settled the subscription (doc 06 §4's race hygiene). */
-  onStartTrial: (plan: PlanName) => void;
+  onStartTrial: (plan: ConsumerPlanName) => void;
   /** Doc 05 §6: "Continue with free practice" — the child's floor is never hostage. */
   onContinueFree: () => void;
 }
 
 export function PaywallContent({ onStartTrial, onContinueFree }: PaywallProps) {
-  const [selected, setSelected] = useState<PlanName>(PAYWALL_OFFERS[0]!.plan);
+  const [selected, setSelected] = useState<ConsumerPlanName>(PAYWALL_OFFERS[0]!.plan);
   const schedule = trialSchedule(selected);
 
   return (
@@ -41,8 +41,8 @@ export function PaywallContent({ onStartTrial, onContinueFree }: PaywallProps) {
             Try the whole thing free for {schedule.days} days
           </Heading>
           <TWText className="text-body-lg text-text">
-            Every child in your family, the full tutor, nothing held back. Cancel in the app in two
-            taps.
+            One learner or the whole family, the full tutor, nothing held back. Cancel in the app in
+            two taps.
           </TWText>
         </Section>
 
@@ -66,8 +66,8 @@ export function PaywallContent({ onStartTrial, onContinueFree }: PaywallProps) {
                   </TWText>
                 </View>
                 <TWText className="text-body text-text">{offer.promise}</TWText>
-                {/* Billing frequency is never the thing left out. */}
-                <TWText className="text-caption text-text-muted">{offer.billed}</TWText>
+                {/* Who the price covers is never the thing left out. */}
+                <TWText className="text-caption text-text-muted">Covers {offer.covers}</TWText>
                 {offer.terms ? (
                   // Real text at body size, not gray fine print (doc 05 §6 A11y).
                   <TWText className="text-body text-text">{offer.terms}</TWText>

@@ -17,7 +17,8 @@
 
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, Card, Dial, FadeIn, Heading, Text } from '@acme/ui';
-import { PLANS, plansFor, type PlanName } from '@acme/auth';
+import { isBusinessPlan, PLANS, plansFor, type BusinessPlanName } from '@acme/auth';
+import { businessMonthlyPriceLine, BUSINESS_PLAN_DISPLAY } from '../billing/business-plan-display';
 import { MILESTONES, milestoneProgress, type ActivationState } from './milestones';
 import { tierGateNote, trialSentence, trialStats } from './convert';
 
@@ -25,7 +26,7 @@ export interface ConvertProps {
   activation: ActivationState;
   daysLeft: number | null;
   endsAt: string | null;
-  onChoosePlan: (plan: PlanName) => void;
+  onChoosePlan: (plan: BusinessPlanName) => void;
   /** Doc 05 §6: export stays visible after expiry, always. */
   onExport: () => void;
 }
@@ -55,7 +56,7 @@ export function ConvertContent({
             <Text variant="label" tone="muted">
               {daysLeft === null
                 ? `${done} of ${total} set up`
-                : `Day ${Math.max(0, 30 - daysLeft)} of 30 · ${done} of ${total} set up`}
+                : `Day ${Math.max(0, OPS_TRIAL_DAYS - daysLeft)} of ${OPS_TRIAL_DAYS} · ${done} of ${total} set up`}
             </Text>
           </Section>
         </FadeIn>
@@ -79,19 +80,24 @@ export function ConvertContent({
         ) : null}
 
         <View className="gap-stack">
-          {plansFor('organization').map((plan) => (
-            <Card key={plan.name} className="gap-stack">
+          {OPS_PLANS.map((plan) => (
+            <Card key={plan} className="gap-stack">
               <View className="flex-row items-baseline justify-between gap-element">
-                <TWText className="text-body font-semibold text-text">{TIER_TITLES[plan.name]}</TWText>
+                <TWText className="text-body font-semibold text-text">
+                  {BUSINESS_PLAN_DISPLAY[plan].shortTitle}
+                </TWText>
                 <TWText className="font-display text-body-lg font-bold text-text">
-                  {TIER_PRICES[plan.name]}
+                  {businessMonthlyPriceLine(plan)}
                 </TWText>
               </View>
               {/* Juicebox: the gate is stated here, not discovered at the pay run. */}
               <TWText className="text-body text-text">
-                {tierGateNote(PLANS[plan.name].limits.payoutAutomation)}
+                {tierGateNote(PLANS[plan].limits.payoutAutomation)}
               </TWText>
-              <Button title={`Choose ${TIER_TITLES[plan.name]}`} onPress={() => onChoosePlan(plan.name)} />
+              <Button
+                title={`Choose ${BUSINESS_PLAN_DISPLAY[plan].shortTitle}`}
+                onPress={() => onChoosePlan(plan)}
+              />
             </Card>
           ))}
         </View>
@@ -112,22 +118,20 @@ export function ConvertContent({
   );
 }
 
-const TIER_TITLES: Record<PlanName, string> = {
-  'family-early-bird': 'Founding family',
-  family: 'Family',
-  'ops-solo': 'Solo',
-  'ops-studio': 'Studio',
-  'ops-scale': 'Scale',
-};
+/** The ops tiers, narrowed from the catalogue: this screen sells to organisations only. */
+const OPS_PLANS: readonly BusinessPlanName[] = plansFor('organization')
+  .map((plan) => plan.name)
+  .filter(isBusinessPlan);
 
-/** Display copy paired with the plan the server charges — see paywall.data.ts. */
-const TIER_PRICES: Record<PlanName, string> = {
-  'family-early-bird': '$11/month',
-  family: '$15.99/month',
-  'ops-solo': '$19/month',
-  'ops-studio': '$99/month',
-  'ops-scale': '$299/month',
-};
+/**
+ * The trial length the ops tiers share, read from the catalogue the Stripe
+ * plugin bills from. The reduce guards against a tier that someday differs: the
+ * longest trial is the only one a "Day N of M" line can be true for everyone on.
+ */
+const OPS_TRIAL_DAYS: number = plansFor('organization').reduce(
+  (longest, plan) => Math.max(longest, plan.trialDays),
+  0,
+);
 
 /**
  * The rail chip (doc 05 §6: "banner chip in the rail — days left + milestone

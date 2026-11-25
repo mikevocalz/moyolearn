@@ -11,11 +11,15 @@
 export type CustomerType = 'user' | 'organization';
 
 export type PlanName =
+  | 'plus'
   | 'family-early-bird'
   | 'family'
   | 'ops-solo'
   | 'ops-studio'
   | 'ops-scale';
+
+/** The ops tiers. Derived from the union so a renamed tier fails here, not in a screen. */
+export type BusinessPlanName = Extract<PlanName, `ops-${string}`>;
 
 export interface PlanLimits {
   /** S19's automated pay runs. Gated at Studio (doc 06 §4). */
@@ -42,6 +46,17 @@ const NO_LIMITS: PlanLimits = { payoutAutomation: 0 };
 const TRIAL_DAYS = 30;
 
 export const PLANS: Record<PlanName, Plan> = {
+  plus: {
+    name: 'plus',
+    customerType: 'user',
+    // Moyo Plus (one learner) is on the public pricing page and in the consumer
+    // catalogue (plan-catalog.ts). Its Stripe price is not yet provisioned: until
+    // STRIPE_PRICE_PLUS is set, `resolvePrices` reports it missing and the plugin
+    // refuses it, which is the designed behaviour for an unpriced plan.
+    priceEnv: 'STRIPE_PRICE_PLUS',
+    trialDays: TRIAL_DAYS,
+    limits: NO_LIMITS,
+  },
   'family-early-bird': {
     name: 'family-early-bird',
     customerType: 'user',
@@ -84,6 +99,9 @@ export const PLANS: Record<PlanName, Plan> = {
 };
 
 export const isPlanName = (value: string): value is PlanName => value in PLANS;
+
+export const isBusinessPlan = (plan: PlanName): plan is BusinessPlanName =>
+  PLANS[plan].customerType === 'organization';
 
 /** Family plans are bought by a guardian for themselves; ops plans by an org. */
 export const plansFor = (customerType: CustomerType) =>
