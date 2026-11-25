@@ -18,7 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const ADMISSION = Object.freeze({
   renderer: '2.14.0', version: '158.1.0', skia: 'm158a',
   dawnCommit: '1716e88cc9e58398fab5d4473f7f2e858667b677',
-  dawnTag: 'chrome-m158', webgpu: '0.25.0',
+  dawnTag: 'chrome-m158', webgpu: '0.26.0',
   patches: ['metal-platforms.patch', 'metal-suspend-submissions-in-background.patch', 'vulkan-fifo-three-images-android.patch'],
   // Private Graphite headers come from the 158.1.0 publisher's exact Skia
   // submodule; externals/skia at 3d092273 is 75584a96, the same commit the

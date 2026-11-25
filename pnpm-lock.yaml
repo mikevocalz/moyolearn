@@ -337,8 +337,8 @@ catalogs:
       specifier: 0.21.4
       version: 0.21.4
     react-native-webgpu:
-      specifier: 0.25.0
-      version: 0.25.0
+      specifier: 0.26.0
+      version: 0.26.0
     react-native-webgpu-dawn:
       specifier: 158.1.0
       version: 158.1.0
@@ -819,7 +819,7 @@ importers:
         version: 0.21.4(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react-native-webgpu:
         specifier: 'catalog:'
-        version: 0.25.0(react-native-reanimated@4.8.0(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1)
+        version: 0.26.0(react-native-reanimated@4.8.0(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1)
       react-native-webgpu-dawn:
         specifier: 'catalog:'
         version: 158.1.0
@@ -11026,8 +11026,8 @@ packages:
   react-native-webgpu-dawn@158.1.0:
     resolution: {integrity: sha512-r33YyVsxDOaaXriZje4YFqFWKWcrQ08lKZwqxPDnx8X0dZEWsiN/mi6z0sO6qb+TX70JmUH9VHY3gGJREHy93w==}
 
-  react-native-webgpu@0.25.0:
-    resolution: {integrity: sha512-2DF/0S1KkUGmL+/pdvUXpm0wrv633HDMwzyKCZbUDpFFaUep5hpwJE5Q1h8MjoBkR4Gwi+Gmvr3VSkdN5KLhaA==}
+  react-native-webgpu@0.26.0:
+    resolution: {integrity: sha512-A9y1MyZeH8TXu4wFhpDVk+m4TGpofNVcyortIWWhUno7hF1yrLCCHoGD6hfGOtrV2Aqo9XqdYozMZ9gwE7C6lw==}
     peerDependencies:
       react: 19.3.1
       react-native: 0.88.1
@@ -23478,7 +23478,7 @@ snapshots:
 
   react-native-webgpu-dawn@158.1.0: {}
 
-  react-native-webgpu@0.25.0(react-native-reanimated@4.8.0(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1):
+  react-native-webgpu@0.26.0(react-native-reanimated@4.8.0(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native-worklets@0.14.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1):
     dependencies:
       react: 19.3.1
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1)

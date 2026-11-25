@@ -87,7 +87,7 @@ catalog:
   # expo-router imports it; listed so the iOS SwiftPM build links it (see tooling/ios-spm.mjs).
   "@react-native-masked-view/masked-view": 0.3.2
   react-native-reanimated: 4.8.0
-  react-native-webgpu: 0.25.0
+  react-native-webgpu: 0.26.0
   # WebGPU 0.24 downloads Dawn from the react-native-skia `binaries-158.1.0`
   # release itself and no longer depends on this package. Graphite still takes
   # its Dawn from here (tooling/enable-skia-graphite.mjs), so the shared owner
