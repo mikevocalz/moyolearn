@@ -1,0 +1,80 @@
+{
+  "source_commit": "1471b3faf4470b91710db573a37634e4ab65161c",
+  "source_baseline": "0ea78070138a3357858af5d702e8fdbb095d0e6a",
+  "baseline_aar_sha256": "184e39d034cf22eb0b45f056d0258234b31e61d07454fdf7a4f1405816f4a1b5",
+  "renderer_sha256": "870c1418b6b8c1378c1dac82d51a8cf391164a4884e6253dc0cacb6ef4d4f6d5",
+  "renderer_bytes": 7163992,
+  "baseline_elf": {
+    "needed": [
+      "libBulletCollision.so",
+      "libBulletDynamics.so",
+      "libBulletSoftBody.so",
+      "libEGL.so",
+      "libGLESv3.so",
+      "libLinearMath.so",
+      "libandroid.so",
+      "libc++_shared.so",
+      "libc.so",
+      "libdl.so",
+      "libfreetype.so",
+      "libgvr.so",
+      "libgvr_audio.so",
+      "libjnigraphics.so",
+      "liblog.so",
+      "libm.so",
+      "libopenxr_loader.so",
+      "libz.so"
+    ],
+    "soname": [
+      "libviro_renderer.so"
+    ],
+    "aarch64": true,
+    "load_alignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  "renderer_elf": {
+    "needed": [
+      "libBulletCollision.so",
+      "libBulletDynamics.so",
+      "libBulletSoftBody.so",
+      "libEGL.so",
+      "libGLESv3.so",
+      "libLinearMath.so",
+      "libandroid.so",
+      "libc++_shared.so",
+      "libc.so",
+      "libdl.so",
+      "libfreetype.so",
+      "libgvr.so",
+      "libgvr_audio.so",
+      "libjnigraphics.so",
+      "liblog.so",
+      "libm.so",
+      "libopenxr_loader.so",
+      "libz.so"
+    ],
+    "soname": [
+      "libviro_renderer.so"
+    ],
+    "aarch64": true,
+    "load_alignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  "missing_exports": [],
+  "missing_jni": [],
+  "new_exports": [
+    "_ZN17VROHandPinchState14updateDistanceEbf",
+    "_ZN17VROHandPinchState6updateEbf"
+  ],
+  "new_undefined": [],
+  "defined_symbols_before": 9750,
+  "defined_symbols_after": 9752,
+  "qualification": "prototype only; no physical acceptance; no direct touch",
+  "abi_pass": true
+}

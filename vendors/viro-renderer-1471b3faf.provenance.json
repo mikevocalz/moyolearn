@@ -1,0 +1,152 @@
+{
+  "source_commit": "1471b3faf4470b91710db573a37634e4ab65161c",
+  "source_baseline": "0ea78070138a3357858af5d702e8fdbb095d0e6a",
+  "baseline_aar_sha256": "184e39d034cf22eb0b45f056d0258234b31e61d07454fdf7a4f1405816f4a1b5",
+  "renderer_sha256": "870c1418b6b8c1378c1dac82d51a8cf391164a4884e6253dc0cacb6ef4d4f6d5",
+  "renderer_bytes": 7163992,
+  "baseline_elf": {
+    "needed": [
+      "libBulletCollision.so",
+      "libBulletDynamics.so",
+      "libBulletSoftBody.so",
+      "libEGL.so",
+      "libGLESv3.so",
+      "libLinearMath.so",
+      "libandroid.so",
+      "libc++_shared.so",
+      "libc.so",
+      "libdl.so",
+      "libfreetype.so",
+      "libgvr.so",
+      "libgvr_audio.so",
+      "libjnigraphics.so",
+      "liblog.so",
+      "libm.so",
+      "libopenxr_loader.so",
+      "libz.so"
+    ],
+    "soname": [
+      "libviro_renderer.so"
+    ],
+    "aarch64": true,
+    "load_alignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  "renderer_elf": {
+    "needed": [
+      "libBulletCollision.so",
+      "libBulletDynamics.so",
+      "libBulletSoftBody.so",
+      "libEGL.so",
+      "libGLESv3.so",
+      "libLinearMath.so",
+      "libandroid.so",
+      "libc++_shared.so",
+      "libc.so",
+      "libdl.so",
+      "libfreetype.so",
+      "libgvr.so",
+      "libgvr_audio.so",
+      "libjnigraphics.so",
+      "liblog.so",
+      "libm.so",
+      "libopenxr_loader.so",
+      "libz.so"
+    ],
+    "soname": [
+      "libviro_renderer.so"
+    ],
+    "aarch64": true,
+    "load_alignments": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  "missing_exports": [],
+  "missing_jni": [],
+  "new_exports": [
+    "_ZN17VROHandPinchState14updateDistanceEbf",
+    "_ZN17VROHandPinchState6updateEbf"
+  ],
+  "new_undefined": [],
+  "defined_symbols_before": 9750,
+  "defined_symbols_after": 9752,
+  "qualification": "prototype only; no physical acceptance; no direct touch",
+  "abi_pass": true,
+  "changed_members": [
+    "jni/arm64-v8a/libviro_renderer.so"
+  ],
+  "aar_sha256": "a733a97e0f15f25eb42f384c749eb12906842a750527fac0e784cd69b8e0d762",
+  "file": "viro-renderer-1471b3faf.aar",
+  "build_monitor": {
+    "command": [
+      "/Users/mikevocalz/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/private/tmp/moyo-hands-native-0ea780701/.build/arm64",
+      "-j2",
+      "viro_renderer"
+    ],
+    "exit": 0,
+    "free_floor_triggered": false,
+    "minimum_free_bytes": 1632399360
+  },
+  "host_test": "c++14 -Wall -Wextra -Werror: PASS",
+  "candidate_thresholds": {
+    "strength_press": 0.75,
+    "strength_release": 0.55,
+    "distance_press_metres": 0.02,
+    "distance_release_metres": 0.025,
+    "qualified": false
+  },
+  "build_recipe": {
+    "ndk": "27.1.12297006",
+    "abi": "arm64-v8a",
+    "build_type": "RelWithDebInfo",
+    "configure_command": [
+      "/Users/mikevocalz/Library/Android/sdk/cmake/3.22.1/bin/cmake",
+      "-S",
+      "android/sharedCode",
+      "-B",
+      ".build/arm64",
+      "-G",
+      "Ninja",
+      "-DCMAKE_TOOLCHAIN_FILE=/Users/mikevocalz/Library/Android/sdk/ndk/27.1.12297006/build/cmake/android.toolchain.cmake",
+      "-DANDROID_ABI=arm64-v8a",
+      "-DANDROID_PLATFORM=android-24",
+      "-DANDROID_STL=c++_shared",
+      "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+      "-DCMAKE_BUILD_TYPE=RelWithDebInfo",
+      "-DCMAKE_CXX_FLAGS=-std=c++14 -frtti -fexceptions",
+      "-DCMAKE_MAKE_PROGRAM=/Users/mikevocalz/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-DOpenXR_DIR=/private/tmp/moyo-hands-native-0ea780701/.build/OpenXR",
+      "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+    ],
+    "cwd": "/private/tmp/moyo-hands-native-0ea780701",
+    "shared_inputs": "exact pinned AAR arm64 shared members; unchanged loader",
+    "protobuf_sha256": "6548edb7f9cf3086417a8955ccc5cdc722f339fe8a478664b65127a318a095e8",
+    "openxr_headers": "pinned source1.1.62",
+    "source_review": "root independent source review approved prototype commit/build only",
+    "cca": "disabled; baseline DT_NEEDED matches",
+    "log": "/private/tmp/moyo-hands-native-build.log",
+    "abi_log": "/private/tmp/moyo-hands-native-abi.log",
+    "verification_script": "/private/tmp/moyo-hands-native-verify.py"
+  },
+  "footprint_kib": {
+    "worktree": 452832,
+    "build": 373132,
+    "artifacts": 26648
+  },
+  "free_bytes_after_packaging": 1658613760,
+  "cleanup": {
+    "operation": "ninja -C .build/arm64 -t clean",
+    "removed_generated_files": 307,
+    "build_before_kib": 373132,
+    "build_after_kib": 2932,
+    "preserved": "source worktree/commit/patch, original staged inputs, stripped+unstripped renderer, AAR, provenance, host/build/ABI logs",
+    "free_bytes_after": 1906257920
+  }
+}
