@@ -58,13 +58,65 @@ export interface AuthEmailMessage {
  * safety alert is the mail that can least afford to be the one wired
  * differently.
  */
-export type AuthEmailPurpose = 'verify' | 'reset' | 'incident';
+export type AuthEmailPurpose =
+  | 'verify'
+  | 'reset'
+  | 'incident'
+  | 'consent-code'
+  | 'consent-confirm';
 
 const PURPOSE_LABEL: Record<AuthEmailPurpose, string> = {
   verify: 'verification email',
   reset: 'password reset email',
   incident: 'guardian incident email',
+  'consent-code': 'consent code email',
+  'consent-confirm': 'consent confirmation email',
 };
+
+/**
+ * The consent code (doc 06 §3.1, email-plus's first contact). Fifteen minutes
+ * is `CODE_TTL_MINUTES` in consent-flow.ts; the sentence moves with it.
+ */
+export function consentCodeEmail(to: string, code: string): AuthEmailMessage {
+  const safeCode = escapeHtml(code);
+  return {
+    to,
+    subject: `${code} is your Moyo permission code`,
+    text: [
+      'Enter this code in Moyo to confirm you are giving permission as a parent or guardian:',
+      '',
+      code,
+      '',
+      "It works for fifteen minutes. If you didn't ask for it, ignore this email — nothing is recorded until the code is entered.",
+    ].join('\n'),
+    html: [
+      '<p>Enter this code in Moyo to confirm you are giving permission as a parent or guardian:</p>',
+      `<p style="font-size:2em;letter-spacing:0.2em"><strong>${safeCode}</strong></p>`,
+      "<p>It works for fifteen minutes. If you didn't ask for it, ignore this email — nothing is recorded until the code is entered.</p>",
+    ].join('\n'),
+  };
+}
+
+/**
+ * The "plus": a second, separate message after the code is verified. It
+ * carries no link and no code on purpose — the point of it is that the parent
+ * sees it arrive and comes back to say so.
+ */
+export function consentConfirmationEmail(to: string): AuthEmailMessage {
+  return {
+    to,
+    subject: 'One more step for your Moyo permission',
+    text: [
+      'Your code was accepted. To finish, go back to Moyo and tap "I confirmed it".',
+      '',
+      "Permission isn't recorded until you do. If this wasn't you, don't tap it — nothing happens.",
+    ].join('\n'),
+    html: [
+      '<p>Your code was accepted. To finish, go back to Moyo and tap <strong>I confirmed it</strong>.</p>',
+      "<p>Permission isn't recorded until you do. If this wasn't you, don't tap it — nothing happens.</p>",
+    ].join('\n'),
+  };
+}
 
 /**
  * The environment shape this module reads. Typed structurally rather than as

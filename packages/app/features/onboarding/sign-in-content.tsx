@@ -212,6 +212,15 @@ export function SignInContent() {
           fullWidth
           size="lg"
         />
+        {/* The reset path is reachable from the one screen a locked-out parent
+            is standing on. `createAuth` wires `sendResetPassword`; this is the
+            door to it. */}
+        <Button
+          title="Forgot your password?"
+          onPress={() => router.push('/onboarding/forgot-password')}
+          variant="ghost"
+          fullWidth
+        />
         <Button
           title="Back"
           onPress={() => router.push('/onboarding')}

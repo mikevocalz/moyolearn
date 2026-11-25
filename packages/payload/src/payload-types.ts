@@ -72,6 +72,7 @@ export interface Config {
     guardianships: Guardianship;
     'handoff-codes': HandoffCode;
     consents: Consent;
+    'consent-verifications': ConsentVerification;
     skills: Skill;
     misconceptions: Misconception;
     sessionTranscripts: SessionTranscript;
@@ -106,6 +107,7 @@ export interface Config {
     guardianships: GuardianshipsSelect<false> | GuardianshipsSelect<true>;
     'handoff-codes': HandoffCodesSelect<false> | HandoffCodesSelect<true>;
     consents: ConsentsSelect<false> | ConsentsSelect<true>;
+    'consent-verifications': ConsentVerificationsSelect<false> | ConsentVerificationsSelect<true>;
     skills: SkillsSelect<false> | SkillsSelect<true>;
     misconceptions: MisconceptionsSelect<false> | MisconceptionsSelect<true>;
     sessionTranscripts: SessionTranscriptsSelect<false> | SessionTranscriptsSelect<true>;
@@ -258,7 +260,30 @@ export interface Consent {
   scope: string;
   policyVersion: string;
   evidenceRef?: string | null;
+  verificationId?: string | null;
   grantedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-verifications".
+ */
+export interface ConsentVerification {
+  id: number;
+  guardianAuthId: string;
+  method: 'email-plus' | 'text-plus' | 'kba' | 'card';
+  sentTo: string;
+  codeHash: string;
+  sentAt: string;
+  attempts: number;
+  codeVerifiedAt?: string | null;
+  confirmationSentAt?: string | null;
+  confirmedAt?: string | null;
+  recordedAt?: string | null;
+  scope?: string | null;
+  policyVersion?: string | null;
+  evidenceRef?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1054,6 +1079,10 @@ export interface PayloadLockedDocument {
         value: number | Consent;
       } | null)
     | ({
+        relationTo: 'consent-verifications';
+        value: number | ConsentVerification;
+      } | null)
+    | ({
         relationTo: 'skills';
         value: number | Skill;
       } | null)
@@ -1262,7 +1291,29 @@ export interface ConsentsSelect<T extends boolean = true> {
   scope?: T;
   policyVersion?: T;
   evidenceRef?: T;
+  verificationId?: T;
   grantedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-verifications_select".
+ */
+export interface ConsentVerificationsSelect<T extends boolean = true> {
+  guardianAuthId?: T;
+  method?: T;
+  sentTo?: T;
+  codeHash?: T;
+  sentAt?: T;
+  attempts?: T;
+  codeVerifiedAt?: T;
+  confirmationSentAt?: T;
+  confirmedAt?: T;
+  recordedAt?: T;
+  scope?: T;
+  policyVersion?: T;
+  evidenceRef?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1748,6 +1799,7 @@ export interface CollectionQueryWidget {
       | 'guardianships'
       | 'handoff-codes'
       | 'consents'
+      | 'consent-verifications'
       | 'skills'
       | 'misconceptions'
       | 'sessionTranscripts'
@@ -1798,6 +1850,8 @@ export interface ActivityWidget {
           | 'guardianships'
           | 'handoff-codes'
           | 'consents'
+          | 'consent-verifications'
+      | 'consent-verifications'
           | 'skills'
           | 'misconceptions'
           | 'sessionTranscripts'

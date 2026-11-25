@@ -40,6 +40,13 @@ export {
   roleForOrganizationRoleAndKind,
 } from './providers/session/role-mapping';
 export {
+  issueConsentChallenge,
+  checkConsentCode,
+  confirmConsentChallenge,
+  recordGuardianConsent,
+  readGuardianConsent,
+} from './features/onboarding/consent/consent.service';
+export {
   institutionRead,
   loadInstitutionOverview,
   loadDistrictOverview,

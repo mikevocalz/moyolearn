@@ -532,3 +532,33 @@ export {
   HandoffError,
 } from './handoff.ts';
 export type { HandoffStore, GuardianshipReader, HandoffIssue } from './handoff.ts';
+/*
+  Server-side consent verification (security H3): the code is minted, mailed,
+  compared and recorded here, never on the guardian's device. node:crypto, so
+  it lives behind this entry point like the handoff.
+*/
+export {
+  startConsentChallenge,
+  verifyConsentCode,
+  sendConsentConfirmation,
+  recordConsent,
+  readVerifiedConsent,
+  ConsentVerificationError,
+} from './consent-verification.ts';
+export type {
+  ConsentVerificationRow,
+  ConsentVerificationStore,
+  ConsentMailer,
+  ConsentVerificationDeps,
+  ConsentChallengeIssue,
+  ConsentVerifyResult,
+  RecordedConsent,
+  VerifiedConsent,
+} from './consent-verification.ts';
+// readAuthEmailConfig and AuthEmailConfig are exported with the incident sender above.
+export {
+  sendAuthEmail,
+  consentCodeEmail,
+  consentConfirmationEmail,
+  AuthEmailSendError,
+} from './auth-email.ts';
