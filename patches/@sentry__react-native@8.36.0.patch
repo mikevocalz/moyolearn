@@ -1,17 +1,17 @@
 diff --git a/Package.swift b/Package.swift
-index 354c139..23205eb 100644
+index 8db8854..f929c41 100644
 --- a/Package.swift
 +++ b/Package.swift
 @@ -78,9 +78,13 @@ let reactNativeHeaderProducts: [Target.Dependency] = [
  // `sentry_cocoa_version` in RNSentry.podspec. The checksum is the SHA256 of the
  // archive, which is what both `pod install` and SwiftPM verify.
- let sentryCocoaVersion = "9.31.0"
--let sentryCocoaChecksum = "86dde13e6145ea3049ee2eb0b07ccb66e137a4d3af0d0dfe0b9d895f80b43237"
+ let sentryCocoaVersion = "9.35.0"
+-let sentryCocoaChecksum = "6c460f79c18f8dc2c694f8367e2a5d5edb0e54e4f9a4cfe5ea6c7f9d21fc242b"
 +// Moyo: the dynamic build (Sentry-Dynamic.xcframework.zip). Xcode 27.1 embeds a
 +// static framework binary target by stripping it and injecting a stub binary, and
 +// that step runs `lipo -create` with no inputs and fails the app build. A dynamic
 +// framework embeds normally. Checksum: the release asset's published SHA-256.
-+let sentryCocoaChecksum = "53b938aab7f1e3cb0728a7cacdf379ad232c051e39fb4e4ef7b18b31f04b46b6"
++let sentryCocoaChecksum = "a59b69fcdbe19a30f376d83b1f3a387d05d5b9ee6064d7f62d48b4a6320c6625"
  
 -let sentryCocoa: Target.Dependency = "Sentry"
 +let sentryCocoa: Target.Dependency = "Sentry-Dynamic"

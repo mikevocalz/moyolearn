@@ -55,13 +55,6 @@ which is exactly the intermittency that made it look fixed. Nothing reads
 `lastUnhandledLink` before the commit (the container renders `fallback` until
 that promise resolves), so deep-link handling is unchanged.
 
-## `expo-horizon-core@57.0.2`
-
-Enables `android.buildFeatures.buildConfig` explicitly. The module declares
-`META_HORIZON_APP_ID` in `defaultConfig`, but AGP 9 disables BuildConfig generation
-by default and otherwise rejects the module during configuration. Remove this
-patch when the upstream module enables the feature itself.
-
 ## `@reactvision/react-viro@3.0.1-moyo.1`: appcompat on the two Android shims
 
 The `react_viro` and `viro_renderer` Gradle modules are thin wrappers around
@@ -89,7 +82,7 @@ could overwrite the app's repairs. The package version stays pinned. The
 single-process Expo compiler regression covers fresh and repeated generation;
 remove this correction when the generator awaits its IO upstream.
 
-## `expo-sharing@58.0.22`
+## `expo-sharing@58.0.23`
 
 **Why:** `ios/ResolveUrlContentDetails.swift` uses `URL`, `URLRequest`,
 `URLSession` and `HTTPURLResponse` without `import Foundation`. It is the only
