@@ -2,24 +2,38 @@
 // Dev-only persona switcher — a QA hatch, never production.
 //
 // This reproduces the old fixture persona picker so QA and design can still
-// open any shell or onboarding flow without a real account. It is gated by
-// `__DEV__` everywhere it is mounted, so it cannot ship.
+// open any shell or onboarding flow without a real account.
+//
+// Two gates, both required. The welcome screen `require`s this module only
+// inside a `__DEV__` branch, so a release bundle does not contain it; and the
+// component itself renders nothing unless the build is a dev build in mock
+// mode, so a dev build pointed at the live server cannot overwrite a real
+// session with a fixture. It has no route of its own: `/onboarding/dev` was a
+// URL any release build answered, and it is deleted.
 // SOT: docs/pack/09-screens-first-build-order.md §2
-// SOT-KEYWORDS: dev persona switch qa fixture onboarding role
+// SOT-KEYWORDS: dev persona switch qa fixture onboarding role release guard
 
 import { useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import { View, Text as TWText } from '@acme/ui/tw';
 import { Button, Heading, PressScale } from '@acme/ui';
 import { Check } from '@acme/ui/icons';
+import { getAuthMode, isDevBuild } from '../../providers/session/auth-mode';
 import { useSessionStore } from '../../providers/session/store';
 import { PERSONAS } from '../../fixtures/personas';
 import { onboardingPath } from './flow/flow';
+
+/** True only where a fixture identity is an honest thing to boot. */
+export function isDevPersonaSwitchAvailable(): boolean {
+  return isDevBuild() && getAuthMode() !== 'live';
+}
 
 export function DevPersonaSwitch() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const setPersona = useSessionStore((s) => s.setPersona);
   const router = useRouter();
+
+  if (!isDevPersonaSwitchAvailable()) return null;
 
   const selected = PERSONAS.find((p) => p.id === selectedId);
 

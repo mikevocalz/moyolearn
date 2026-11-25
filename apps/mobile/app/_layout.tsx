@@ -55,12 +55,14 @@ SplashScreen.setOptions({ fade: true, duration: presets.feedback.durationMs });
 //
 // `/settings` and `/editor-settings` sit here rather than in a shell because
 // more than one shell pushes them and expo-router forbids one path living in
-// two sibling groups; the dev hatch sits here because it must be reachable
-// before any shell exists. All three used to render with no bar at all.
+// two sibling groups. Both used to render with no bar at all.
+//
+// There is no `/onboarding/dev` route any more. The persona switch for QA is
+// mounted by the welcome screen under `__DEV__` and nowhere else; a route file
+// here was reachable by URL in a release build with nothing guarding it.
 const ROOT_TITLES: Record<string, string> = {
   "/settings": "Settings",
   "/editor-settings": "Editor",
-  "/onboarding/dev": "Personas",
 };
 
 // className-capable gesture root (third-party component → withUniwind).
@@ -157,11 +159,11 @@ export default function RootLayout() {
               {/*
                 A Stack, not a `<Slot>`. Slot renders the focused child and
                 nothing else, which is why every root-level route — Settings,
-                Editor settings, the dev hatch — arrived with no app bar and no
-                back affordance while the shells all had one. Chrome is OFF by
+                Editor settings — arrived with no app bar and no back
+                affordance while the shells all had one. Chrome is OFF by
                 default here (the shell groups draw their own, the dispatcher is
                 a redirect, and the front door owns its full-bleed hero); the
-                three real destinations opt in below and get the same
+                two real destinations opt in below and get the same
                 `ShellHeader` every shell route gets.
               */}
               <MainContentFrame>
@@ -183,9 +185,6 @@ export default function RootLayout() {
               >
                 <Stack.Screen name="settings" options={{ headerShown: true }} />
                 <Stack.Screen name="editor-settings/index" options={{ headerShown: true }} />
-                {/* The QA hatch is a screen people actually navigate; leaving it
-                    barless is how it stayed the one surface with no way out. */}
-                <Stack.Screen name="onboarding/dev" options={{ headerShown: true }} />
               </Stack>
               </MainContentFrame>
               <SpatialWindowHost />
