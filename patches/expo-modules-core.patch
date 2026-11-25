@@ -1,7 +1,8 @@
 diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift
+index 32f0510..c6a323c 100644
 --- a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift
 +++ b/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift
-@@ -4,7 +4,7 @@
+@@ -4,7 +4,7 @@ import Foundation
  @MainActor
  @preconcurrency
  public class ExpoAppDelegateSubscriberManager: NSObject {
@@ -10,7 +11,7 @@ diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDe
  
    @objc
    public static func application(
-@@ -67,7 +67,7 @@
+@@ -67,7 +67,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
  
    // MARK: - Responding to App Life-Cycle Events
  
@@ -19,7 +20,7 @@ diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDe
  
    @objc
    public static func applicationDidBecomeActive(_ application: UIApplication) {
-@@ -143,7 +143,7 @@
+@@ -143,7 +143,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
  
    // MARK: - Responding to Environment Changes
  
@@ -28,7 +29,7 @@ diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDe
  
    @objc
    public static func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
-@@ -158,7 +158,7 @@
+@@ -158,7 +158,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
  
    // MARK: - Downloading Data in the Background
  
@@ -37,7 +38,7 @@ diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDe
    @objc
    public static func application(
      _ application: UIApplication,
-@@ -206,7 +206,7 @@
+@@ -206,7 +206,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
        .forEach { $0.application?(application, didFailToRegisterForRemoteNotificationsWithError: error) }
    }
  
@@ -46,7 +47,7 @@ diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDe
    @objc
    public static func application(
      _ application: UIApplication,
-@@ -277,7 +277,7 @@
+@@ -277,7 +277,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
        }
    }
  
@@ -55,7 +56,7 @@ diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDe
    @objc
    public static func application(
      _ application: UIApplication,
-@@ -437,7 +437,7 @@
+@@ -437,7 +437,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
  #endif
  
    // MARK: - Opening a URL-Specified Resource
@@ -65,9 +66,10 @@ diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDe
    @objc
    public static func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
 diff --git a/ios/Core/AppContext.swift b/ios/Core/AppContext.swift
+index 61b1168..5d0acee 100644
 --- a/ios/Core/AppContext.swift
 +++ b/ios/Core/AppContext.swift
-@@ -320,7 +320,7 @@
+@@ -333,7 +333,7 @@ public class AppContext: NSObject, EXAppContextProtocol, @unchecked Sendable {
     Starts listening to `UIApplication` notifications.
     */
    private func listenToClientAppNotifications() {
@@ -76,7 +78,7 @@ diff --git a/ios/Core/AppContext.swift b/ios/Core/AppContext.swift
      let notifications = [
        UIApplication.willEnterForegroundNotification,
        UIApplication.didBecomeActiveNotification,
-@@ -345,7 +345,7 @@
+@@ -358,7 +358,7 @@ public class AppContext: NSObject, EXAppContextProtocol, @unchecked Sendable {
    @objc
    private func handleClientAppNotification(_ notification: Notification) {
      switch notification.name {
@@ -85,22 +87,24 @@ diff --git a/ios/Core/AppContext.swift b/ios/Core/AppContext.swift
      case UIApplication.willEnterForegroundNotification:
        moduleRegistry.post(event: .appEntersForeground)
      case UIApplication.didBecomeActiveNotification:
-diff --git a/ios/Core/Convertibles/Convertibles+Color.swift b/ios/Core/Convertibles/Convertibles+Color.swift
---- a/ios/Core/Convertibles/Convertibles+Color.swift
-+++ b/ios/Core/Convertibles/Convertibles+Color.swift
-@@ -46,7 +46,7 @@
-         let highContrastLightColor = try appearances["highContrastLight"].map({ try UIColor.convert(from: $0) })
-         let highContrastDarkColor = try appearances["highContrastDark"].map({ try UIColor.convert(from: $0) })
+diff --git a/ios/Core/Coding/JavaScriptCodable+Color.swift b/ios/Core/Coding/JavaScriptCodable+Color.swift
+index 8d41134..4ae38c2 100644
+--- a/ios/Core/Coding/JavaScriptCodable+Color.swift
++++ b/ios/Core/Coding/JavaScriptCodable+Color.swift
+@@ -146,7 +146,7 @@ internal func uiColorFromAny(_ value: Any?) throws -> UIColor {
+       let highContrastLightColor = try appearances["highContrastLight"].map({ try uiColorFromAny($0) })
+       let highContrastDarkColor = try appearances["highContrastDark"].map({ try uiColorFromAny($0) })
  
--        #if os(iOS) || os(tvOS)
-+        #if os(iOS) || os(tvOS) || os(visionOS)
-         let color = UIColor { (traitCollection: UITraitCollection) -> UIColor in
-           if traitCollection.userInterfaceStyle == .dark {
-             if traitCollection.accessibilityContrast == .high, let highContrastDarkColor {
+-      #if os(iOS) || os(tvOS)
++      #if os(iOS) || os(tvOS) || os(visionOS)
+       return UIColor { (traitCollection: UITraitCollection) -> UIColor in
+         if traitCollection.userInterfaceStyle == .dark {
+           if traitCollection.accessibilityContrast == .high, let highContrastDarkColor {
 diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
+index 86ddf84..da10b65 100644
 --- a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
 +++ b/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
-@@ -67,7 +67,7 @@
+@@ -67,7 +67,7 @@ extension ExpoSwiftUI {
        self.contentView = ContentView(props: props)
        let rootView = AnyView(contentView)
        self.props = props
@@ -109,7 +113,7 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/Sw
        let controller: UIHostingController<AnyView> = AppearanceTrackingHostingController(rootView: rootView)
        #else
        let controller = UIHostingController(rootView: rootView)
-@@ -93,7 +93,7 @@
+@@ -93,7 +93,7 @@ extension ExpoSwiftUI {
  
        shadowNodeProxy.objectWillChange.send()
  
@@ -118,7 +122,7 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/Sw
        // Hosting controller has white background by default,
        // but we always want it to be transparent.
        hostingController.view.backgroundColor = .clear
-@@ -207,7 +207,7 @@
+@@ -208,7 +208,7 @@ extension ExpoSwiftUI {
        }
        let frame = self.bounds
        view.frame = frame
@@ -127,7 +131,7 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/Sw
          view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
          #elseif os(macOS)
          view.autoresizingMask = [.width, .height]
-@@ -261,14 +261,14 @@
+@@ -262,14 +262,14 @@ extension ExpoSwiftUI {
        }
        #endif
        addSubview(hostingController.view)
@@ -144,7 +148,7 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/Sw
      // A child added during a transition after its parent appeared never appears, so it gets no safe area (#51288).
      // TODO: Workaround for https://github.com/software-mansion/react-native-screens/pull/4997, remove once it ships.
      private func forwardAppearanceIfMissed(parentController: UIViewController) {
-@@ -299,7 +299,7 @@
+@@ -300,7 +300,7 @@ extension ExpoSwiftUI {
    }
  }
  
@@ -154,9 +158,10 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/Sw
  private final class AppearanceTrackingHostingController: UIHostingController<AnyView> {
    private(set) var isAppearing = false
 diff --git a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm b/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
+index b7717e6..2f62c5e 100644
 --- a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
 +++ b/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
-@@ -100,14 +100,14 @@
+@@ -100,14 +100,14 @@ static std::unordered_map<std::string, expo::ExpoViewComponentDescriptor<>::Flav
      static const auto defaultProps = std::make_shared<const expo::SwiftUIViewProps>();
      _props = defaultProps;
      self.hidden = YES;
@@ -173,7 +178,7 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm b/ios/Core/View
  - (void)didMoveToSuperview
  {
    [super didMoveToSuperview];
-@@ -129,7 +129,7 @@
+@@ -129,7 +129,7 @@ static std::unordered_map<std::string, expo::ExpoViewComponentDescriptor<>::Flav
                  self.componentName ?: NSStringFromClass([self class]), (long)self.tag);
    }
  }
@@ -183,6 +188,7 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm b/ios/Core/View
  #if TARGET_OS_OSX
  - (NSInteger)tag
 diff --git a/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h b/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h
+index faf34a7..1cec248 100644
 --- a/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h
 +++ b/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h
 @@ -4,7 +4,7 @@
@@ -202,9 +208,10 @@ diff --git a/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h b/ios/
 +#endif // !TARGET_OS_TV && !TARGET_OS_VISION
  @end
 diff --git a/ios/Legacy/EXUtilities.m b/ios/Legacy/EXUtilities.m
+index fa9a01f..1f30d1f 100644
 --- a/ios/Legacy/EXUtilities.m
 +++ b/ios/Legacy/EXUtilities.m
-@@ -40,14 +40,33 @@
+@@ -40,14 +40,33 @@ EX_REGISTER_MODULE();
  
  - (UIViewController *)currentViewController
  {
@@ -240,9 +247,10 @@ diff --git a/ios/Legacy/EXUtilities.m b/ios/Legacy/EXUtilities.m
  
    while (presentedController && ![presentedController isBeingDismissed]) {
 diff --git a/ios/Legacy/Services/EXReactNativeAdapter.mm b/ios/Legacy/Services/EXReactNativeAdapter.mm
+index b1d0f59..c246f13 100644
 --- a/ios/Legacy/Services/EXReactNativeAdapter.mm
 +++ b/ios/Legacy/Services/EXReactNativeAdapter.mm
-@@ -303,7 +303,7 @@
+@@ -303,7 +303,7 @@ EX_REGISTER_MODULE();
  
  - (BOOL)isApplicationStateBackground
  {
@@ -251,7 +259,7 @@ diff --git a/ios/Legacy/Services/EXReactNativeAdapter.mm b/ios/Legacy/Services/E
    return RCTSharedApplication().applicationState == UIApplicationStateBackground;
  #elif TARGET_OS_OSX
    return RCTSharedApplication().isHidden;
-@@ -312,7 +312,7 @@
+@@ -312,7 +312,7 @@ EX_REGISTER_MODULE();
  
  - (BOOL)isApplicationStateActive
  {
@@ -261,6 +269,7 @@ diff --git a/ios/Legacy/Services/EXReactNativeAdapter.mm b/ios/Legacy/Services/E
  #elif TARGET_OS_OSX
    return RCTSharedApplication().isActive;
 diff --git a/ios/Platform/Platform.h b/ios/Platform/Platform.h
+index 6ba9841..b26d5e8 100644
 --- a/ios/Platform/Platform.h
 +++ b/ios/Platform/Platform.h
 @@ -1,6 +1,6 @@
@@ -272,9 +281,10 @@ diff --git a/ios/Platform/Platform.h b/ios/Platform/Platform.h
  #import <UIKit/UIKit.h>
  
 diff --git a/ios/Utilities/ConstantsProvider.swift b/ios/Utilities/ConstantsProvider.swift
+index 372d855..0b9e278 100644
 --- a/ios/Utilities/ConstantsProvider.swift
 +++ b/ios/Utilities/ConstantsProvider.swift
-@@ -57,7 +57,7 @@
+@@ -57,7 +57,7 @@ private func getStatusBarHeight() -> Double {
  
  @MainActor
  private func getSystemFontNames() -> [String] {
@@ -283,7 +293,7 @@ diff --git a/ios/Utilities/ConstantsProvider.swift b/ios/Utilities/ConstantsProv
    let familyNames = UIFont.familyNames
    var fontNames = Set<String>()
  
-@@ -80,7 +80,7 @@
+@@ -80,7 +80,7 @@ private func getSystemFontNames() -> [String] {
  
  @MainActor
  private func getDeviceName() -> String {
@@ -293,6 +303,7 @@ diff --git a/ios/Utilities/ConstantsProvider.swift b/ios/Utilities/ConstantsProv
    #elseif os(macOS)
    return ProcessInfo.processInfo.hostName
 diff --git a/ios/Utilities/SceneGeometry.swift b/ios/Utilities/SceneGeometry.swift
+index 3cb0cfe..0b07cc1 100644
 --- a/ios/Utilities/SceneGeometry.swift
 +++ b/ios/Utilities/SceneGeometry.swift
 @@ -1,6 +1,6 @@
@@ -318,9 +329,10 @@ diff --git a/ios/Utilities/SceneGeometry.swift b/ios/Utilities/SceneGeometry.swi
    @discardableResult
    static func anchorPopover(of controller: UIViewController, to view: UIView?, rect: CGRect? = nil) -> Bool {
 diff --git a/ios/Utilities/Utilities.swift b/ios/Utilities/Utilities.swift
+index a80c006..7087ad0 100644
 --- a/ios/Utilities/Utilities.swift
 +++ b/ios/Utilities/Utilities.swift
-@@ -130,7 +130,7 @@
+@@ -130,7 +130,7 @@ public struct Utilities {
     */
    @MainActor
    public static func keyWindow() -> UIWindow? {
@@ -329,7 +341,7 @@ diff --git a/ios/Utilities/Utilities.swift b/ios/Utilities/Utilities.swift
      return SceneGeometry.keyWindow()
  #elseif os(macOS)
      return NSApplication.shared.keyWindow
-@@ -139,7 +139,7 @@
+@@ -139,7 +139,7 @@ public struct Utilities {
  
    nonisolated public func currentViewController() -> UIViewController? {
      return MainActor.assumeIsolated {
