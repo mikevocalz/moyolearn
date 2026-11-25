@@ -144,4 +144,4 @@ No fixes were applied. No clones were made, so none to delete.
 
 ## Status after lane C2 (2026-11-25)
 
-PR #159 fixes H1, H2, H4 and H5 and the M7 error-message leak. H3 (consent from the request body) is assigned to the front-door branch and is still open.
+PR #159 fixes H1, H2, H4 and H5 and the M7 error-message leak. H3 (consent from the request body) is fixed in PR #160: `/api/family/learners` accepts only a `consentId` and reads the grant from the server's own record.

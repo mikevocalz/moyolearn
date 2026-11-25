@@ -18,11 +18,11 @@ Status values: `open`, `blocked`, `in review`, `done`. "Done" needs the evidence
 
 | Item | Owner | Status | Evidence |
 | --- | --- | --- | --- |
-| Persona hatch `apps/mobile/app/onboarding/dev.tsx` removed from release builds | lane C | open | bundle grep in CI |
-| Mock auth, mock subscriptions and demo consent channel excluded from release bundles | lane C | open | bundle grep in CI |
-| Guardian signup creates an account (today the account step stores an email only) | lane C | open | device run |
-| OTP, forgot and reset routes exist on mobile (server has no `emailOTP` plugin; verification is link-based) | lane C | open | device run |
-| Parental consent verified server-side (today `DevConsentChannel`, in memory) | lane C | open | server log of a stored consent |
+| Persona hatch `apps/mobile/app/onboarding/dev.tsx` removed from release builds | lane C | in source, PR #160 (route deleted, `mobile-release-bundle` CI job greps the export) | bundle grep in CI |
+| Mock auth, mock subscriptions and demo consent channel excluded from release bundles | lane C | in source, PR #160 (literal `__DEV__` require blocks; local release export clean) | bundle grep in CI |
+| Guardian signup creates an account (today the account step stores an email only) | lane C | in source, PR #160 (`signUp.email`); device run owed | device run |
+| OTP, forgot and reset routes exist on mobile (server has no `emailOTP` plugin; verification is link-based) | lane C | in source, PR #160 (forgot and reset routes, link-based verification kept); device run owed | device run |
+| Parental consent verified server-side (today `DevConsentChannel`, in memory) | lane C | in source, PR #160 (hashed code in `consent-verifications`, learner create reads only the server row); needs the additive migration and `RESEND_API_KEY`/`AUTH_EMAIL_FROM` | server log of a stored consent |
 | One price catalog that matches moyolearn.com (today three disagreeing literal sets) | lane C | in source, PR #158 (`packages/auth/src/plan-catalog.ts`); screenshot still owed | screenshot per paywall surface |
 | `PlanCard` honours its `tier` prop so business tiers cannot render for a family | lane C | in source, PR #158 (`packages/ui/plan-card-guard.test.ts`, 5 tests); screenshot still owed | unit test plus screenshot |
 | Entitlement states trial, active, lapsed, cancel-at-period-end, restore modelled and tested | lane C | in source, PR #158 (`packages/auth/src/entitlement-state.test.ts`, 18-row table plus transitions) | `subscription-reader` tests |
