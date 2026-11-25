@@ -70,3 +70,14 @@ Mike asked on 2026-11-25 for every package to move to npm latest, Expo included.
 ## Branch cleanup (7.8), nothing deleted
 
 56 remote branches are ancestors of `main` (including `release/meta-vr-start-2026`). 47 are not, of which at least 12 were squash-merged through PRs #139 to #151 and hold no unmerged content. The full lists are in the lane A analysis; deletion needs Mike's approval.
+
+## Stacked lane PRs merged into this branch (2026-11-25)
+
+| PR | Lane | Merge commit | Merge notes |
+| --- | --- | --- | --- |
+| #159 | safety and media (H1, H2, H4, H5, M7) | `c7c4464c` | clean |
+| #161 | npm latest, Expo 58.0.26, React Native 0.88.1 | `7a0c8479` | iOS fixed on the way in: Expo prebuild pin moved to sdk-58 head `7931abaf`, scheme patch dropped (fixed upstream), `-sdk iphonesimulator` removed so Expo macros build for the host, expo-print prebuilt, cache key carries the Expo versions |
+| #160 | front door, guardian account, server consent (H3) | `c08be4f0` | `AuthEmailPurpose` keeps all five purposes; duplicate `readAuthEmailConfig` export removed |
+| #158 | plan catalogue, entitlement state, PlanCard scope | `4f6df842` | ui test script runs both `plan-card-guard.test.ts` and `tv.test.ts`; combined tree typechecks and passes auth, app, ui and web tests locally |
+
+Open on this branch before `main`: the native launch step (iOS and Android open `moyo://native-3d-smoke` before the app is ready; fix in progress as #162) and an intermittent iOS build error, `Missing package product 'reactnativewebgpu_ReactNativeWebGPU.ReactNativeWebGPU'`, seen on two of four runs since #161. GitGuardian's finding on #160 is a synthetic test password, replaced in `579ccd69`; Mike chose not to triage it.
