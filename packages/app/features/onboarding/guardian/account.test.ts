@@ -48,7 +48,7 @@ function recorder(
   };
 }
 
-const draft = { name: 'Ada Lovelace', email: ' ada@example.com ', password: 'twelve-chars-long' };
+const draft = { name: 'Ada Lovelace', email: ' ada@example.com ', password: 'fixture-only-not-a-secret' };
 
 describe('createGuardianAccount', () => {
   it('calls Better Auth sign-up with the draft email, trimmed, and the chosen password and name', async () => {
@@ -58,7 +58,7 @@ describe('createGuardianAccount', () => {
     assert.deepEqual(client.calls.signUp, [
       {
         email: 'ada@example.com',
-        password: 'twelve-chars-long',
+        password: 'fixture-only-not-a-secret',
         name: 'Ada Lovelace',
         callbackURL: 'moyo://onboarding/guardian',
       },

@@ -79,7 +79,7 @@ const post = (body: unknown) =>
     }) as never,
   );
 
-const child = { username: 'otter-42', password: 'twelve-chars-long', displayName: 'Sam' };
+const child = { username: 'otter-42', password: 'fixture-only-not-a-secret', displayName: 'Sam' };
 
 test('H3: a client-supplied consent object alone is refused and creates nothing', async () => {
   fixture.created.length = 0;
