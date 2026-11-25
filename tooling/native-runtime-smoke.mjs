@@ -157,6 +157,10 @@ export async function retainAndroidFailureDiagnostics(device, destination, { env
     ['android-port-reverse.log', 'android-port-reverse', ['reverse', '--list']],
     ['android-metro-reachability.log', 'android-metro-reachability',
       ['shell', `printf 'GET /status HTTP/1.0\\r\\n\\r\\n' | toybox nc -w 5 127.0.0.1 ${METRO_PORT}`]],
+    // A reverse mapping lives in adbd. When adbd restarts, every mapping and open
+    // adb shell is dropped. Record when adbd last started and why memory ran low.
+    ['android-adbd.log', 'android-adbd', ['shell', 'getprop init.svc.adbd; ps -A -o PID,STIME,ELAPSED,NAME | grep -E "adbd|PID"; '
+      + 'cat /proc/meminfo | head -6; logcat -b all -d -v threadtime | grep -iE "adbd|lmkd|lowmemorykiller|am_kill|am_low_memory" | tail -n 200']],
   ];
   for (const [name, phase, args] of diagnostics) {
     await retainCommandOutput(destination, name, phase, 'adb', ['-s', device.serial, ...args], { env, files, warnings });

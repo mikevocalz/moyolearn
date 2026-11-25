@@ -338,9 +338,11 @@ test('failed Android diagnostic collection stays bounded and still retains the o
       'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'OkHttp:V', 'AndroidRuntime:V', '*:S'],
     ['-s', 'emulator-5554', 'reverse', '--list'],
     ['-s', 'emulator-5554', 'shell', "printf 'GET /status HTTP/1.0\\r\\n\\r\\n' | toybox nc -w 5 127.0.0.1 8081"],
+    ['-s', 'emulator-5554', 'shell', 'getprop init.svc.adbd; ps -A -o PID,STIME,ELAPSED,NAME | grep -E "adbd|PID"; '
+      + 'cat /proc/meminfo | head -6; logcat -b all -d -v threadtime | grep -iE "adbd|lmkd|lowmemorykiller|am_kill|am_low_memory" | tail -n 200'],
   ]);
   assert.deepEqual(result.files, ['android-crash.log', 'android-app-exit-info.log', 'android-react-native.log',
-    'android-port-reverse.log', 'android-metro-reachability.log']);
+    'android-port-reverse.log', 'android-metro-reachability.log', 'android-adbd.log']);
   assert.equal(result.warnings.length, 2);
   assert.match(result.warnings[0], /android-crash-buffer failed \(17\)/);
   const crash = readFileSync(join(destination, result.files[0]));
