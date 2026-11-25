@@ -4,13 +4,14 @@
 //
 // Persisted (doc 37 / pane-audit-37 §A.3): a guardian who backgrounds the app
 // or reloads the tab mid-flow resumes on the step they left with the children
-// and consent they already entered. Child PASSWORDS are excluded from the
-// persisted partial — a credential in plaintext MMKV/localStorage outlives the
-// flow, and a committed row no longer needs one (steps.ts, isChildComplete).
-// The in-flight flags (`committing`, `commitError`) stay session-only for the
-// same reason a resumed flow must never open on a spinner nothing is spinning.
+// and consent they already entered. PASSWORDS are excluded from the persisted
+// partial — the guardian's own and every child's — because a credential in
+// plaintext MMKV/localStorage outlives the flow, and a committed row no longer
+// needs one (steps.ts, isChildComplete). The in-flight flags (`committing`,
+// `commitError`, the whole `account` block) stay session-only for the same
+// reason a resumed flow must never open on a spinner nothing is spinning.
 // SOT: docs/pack/06-auth-onboarding-spec.md §5 · docs/pack/37-onboarding-dual-pane.md §2
-// SOT-KEYWORDS: onboarding guardian store zustand draft children consent persist family
+// SOT-KEYWORDS: onboarding guardian store zustand draft children consent persist family account
 
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -24,14 +25,34 @@ import {
   type GuardianStep,
 } from './steps';
 
+/** The account step's two registers — see sign-in-content.tsx for why they are one union. */
+export type AccountFeedback = { kind: 'error'; text: string } | { kind: 'notice'; text: string };
+
+/**
+ * The account step's live state. Never persisted: the password is a
+ * credential, `busy` is a spinner, and `verifyPending` is a promise about an
+ * inbox that a resumed flow has to re-earn by trying to sign in.
+ */
+export interface AccountState {
+  password: string;
+  busy: boolean;
+  /** The account exists; the verification link has not been opened yet. */
+  verifyPending: boolean;
+  feedback: AccountFeedback | null;
+}
+
+const BLANK_ACCOUNT: AccountState = { password: '', busy: false, verifyPending: false, feedback: null };
+
 interface GuardianOnboardingState {
   step: GuardianStep;
   draft: GuardianDraft;
+  account: AccountState;
   /** True while the children step is committing rows server-side. */
   committing: boolean;
   commitError: string | null;
   setStep: (step: GuardianStep) => void;
   patch: (patch: Partial<GuardianDraft>) => void;
+  patchAccount: (patch: Partial<AccountState>) => void;
   addChild: () => void;
   patchChild: (index: number, patch: Partial<ChildDraft>) => void;
   removeChild: (index: number) => void;
@@ -42,17 +63,29 @@ interface GuardianOnboardingState {
 
 const BLANK_CHILD: ChildDraft = { displayName: '', username: '', password: '', dob: '' };
 
+/**
+ * What a persisted draft looks like on disk. Typed loosely on purpose: a draft
+ * written by an older build is missing whatever fields were added since, and
+ * `migrate` below is where those gaps are filled from `EMPTY_DRAFT`.
+ */
+interface PersistedGuardianOnboarding {
+  step?: GuardianStep;
+  draft?: Partial<GuardianDraft>;
+}
+
 export const useGuardianOnboarding = create<GuardianOnboardingState>()(
   persist(
     (set) => ({
       step: 'welcome',
       draft: EMPTY_DRAFT,
+      account: BLANK_ACCOUNT,
       committing: false,
       commitError: null,
       setCommitting: (committing) => set({ committing }),
       setCommitError: (commitError) => set({ commitError }),
       setStep: (step) => set({ step }),
       patch: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
+      patchAccount: (patch) => set((s) => ({ account: { ...s.account, ...patch } })),
       addChild: () => set((s) => ({ draft: { ...s.draft, children: [...s.draft.children, { ...BLANK_CHILD }] } })),
       patchChild: (index, patch) =>
         set((s) => ({
@@ -63,11 +96,25 @@ export const useGuardianOnboarding = create<GuardianOnboardingState>()(
         })),
       removeChild: (index) =>
         set((s) => ({ draft: { ...s.draft, children: s.draft.children.filter((_, i) => i !== index) } })),
-      reset: () => set({ step: 'welcome', draft: EMPTY_DRAFT, committing: false, commitError: null }),
+      reset: () =>
+        set({ step: 'welcome', draft: EMPTY_DRAFT, account: BLANK_ACCOUNT, committing: false, commitError: null }),
     }),
     {
       name: 'guardian-onboarding',
       storage: createJSONStorage(() => onboardingStateStorage),
+      /**
+       * Version 1 added `guardianName` and `consentId` to the draft. A version-0
+       * draft rehydrates through `migrate`, which lays it over `EMPTY_DRAFT` so
+       * every field the current build reads exists.
+       */
+      version: 1,
+      migrate: (persisted) => {
+        const state = (persisted ?? {}) as PersistedGuardianOnboarding;
+        return {
+          step: state.step ?? 'welcome',
+          draft: { ...EMPTY_DRAFT, ...state.draft, children: state.draft?.children ?? [] },
+        };
+      },
       partialize: (s) => ({
         step: s.step,
         draft: {
