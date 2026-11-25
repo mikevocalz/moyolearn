@@ -3,8 +3,8 @@
 #
 # Expo's SwiftPM autolinking plugin (expo/scripts/spm) links every Expo module that
 # mixes Swift and Objective-C as a prebuilt XCFramework pair (Debug + Release). On
-# npm only expo-modules-core, expo-file-system, expo-font, expo-image and
-# expo-image-manipulator carry them. This script builds the rest with Expo's own
+# npm only expo-modules-core, expo-file-system, expo-font, expo-image,
+# expo-image-manipulator and (since 58.0.9) expo-print carry them. This script builds the rest with Expo's own
 # pipeline (`et prebuild`, tools/src/prebuilds in expo/expo) from the expo commit
 # the installed packages were published from.
 #
@@ -41,6 +41,7 @@ PACKAGES=(
   expo-font
   expo-image
   expo-image-manipulator
+  expo-print
 )
 
 EXPO="$WORK/expo"
@@ -58,7 +59,7 @@ git -C "$EXPO" sparse-checkout set \
   packages/@expo/internal-scripts packages/@expo/require-utils packages/@expo/platforms \
   packages/unimodules-app-loader packages/expo-task-manager packages/expo-background-task \
   packages/expo-ui packages/expo-file-system packages/expo-font packages/expo-image \
-  packages/expo-image-manipulator
+  packages/expo-image-manipulator packages/expo-print
 git -C "$EXPO" fetch -q --depth 1 --filter=blob:none origin "$EXPO_COMMIT"
 git -C "$EXPO" checkout -q --force FETCH_HEAD
 
