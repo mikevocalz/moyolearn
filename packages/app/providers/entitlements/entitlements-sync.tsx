@@ -18,12 +18,33 @@
 // SOT-KEYWORDS: entitlements sync subscriptions store loaded session persona fetch webhook
 
 import { useEffect } from 'react';
-import { PERSONAS } from '../../fixtures/personas';
-import { mockSubscriptionsFor } from '../../fixtures/subscriptions';
+import type { SubscriptionState } from '@acme/auth';
 import { getAuthMode } from '../session/auth-mode';
 import { useSessionStore } from '../session/store';
 import { fetchEntitlements } from './entitlements.client';
 import { useEntitlementStore } from './store';
+
+/**
+ * The fixture plans for a mock persona, or null when this is not a dev build
+ * or the id matches no persona.
+ *
+ * The fixtures are required behind a literal `__DEV__` test rather than
+ * imported, for the same reason `session.tsx` loads the mock provider that way:
+ * a static import kept `PERSONAS` and every fixture plan in the release bundle.
+ * Metro folds the literal and drops the branch with the modules it required;
+ * a helper function would not fold, so the test is written out here.
+ */
+function mockSubscriptions(userId: string): SubscriptionState[] | null {
+  const devBuild =
+    typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
+  if (!devBuild) return null;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { PERSONAS } = require('../../fixtures/personas') as typeof import('../../fixtures/personas');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { mockSubscriptionsFor } = require('../../fixtures/subscriptions') as typeof import('../../fixtures/subscriptions');
+  const persona = PERSONAS.find((p) => p.id === userId);
+  return persona ? mockSubscriptionsFor(persona) : null;
+}
 
 export function EntitlementsSync() {
   const userId = useSessionStore((s) => s.user?.id);
@@ -51,9 +72,9 @@ export function EntitlementsSync() {
     }
 
     if (getAuthMode() === 'mock') {
-      const persona = PERSONAS.find((p) => p.id === userId);
-      if (persona) {
-        setSubscriptions(mockSubscriptionsFor(persona));
+      const fixture = mockSubscriptions(userId);
+      if (fixture) {
+        setSubscriptions(fixture);
         return;
       }
     }
