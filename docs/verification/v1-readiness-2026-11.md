@@ -58,4 +58,4 @@ Source findings (C++ review of virocore #121 head `3674d1cd`, `android/sharedCod
 - [ ] All three lines on `main`; CI green; migrations applied and recorded.
 - [ ] No open draft PR holds v1 work.
 
-Progress: the three lines plus the billing release line are merged on `integrate/v1-main-20261125` at `1457ff92` (record in `docs/verification/v1-integration-2026-11.md`). The merge to `main` is held for Mike's decision on the sales-inquiry commits. Migrations have run only against a local scratch Postgres (lane B record). PRs #153, #154, #155 and virocore #121 remain open drafts.
+Progress: the three lines plus the billing release line are merged on `integrate/v1-main-20261125` at `1457ff92` (record in `docs/verification/v1-integration-2026-11.md`). The sales-inquiry commits ship with the line; the two family exposures are closed by `c5193fe2` and `dfbe5b29` (decision in the integration record). The merge to `main` waits on CI. Migrations have run only against a local scratch Postgres (lane B record). PRs #153, #154, #155 and virocore #121 remain open drafts.

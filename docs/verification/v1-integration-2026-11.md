@@ -48,19 +48,20 @@ Native iOS, Android mobile-runtime and Quest assembly lanes were not run locally
 
 `fcc5838b` itself has never had an Actions run and no PR. Its parent `73427f6e` is the head of PR #152, where on 2026-11-16 every turbo, web, marketing, desktop, visionOS and Quest-assembly check passed, Android mobile-runtime failed (run 43954047539: React Native redbox "Could not load bundle" in `native-3d-smoke.tsx` after the APK built and the emulator booted), and iOS simulator was cancelled at 23 minutes with no result (run 43954047837; the workflow has no concurrency block and a 180-minute timeout, so the cancel was external).
 
-## Sales-inquiry decision, held for Mike
+## Sales-inquiry decision (2026-11-25)
 
-The billing line carries PR #152 (SignalIQ sales inquiry, 14 commits) interleaved with the native build repairs the other lines need: Android startup fix `f179bcc6`, Quest 90-minute allowance `72204dc2`, PICO scoping `a8ab86f9`, mobile-runtime job `bec68278`. Splitting it out means rewriting those mixed commits, which the build prompt's stop conditions forbid, so the merge to `main` waits for a decision.
+Decision: ship the billing line with the SignalIQ sales-inquiry commits from PR #152, and close what reached families with new commits on this branch. Splitting the line out would mean rewriting commits that also carry the native build fixes the other lines need (Android startup `f179bcc6`, Quest 90-minute allowance `72204dc2`, PICO scoping `a8ab86f9`, mobile-runtime job `bec68278`), which the repo rules forbid.
 
-It is not inert for families on three points:
+What reached families, and what was done:
 
-- The public marketing inquiry form accepts audience `parent` (`packages/payload/migrations/signaliq_marketing_additive.sql` CHECK constraint).
-- `packages/payload/src/collections/Users.ts` gains `access.update` and `access.delete` through `marketingIdentityAccess` on the learner-bearing `users` collection. It is a no-op only while `MOYO_MARKETING_ADMIN_IDS` is unset.
-- With Stripe secrets set, family `invoice.paid` events for Moyo plan prices are written to `payload.marketing_verified_payments` by `packages/app/marketing/repository/marketing.repository.ts:saveVerifiedPayment`.
+| Exposure | Disposition | Change |
+| --- | --- | --- |
+| A paid family invoice was copied into `payload.marketing_verified_payments` and could reach the SignalIQ sync. The hook passed every plan price, and the canonical-subscription fallback matched any subscription. | Struck | `c5193fe2`: the hook passes organisation plan prices only, and the fallback requires an organisation plan name. The integration case "a family plan invoice is never recorded as sales revenue" fails without the filter and passes with it (21/21 on Postgres 18). |
+| The inquiry form offered "My family", which put parents into the sales CRM. | Struck | `dfbe5b29`: the form offers schools and tutoring businesses only and links families to `/pricing`. The input schema rejects `parent`; the row schema still parses stored rows. |
+| `marketingIdentityAccess` on the `users` collection. | Kept | Read again: it narrows Payload's default, where any internal user can edit any user. It protects the configured sales admin accounts from other staff and is identical to the default while `MOYO_MARKETING_ADMIN_IDS` is unset. Earlier notes describing it as new access were wrong. |
+| `apps/web/vercel.json` runs `/api/marketing/sync` every minute. | Kept | It drains the outbox only, and the outbox now holds organisation records only. |
 
-Also: `apps/web/vercel.json` adds a cron hitting `/api/marketing/sync` every minute. No migration on the line alters existing rows (verified by applying all three twice against a local scratch Postgres, record in `v1-migrations-local-2026-11.md`).
-
-Options: accept the line as-is with those points named in the PR, or defer the billing line and land homework data, ui and hands directly, each of which merges clean onto `main` alone.
+The `parent` value stays in the `marketing_inquiries` CHECK constraint. Removing it would be a destructive migration, and no new row can carry it.
 
 ## Dependency refresh
 

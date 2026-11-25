@@ -8,7 +8,7 @@ Status values: `open`, `blocked`, `in review`, `done`. "Done" needs the evidence
 
 | Item | Owner | Status | Evidence |
 | --- | --- | --- | --- |
-| Billing, homework data, homework UI and hands lines on `main` | Mike (decision on the sales-inquiry commits), lane A | in review | `docs/verification/v1-integration-2026-11.md` |
+| Billing, homework data, homework UI and hands lines on `main` | lane A | in review, waiting on CI | `docs/verification/v1-integration-2026-11.md` |
 | CI green on `main` for turbo, iOS simulator, Android mobile-runtime, Quest assembly | lane A | open | Actions run on the merge commit |
 | `homework_prior_work_additive.sql` and `better_auth_stripe_organization.sql` applied to staging and production | Mike (needs `DATABASE_URL`), lane B | open | applied-migration record with timestamps |
 | No open draft PR holds v1 work (#153, #154, #155, virocore #121) | lane A | open | PR list |
@@ -58,4 +58,4 @@ Status values: `open`, `blocked`, `in review`, `done`. "Done" needs the evidence
 | Privacy policy and parental-consent text reviewed by counsel | Mike | open |
 | MOYO trademark clearance | Mike | open |
 | Auth cutover sign-off, which needs production credentials | Mike | open |
-| Decision: accept the sales-inquiry commits on the billing line as-is, or land homework and hands without the billing line | Mike | open |
+| Decision: accept the sales-inquiry commits on the billing line as-is, or land homework and hands without the billing line | lane A | decided 2026-11-25: ship the line; family invoice capture and the family inquiry option struck (`c5193fe2`, `dfbe5b29`) |
