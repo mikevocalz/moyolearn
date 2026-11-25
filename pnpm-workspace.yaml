@@ -335,7 +335,7 @@ catalog:
   # tooling/check-font-fallbacks.mjs require it from the repo root; relying on
   # the hoisted transitive copy would be a phantom dependency.
   playwright-core: 1.65.1
-  "@types/react": ~19.3.1
+  "@types/react": ~19.3.2
   # Must stay on the Node major `engines.node` (>=24.15.0 <26) actually allows —
   # typing against 26 describes a runtime this repo refuses to start on.
   "@types/node": ^24.13.3
@@ -348,9 +348,9 @@ catalog:
   eslint-config-expo: ~58.0.4
   eslint-config-next: 16.4.6
   "@eslint/eslintrc": ^3.3.7
-  storybook: 10.6.8
-  "@storybook/react-vite": 10.6.8
-  "@storybook/addon-a11y": 10.6.8
+  storybook: 10.6.9
+  "@storybook/react-vite": 10.6.9
+  "@storybook/addon-a11y": 10.6.9
   # Vite 8 + plugin-react 6, required by @payloadcms/tanstack-start (it peers
   # vite >=8, @vitejs/plugin-react ^6 and @vitejs/plugin-rsc ^0.5.21). The
   # earlier 7.x pin existed only because plugin-react 4.7.0 stopped at ^7;
