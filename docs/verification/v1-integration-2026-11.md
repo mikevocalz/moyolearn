@@ -64,7 +64,7 @@ Options: accept the line as-is with those points named in the PR, or defer the b
 
 ## Dependency refresh
 
-Mike asked on 2026-11-25 for every package to move to npm latest, Expo included. That overrides the build prompt's rule against upgrades the loop does not need. It runs as a separate branch stacked on this one, `chore/npm-latest-20261125`, with its own record in `docs/decisions/npm-latest-2026-11-25.md`.
+Mike asked on 2026-11-25 for every package to move to npm latest, Expo included. That overrides the build prompt's rule against upgrades the loop does not need. It runs as a separate branch stacked on this one, `chore/npm-latest-20261125`, opened as PR #161. Expo 58.0.19 to 58.0.26 and React Native 0.88.0 to 0.88.1; `pnpm outdated -r` drops from 113 entries to 31, each remaining one a recorded hold or peer pin; `node tooling/business-studio-npm.mjs --check` exits 0, which clears the `contracts` and `verify` failures on this PR. Native iOS, Android and visionOS builds for the Graphite and Dawn change have not run outside CI.
 
 ## Branch cleanup (7.8), nothing deleted
 
