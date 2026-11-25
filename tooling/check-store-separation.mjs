@@ -27,14 +27,17 @@ const SCAN_ROOTS = ['apps', 'packages'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', '.next', '.expo', '.turbo', 'migrations']);
 
 /**
- * A repository, by the convention every repository in this repo already follows
- * (`apps/web/lib/*.repository.ts`). Matched by shape rather than by an explicit
+ * A repository, by the convention used in `apps/web/lib/*.repository.ts` and
+ * generator-emitted app domains. Matched by shape rather than by an explicit
  * list so a second educational repository needs no edit here — but the count is
  * printed on every run, because a rule whose exceptions grow silently is not a
  * rule. Naming a service `*.repository.ts` to get past this is possible and is
  * exactly the kind of thing code review is for; it is not possible by accident.
  */
 const isRepository = (rel) => /(^|\/)[\w.-]+\.repository\.ts$/.test(rel);
+
+/** Shared repositories also need the literal first-line client boundary (doc 11 §6). */
+const startsServerOnly = (source) => /^import ['"]server-only['"];?(?:\r?\n|$)/.test(source);
 
 /**
  * The educational store's connection module. Nothing outside a repository may
@@ -130,13 +133,15 @@ for (const root of SCAN_ROOTS) {
     }
 
     if (FEATURE_ROOTS.some((prefix) => rel.startsWith(`${prefix}/`))) {
-      if (RAW_DRIVER.test(source)) {
+      if (RAW_DRIVER.test(source) && !(repository && startsServerOnly(source))) {
         violations.push({
           file: rel,
-          rule: 'a feature or service holds the raw database driver',
-          fix: 'Take a port as an argument and let the composition root inject a repository (see features/tutor/session.service.ts).',
+          rule: 'a feature, service or unmarked shared repository holds the raw database driver',
+          fix: 'Keep database access in a *.repository.ts with a first-line server-only import; services call that repository or take an injected repository port.',
         });
       }
+      // Even a server-only app repository cannot reach the educational store:
+      // that store remains behind its existing host repository and service ports.
       if (EDU_CLIENT.test(source) || EDU_SQL.test(source)) {
         violations.push({
           file: rel,

@@ -1,6 +1,8 @@
 import { BrandPreview as BrandPreview_e1220b6bf9470dca3a4e8e7704afd48c } from '../../../../../packages/payload/src/components/BrandPreview'
 import { Icon as Icon_32d15b2b13e1e9f604c74e03d9ff8022 } from '../../../../../packages/payload/src/components/Icon'
 import { Logo as Logo_2396ffa5fcb8566707b31b0d1917b213 } from '../../../../../packages/payload/src/components/Logo'
+import { MarketingInquiriesNav as MarketingInquiriesNav_4bf5743bcfbd453ae04f372ef1f011a1 } from '../../../../../packages/payload/src/components/MarketingInquiriesView'
+import { MarketingInquiriesView as MarketingInquiriesView_4bf5743bcfbd453ae04f372ef1f011a1 } from '../../../../../packages/payload/src/components/MarketingInquiriesView'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 import { CollectionQueryWidget as CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 import { QueryPresetsWhereField as QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
@@ -13,6 +15,8 @@ export const importMap = {
   "./components/BrandPreview#BrandPreview": BrandPreview_e1220b6bf9470dca3a4e8e7704afd48c,
   "./components/Icon#Icon": Icon_32d15b2b13e1e9f604c74e03d9ff8022,
   "./components/Logo#Logo": Logo_2396ffa5fcb8566707b31b0d1917b213,
+  "./components/MarketingInquiriesView#MarketingInquiriesNav": MarketingInquiriesNav_4bf5743bcfbd453ae04f372ef1f011a1,
+  "./components/MarketingInquiriesView#MarketingInquiriesView": MarketingInquiriesView_4bf5743bcfbd453ae04f372ef1f011a1,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a,
   "@payloadcms/ui/rsc#CollectionQueryWidget": CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a,
   "@payloadcms/ui#QueryPresetsWhereField": QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de,

@@ -6,6 +6,7 @@
     "core/**/*",
     "providers/**/*.test.ts",
     "index.ts",
-    "**/*.d.ts"
+    "**/*.d.ts",
+    "marketing/**/*"
   ]
 }

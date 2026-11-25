@@ -1,0 +1,393 @@
+{
+  "checked_at": "2026-11-14",
+  "scope": "Independent Linux artifact/source checks; not a native app build or device acceptance",
+  "admission": {
+    "renderer": "2.14.0",
+    "version": "158.0.0",
+    "skia": "m158",
+    "dawnCommit": "1716e88cc9e58398fab5d4473f7f2e858667b677",
+    "dawnTag": "chrome-m158",
+    "webgpu": "0.21.4",
+    "patches": [
+      "metal-maccatalyst.patch",
+      "metal-suspend-submissions-in-background.patch",
+      "vulkan-fifo-three-images-android.patch"
+    ],
+    "headersBaseUrl": "https://raw.githubusercontent.com/google/skia/75584a96108b2bf0b1c74b0536126fa4917b64a8/src/gpu/graphite/",
+    "headersSha256": {
+      "ContextOptionsPriv.h": "f801bcda10ea519d50983d312a06bd809cb01031c9d4f852e0dcdb8db6323274",
+      "ResourceTypes.h": "1822b5e90d4202026225cdf5aa1bd89bbc09d4aad57ee84357be98771ecbb10e",
+      "TextureProxyView.h": "2287d9848e01fa42f9a5e9894ccd3d73c6979e0272d1ae46fe24d3b7ce01362d"
+    }
+  },
+  "packages": [
+    {
+      "name": "@shopify/react-native-skia",
+      "version": "2.14.0",
+      "registry_git_head": null,
+      "tarball": "https://registry.npmjs.org/@shopify/react-native-skia/-/react-native-skia-2.14.0.tgz",
+      "integrity": "sha512-mzizcTeUAgvam+m1BsxTs+K8ujUXkzoCmwumUhV5NWcoImmKJiWUMfQYgw2OOt1p6qpr7+G5pPOELAmNzZRvlw==",
+      "tarball_bytes": 2026292,
+      "integrity_verified": true
+    },
+    {
+      "name": "react-native-gesture-handler",
+      "version": "3.5.0",
+      "registry_git_head": null,
+      "tarball": "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-3.5.0.tgz",
+      "integrity": "sha512-bm8yepwMBUhEOSeU7WQbNNrstD0Hbv6i+XsApARBJSlb+WlRvyaQsobi+tZ5Uyr5kDVgXzg6kPb+CWY9zvyfEw==",
+      "tarball_bytes": 728631,
+      "integrity_verified": true
+    },
+    {
+      "name": "react-native-skia-graphite-android",
+      "version": "158.0.0",
+      "registry_git_head": "9f61caf3f4a59e488fa4cf5c557d7b2e4846d854",
+      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-android/-/react-native-skia-graphite-android-158.0.0.tgz",
+      "integrity": "sha512-uxGEs8MmTAMpQiOJWOOoSU+Vl8WUWgZ0kii8A/xsThZEZszz8R1aKcpsqX40EcqoA0IjueWYEO9Han21/uKYTg==",
+      "tarball_bytes": 73193574,
+      "integrity_verified": true
+    },
+    {
+      "name": "react-native-skia-graphite-apple-ios",
+      "version": "158.0.0",
+      "registry_git_head": "9f61caf3f4a59e488fa4cf5c557d7b2e4846d854",
+      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-apple-ios/-/react-native-skia-graphite-apple-ios-158.0.0.tgz",
+      "integrity": "sha512-JvT/yWttlEBu9SomCMHO7olKfWaWlPlpWIdDHqp1h+Z1aMaFvNJSd7SDI4ItgIPYXM7KxcF3cJwBnCgMWYgY6Q==",
+      "tarball_bytes": 79533853,
+      "integrity_verified": true
+    },
+    {
+      "name": "react-native-skia-graphite-apple-macos",
+      "version": "158.0.0",
+      "registry_git_head": "9f61caf3f4a59e488fa4cf5c557d7b2e4846d854",
+      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-apple-macos/-/react-native-skia-graphite-apple-macos-158.0.0.tgz",
+      "integrity": "sha512-q+9lsV+8TvYZQP41lO1uihpMG938+flJir0HY5a/rw02hsW/dA6mxNcv8Z6fFrpFP3kscJVbI2CTKcH6K/LDAA==",
+      "tarball_bytes": 32379751,
+      "integrity_verified": true
+    },
+    {
+      "name": "react-native-webgpu",
+      "version": "0.21.4",
+      "registry_git_head": null,
+      "tarball": "https://registry.npmjs.org/react-native-webgpu/-/react-native-webgpu-0.21.4.tgz",
+      "integrity": "sha512-SOfTRJ5QUGjzzJpCNNZG0VSHcmTsXSOaftKGrzodUnTTX/JSM032RpiUsvRWC9o5CBs/ShI1A6J9ZGdJKrbIfA==",
+      "tarball_bytes": 319043,
+      "integrity_verified": true
+    },
+    {
+      "name": "react-native-webgpu-dawn",
+      "version": "158.0.0",
+      "registry_git_head": "9f61caf3f4a59e488fa4cf5c557d7b2e4846d854",
+      "tarball": "https://registry.npmjs.org/react-native-webgpu-dawn/-/react-native-webgpu-dawn-158.0.0.tgz",
+      "integrity": "sha512-YCobosg4b012wt8GTUN/7xh7ldgnpluKg00hbdIHTfb2HU6GBUB0ZkKjex9uklrYOYKH5Z0WTwG7M5A6bI1b+A==",
+      "tarball_bytes": 76865536,
+      "integrity_verified": true
+    }
+  ],
+  "results": {
+    "cold_installer": "passed using actual integrity-verified npm packages and downloaded pinned headers",
+    "warm_installer": "passed using actual packages",
+    "stale_local_android_cache": "reproduced and removed by installer; regression passes on cold and warm runs",
+    "installer_contracts": {
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0
+    },
+    "android_dawn": [
+      {
+        "abi": "arm64-v8a",
+        "shared_dawn_sha256": "261d75c1b1844d2650c8d97419da3a2da88fff7c9cfe59c0bd5bf2738b827e4a",
+        "staged_copy_matches": true,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "needed": [
+          "liblog.so",
+          "libandroid.so",
+          "libdl.so",
+          "libm.so",
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      },
+      {
+        "abi": "armeabi-v7a",
+        "shared_dawn_sha256": "edc7d426918530651e7fafb1d6b5c6d2e9d7def44197d17fa44667821c82d0fa",
+        "staged_copy_matches": true,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "needed": [
+          "liblog.so",
+          "libandroid.so",
+          "libdl.so",
+          "libm.so",
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      },
+      {
+        "abi": "x86",
+        "shared_dawn_sha256": "c795aff72880c7511e853b00791cab7ddd48de03747b31f7b068d267ec94ff34",
+        "staged_copy_matches": true,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "needed": [
+          "liblog.so",
+          "libandroid.so",
+          "libdl.so",
+          "libm.so",
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      },
+      {
+        "abi": "x86_64",
+        "shared_dawn_sha256": "532990b49040ecee655df661e071c8fbb012eb02dbd3caeefa791fac26adbc2d",
+        "staged_copy_matches": true,
+        "load_alignments": [
+          16384,
+          16384,
+          16384
+        ],
+        "needed": [
+          "liblog.so",
+          "libandroid.so",
+          "libdl.so",
+          "libm.so",
+          "libc++_shared.so",
+          "libc.so"
+        ]
+      }
+    ],
+    "graphite_dawn_symbol_resolution": [
+      {
+        "abi": "arm64-v8a",
+        "graphite_dawn_imports": 107,
+        "missing_shared_dawn_exports": []
+      },
+      {
+        "abi": "armeabi-v7a",
+        "graphite_dawn_imports": 107,
+        "missing_shared_dawn_exports": []
+      },
+      {
+        "abi": "x86",
+        "graphite_dawn_imports": 107,
+        "missing_shared_dawn_exports": []
+      },
+      {
+        "abi": "x86_64",
+        "graphite_dawn_imports": 107,
+        "missing_shared_dawn_exports": []
+      }
+    ],
+    "dawn_upgrade_imports": {
+      "baseline_version": "157.1.0",
+      "candidate_version": "158.0.0",
+      "new_undefined_arm64": [
+        "fabs@LIBC",
+        "pthread_setname_np@LIBC"
+      ]
+    },
+    "dawn_arm64_build_metadata": {
+      "android_api": 26,
+      "ndk": "r27d",
+      "build_id": "1cf401a02e516a9b925367f9edd619e5220faa64"
+    },
+    "apple_frameworks": [
+      {
+        "package": "react-native-webgpu-dawn",
+        "framework": "libwebgpu_dawn.xcframework",
+        "slices": [
+          "tvos-arm64",
+          "ios-arm64_x86_64-maccatalyst",
+          "macos-arm64_x86_64",
+          "tvos-arm64_x86_64-simulator",
+          "ios-arm64_x86_64-simulator",
+          "ios-arm64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libskunicode_core.xcframework",
+        "slices": [
+          "ios-arm64_x86_64-maccatalyst",
+          "ios-arm64_x86_64-simulator",
+          "ios-arm64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libskparagraph.xcframework",
+        "slices": [
+          "ios-arm64",
+          "ios-arm64_x86_64-maccatalyst",
+          "ios-arm64_x86_64-simulator"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libsvg.xcframework",
+        "slices": [
+          "ios-arm64",
+          "ios-arm64_x86_64-maccatalyst",
+          "ios-arm64_x86_64-simulator"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libskottie.xcframework",
+        "slices": [
+          "ios-arm64_x86_64-simulator",
+          "ios-arm64_x86_64-maccatalyst",
+          "ios-arm64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libskia.xcframework",
+        "slices": [
+          "ios-arm64",
+          "ios-arm64_x86_64-simulator",
+          "ios-arm64_x86_64-maccatalyst"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libskunicode_libgrapheme.xcframework",
+        "slices": [
+          "ios-arm64_x86_64-simulator",
+          "ios-arm64",
+          "ios-arm64_x86_64-maccatalyst"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libsksg.xcframework",
+        "slices": [
+          "ios-arm64_x86_64-maccatalyst",
+          "ios-arm64",
+          "ios-arm64_x86_64-simulator"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-ios",
+        "framework": "libskshaper.xcframework",
+        "slices": [
+          "ios-arm64",
+          "ios-arm64_x86_64-maccatalyst",
+          "ios-arm64_x86_64-simulator"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libskunicode_core.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libskparagraph.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libsvg.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libskottie.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libskia.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libskunicode_libgrapheme.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libsksg.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      },
+      {
+        "package": "react-native-skia-graphite-apple-macos",
+        "framework": "libskshaper.xcframework",
+        "slices": [
+          "macos-arm64_x86_64"
+        ],
+        "declared_binaries_exist": true
+      }
+    ],
+    "rngh_visionos_patch": "git apply --check passed against unmodified RNGH 3.5.0 artifact",
+    "visionos_lock": "committed lock is RNGestureHandler 3.4.0; regenerate through macOS pod install and retrieve visionos-native-diagnostics/Podfile.lock"
+  },
+  "unverified": [
+    "Android native application compile/link with new lockfile",
+    "iOS SwiftPM application compile/link with new lockfile",
+    "visionOS pod resolution and build with RNGH 3.5.0",
+    "iOS CocoaPods Graphite compile/runtime",
+    "Physical Quest/PICO/iOS rendering, input and lifecycle acceptance"
+  ],
+  "nativeBuildEvidence": {
+    "sourceHead": "b34fdb6062fce8d1e987ee5e9146fcd531a2717f",
+    "visionOS": {
+      "runId": 43615673096,
+      "artifactId": 14126700120,
+      "archiveSha256": "d48f4b8b835dd7ee493dc383092c5baa4c2baa72fb7f3e256a07f236c40d37aa",
+      "lockSha256": "266b2ac235f9271f9a8d8da988fadc68dad9c7d24c0ef42167abc61dab0694ca",
+      "lockCopiedByteForByte": true,
+      "result": "TEST BUILD SUCCEEDED"
+    },
+    "iosRunId": 43615673077,
+    "androidRunId": 43615673097,
+    "desktopRunId": 43615673057,
+    "ciRunId": 43615673078,
+    "freshnessRunId": 43615673127,
+    "allListedRunsConclusion": "success",
+    "scope": "Native compilation and simulator build-for-testing. Physical-device rendering, input and lifecycle acceptance are not established by these runs. Follow-up lock/evidence commit requires its applicable checks."
+  }
+}

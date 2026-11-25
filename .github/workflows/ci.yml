@@ -30,7 +30,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Module exports, protected learner routes and the motion-duration gate
-        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs
+        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs tooling/check-machine-routes.test.mjs tooling/check-store-separation.test.mjs
       - name: Prepare avatar assets for repository guards
         run: node apps/web/scripts/copy-avatar-assets.mjs
       - name: Repository guards and workspace lint
@@ -41,6 +41,35 @@ jobs:
       # (docs/issues/2026-09-13-turbo-lint-failures.md). The run still exits
       # non-zero, so this reports more without gating less.
       - run: pnpm exec turbo run build typecheck test --continue
+
+  marketing-integration:
+    name: marketing (transactional PostgreSQL integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: moyo_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-ci-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MOYO_MARKETING_TEST_DATABASE_URL: postgresql://postgres:synthetic-ci-only@127.0.0.1:5432/moyo_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web marketing:test:db
 
   # Per-application build + artifact + runtime coverage.
   #

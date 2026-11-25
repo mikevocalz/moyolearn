@@ -12,6 +12,7 @@ import { haveIBeenPwned, multiSession, organization, username } from 'better-aut
 import Stripe from 'stripe';
 import { Pool } from 'pg';
 import { authorizeReference, isBillingRole, isPlanName, resolvePrices } from './billing-plans.ts';
+import { recheckPaidInvoice, verifiedPaidInvoice, type VerifiedBillingPayment } from './billing-payment.ts';
 import {
   hostFromHeaderValues,
   permitsLoginAtHost,
@@ -22,6 +23,7 @@ import {
   sendResetPasswordEmailFor,
   sendVerificationEmailFor,
 } from './auth-email.ts';
+export { readBillingPreflight } from './billing-payment.ts';
 
 /** Doc 06 §6: learner sessions expire sooner than adult ones. */
 const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -145,7 +147,7 @@ export function isRestrictedLearnerPasswordChange(
  */
 export const AUTH_SCHEMA = 'better_auth';
 
-export function createAuth(options?: { connectionString?: string; schema?: string }) {
+export function createAuth(options?: { connectionString?: string; schema?: string; onBillingPayment?: (payment:VerifiedBillingPayment)=>Promise<void> }) {
   const schema = options?.schema ?? AUTH_SCHEMA;
   const connectionString = options?.connectionString ?? process.env.DATABASE_URL;
   const pool = new Pool({
@@ -375,9 +377,19 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // Doc 06 §6 breached-password rejection.
       haveIBeenPwned(),
       expo(),
-      ...billingPlugin(pool),
+      ...billingPlugin(pool,options?.onBillingPayment),
     ],
   });
+}
+
+
+/** Private worker repair, using only this application's configured Moyo plan prices. */
+export async function recheckMoyoPaidInvoice(receipt: Pick<VerifiedBillingPayment, 'invoiceId' | 'occurredAt'>) {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error('Billing verification is unavailable.');
+  const { priced } = resolvePrices();
+  return recheckPaidInvoice(process.env.STRIPE_SECRET_KEY, receipt.invoiceId,
+    priced.flatMap(({ priceId, annualPriceId }) => annualPriceId ? [priceId, annualPriceId] : [priceId]),
+    receipt.occurredAt);
 }
 
 /**
@@ -386,7 +398,7 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
  * omitted entirely without keys: a dev machine with no Stripe account should run
  * the app, not fail to construct auth.
  */
-function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
+function billingPlugin(pool: Pool,onBillingPayment?: (payment:VerifiedBillingPayment)=>Promise<void>): [] | [ReturnType<typeof stripePlugin>] {
   const secret = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret || !webhookSecret) return [];
@@ -399,6 +411,12 @@ function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
       stripeClient: new Stripe(secret),
       stripeWebhookSecret: webhookSecret,
       createCustomerOnSignUp: true,
+      // The plugin verifies the signature before onEvent and retries failed
+      // callbacks. Await the durable outbox write; never send in the webhook.
+      onEvent: async(event)=>{
+        const payment=verifiedPaidInvoice(event, priced.flatMap(({priceId,annualPriceId})=>annualPriceId?[priceId,annualPriceId]:[priceId]));
+        if(payment&&onBillingPayment)await onBillingPayment(payment);
+      },
       subscription: {
         enabled: true,
         plans: priced.map(({ plan, priceId, annualPriceId }) => ({

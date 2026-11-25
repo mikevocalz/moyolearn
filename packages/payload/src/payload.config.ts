@@ -33,6 +33,7 @@ import { AiModelRoutes } from './collections/AiModelRoutes';
 import { HomeworkSubmissions } from './collections/HomeworkSubmissions';
 import { HomeworkQuestions } from './collections/HomeworkQuestions';
 import { HomeworkPracticeSets } from './collections/HomeworkPracticeSets';
+import { marketingEndpoints } from './marketing/endpoints';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -56,6 +57,7 @@ const adminMcpAccess = ({ req }: { req: PayloadRequest }): boolean => {
 };
 
 export default buildConfig({
+  endpoints: marketingEndpoints,
   admin: {
     user: Users.slug,
     // The login screen is the first Moyo surface a staff member sees, and
@@ -63,6 +65,14 @@ export default buildConfig({
     // Paths are resolved against `importMap.baseDir`, then compiled into
     // importMap.js by `pnpm --filter web payload:importmap`.
     components: {
+      afterNavLinks: ['./components/MarketingInquiriesView#MarketingInquiriesNav'],
+      views: {
+        moyoInquiries: {
+          Component: './components/MarketingInquiriesView#MarketingInquiriesView',
+          path: '/moyo-inquiries',
+          exact: true,
+        },
+      },
       graphics: {
         Logo: './components/Logo#Logo',
         Icon: './components/Icon#Icon',

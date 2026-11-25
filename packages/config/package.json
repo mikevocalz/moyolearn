@@ -12,5 +12,8 @@
   },
   "peerDependencies": {
     "eslint": "catalog:"
+  },
+  "scripts": {
+    "test": "node --test eslint/*.test.mjs"
   }
 }
