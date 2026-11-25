@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import { createReadStream, createWriteStream, readdirSync, statSync } from 'node:fs';
 import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { createServer, get as httpGet } from 'node:http';
+import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -114,9 +115,32 @@ export async function retainAgentDiagnostics(stateDir, destination) {
   return copied.sort();
 }
 
+const DIAGNOSTIC_LIMIT = 512 * 1024;
+
+// Run one OS diagnostic command into a file, keeping the first 512 KiB. A
+// failed or slow command becomes a warning; it never replaces the test result.
+async function retainCommandOutput(destination, name, phase, executable, args, { env, files, warnings }) {
+  const chunks = []; let bytes = 0; let truncated = false;
+  const log = { write: (chunk) => {
+    const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    const remaining = Math.max(0, DIAGNOSTIC_LIMIT - bytes);
+    if (remaining === 0) { truncated ||= data.length > 0; return; }
+    if (data.length > remaining) truncated = true;
+    const retained = data.subarray(0, remaining);
+    chunks.push(retained); bytes += retained.length;
+  } };
+  await command(executable, args, { env, log, phase, timeout: 20_000 })
+    .catch((error) => { warnings.push(error.message); });
+  if (truncated) chunks.push(Buffer.from('\n[diagnostic output truncated at 512 KiB]\n'));
+  await writeFile(join(destination, name), Buffer.concat(chunks));
+  files.push(name);
+}
+
 // A failed launch can leave only the Android launcher in the UI hierarchy.
 // Capture the OS crash/exit evidence while the verified temporary emulator is
 // still alive; never turn a diagnostic failure into a replacement test result.
+// The app's own log buffer carries what React Native reported before a red
+// box, such as the network error behind "Could not load bundle".
 export async function retainAndroidFailureDiagnostics(device, destination, { env = runtimeEnvironment(process.env) } = {}) {
   if (device?.kind !== 'Android emulator' || !/^emulator-\d+$/.test(device.serial)
     || !device.abis?.includes('x86_64')) {
@@ -127,21 +151,51 @@ export async function retainAndroidFailureDiagnostics(device, destination, { env
   const diagnostics = [
     ['android-crash.log', 'android-crash-buffer', ['logcat', '-b', 'crash', '-d', '-v', 'threadtime', '-t', '400']],
     ['android-app-exit-info.log', 'android-app-exit-info', ['shell', 'dumpsys', 'activity', 'exit-info', APP_ID]],
+    ['android-react-native.log', 'android-react-native-log', ['logcat', '-b', 'main', '-d', '-v', 'threadtime', '-t', '1500',
+      '-s', 'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'unknown:ReactNative:V', 'OkHttp:V', 'AndroidRuntime:V']],
   ];
   for (const [name, phase, args] of diagnostics) {
-    const chunks = []; let bytes = 0; let truncated = false;
-    const log = { write: (chunk) => {
-      const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      const remaining = Math.max(0, 512 * 1024 - bytes);
-      if (remaining === 0) { truncated ||= data.length > 0; return; }
-      if (data.length > remaining) truncated = true;
-      const retained = data.subarray(0, remaining);
-      chunks.push(retained); bytes += retained.length;
-    } };
-    await command('adb', ['-s', device.serial, ...args], { env, log, phase, timeout: 20_000 })
-      .catch((error) => { warnings.push(error.message); });
-    if (truncated) chunks.push(Buffer.from('\n[diagnostic output truncated at 512 KiB]\n'));
-    await writeFile(join(destination, name), Buffer.concat(chunks));
+    await retainCommandOutput(destination, name, phase, 'adb', ['-s', device.serial, ...args], { env, files, warnings });
+  }
+  return { files, warnings };
+}
+
+// An app that exits during launch leaves agent-device only "app is not
+// running". The simulator's unified log names the exit reason (dyld, signal,
+// watchdog, assertion) and CoreSimulator writes any crash report to the
+// host's DiagnosticReports directory. Retain both, scoped to this app and run.
+export async function retainIosFailureDiagnostics(device, destination, {
+  env = runtimeEnvironment(process.env), since, reportsDir = join(homedir(), 'Library/Logs/DiagnosticReports'),
+} = {}) {
+  if (device?.kind !== 'iPad simulator' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(device.udid ?? '')) {
+    throw new Error('iOS failure diagnostics require the already-selected CI iPad simulator');
+  }
+  const started = Date.parse(since);
+  if (!Number.isFinite(started)) throw new Error('iOS failure diagnostics require the run start time');
+  await mkdir(destination, { recursive: true });
+  const files = []; const warnings = [];
+  const minutes = Math.max(1, Math.ceil((Date.now() - started) / 60_000) + 1);
+  await retainCommandOutput(destination, 'ios-app-log.log', 'ios-app-log', 'xcrun', [
+    'simctl', 'spawn', device.udid, 'log', 'show', '--style', 'compact', '--info', '--last', `${minutes}m`,
+    '--predicate', `process == "Moyo" OR eventMessage CONTAINS "${APP_ID}"`,
+  ], { env, files, warnings });
+  let reports = [];
+  try { reports = await readdir(reportsDir, { withFileTypes: true }); } catch (error) {
+    if (error.code !== 'ENOENT') warnings.push(`crash report listing failed (${error.code ?? error.name})`);
+  }
+  const crashes = [];
+  for (const entry of reports) {
+    if (!entry.isFile() || !/^Moyo[-_.].*\.(?:ips|crash)$/.test(entry.name)) continue;
+    const info = await lstat(join(reportsDir, entry.name));
+    if (info.mtimeMs >= started) crashes.push({ name: entry.name, mtimeMs: info.mtimeMs, size: info.size });
+  }
+  crashes.sort((a, b) => a.mtimeMs - b.mtimeMs || a.name.localeCompare(b.name));
+  for (const crash of crashes.slice(0, 5)) {
+    const bytes = await readFile(join(reportsDir, crash.name));
+    const name = `ios-crash-${crash.name}`;
+    await writeFile(join(destination, name), bytes.length > DIAGNOSTIC_LIMIT
+      ? Buffer.concat([bytes.subarray(0, DIAGNOSTIC_LIMIT), Buffer.from('\n[diagnostic output truncated at 512 KiB]\n')])
+      : bytes);
     files.push(name);
   }
   return { files, warnings };
@@ -435,6 +489,11 @@ async function main() {
       await retainAndroidFailureDiagnostics(receipt.device, artifacts)
         .then((diagnostics) => { receipt.androidFailureDiagnostics = diagnostics; })
         .catch((error) => { receipt.androidDiagnosticsWarning = error.message; });
+    }
+    if (failure && receipt.device?.kind === 'iPad simulator') {
+      await retainIosFailureDiagnostics(receipt.device, artifacts, { since: receipt.startedAt })
+        .then((diagnostics) => { receipt.iosFailureDiagnostics = diagnostics; })
+        .catch((error) => { receipt.iosDiagnosticsWarning = error.message; });
     }
     await stopMetro(metro);
     if (server) { server.closeAllConnections(); await new Promise((done) => server.close(done)); }

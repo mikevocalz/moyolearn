@@ -6,13 +6,13 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   AGENT_DEVICE, IOS_STARTUP_BUDGET, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
-  retainAgentDiagnostics, retainAndroidFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
+  retainAgentDiagnostics, retainAndroidFailureDiagnostics, retainIosFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
 const file = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
@@ -323,9 +323,11 @@ test('failed Android diagnostic collection stays bounded and still retains the o
   assert.deepEqual(readFileSync(calls, 'utf8').trim().split('\n').map(JSON.parse), [
     ['-s', 'emulator-5554', 'logcat', '-b', 'crash', '-d', '-v', 'threadtime', '-t', '400'],
     ['-s', 'emulator-5554', 'shell', 'dumpsys', 'activity', 'exit-info', 'com.moyolearn.app'],
+    ['-s', 'emulator-5554', 'logcat', '-b', 'main', '-d', '-v', 'threadtime', '-t', '1500',
+      '-s', 'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'unknown:ReactNative:V', 'OkHttp:V', 'AndroidRuntime:V'],
   ]);
-  assert.deepEqual(result.files, ['android-crash.log', 'android-app-exit-info.log']);
-  assert.equal(result.warnings.length, 1);
+  assert.deepEqual(result.files, ['android-crash.log', 'android-app-exit-info.log', 'android-react-native.log']);
+  assert.equal(result.warnings.length, 2);
   assert.match(result.warnings[0], /android-crash-buffer failed \(17\)/);
   const crash = readFileSync(join(destination, result.files[0]));
   assert.ok(crash.length < 513 * 1024);
@@ -335,6 +337,50 @@ test('failed Android diagnostic collection stays bounded and still retains the o
   assert.match(exit, /app-exit-reason/);
   assert.match(exit, /"timeoutMs":20000/);
   assert.match(exit, /"timedOut":false/);
+});
+
+test('iOS failure diagnostics refuse an unselected simulator before invoking xcrun', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'moyo-ios-target-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const since = new Date().toISOString();
+  for (const target of [undefined, { kind: 'iPhone simulator', udid }, { kind: 'iPad simulator', udid: 'booted' }]) {
+    await assert.rejects(retainIosFailureDiagnostics(target, join(root, 'artifacts'), { since }), /already-selected CI iPad simulator/);
+  }
+  await assert.rejects(retainIosFailureDiagnostics({ kind: 'iPad simulator', udid }, join(root, 'artifacts'), { since: 'never' }), /run start time/);
+  assert.equal(existsSync(join(root, 'artifacts')), false);
+});
+
+test('iOS failure diagnostics keep this run\'s app log and only this app\'s new crash reports', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'moyo-ios-diagnostics-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = join(root, 'bin'); mkdirSync(bin);
+  const calls = join(root, 'calls.jsonl');
+  writeFileSync(join(bin, 'xcrun'), `#!${process.execPath}
+    require('node:fs').appendFileSync(${JSON.stringify(calls)}, JSON.stringify(process.argv.slice(2)) + '\\n');
+    console.log('Moyo: dyld: Library not loaded');
+  `);
+  chmodSync(join(bin, 'xcrun'), 0o755);
+  const reports = join(root, 'reports'); mkdirSync(reports);
+  const since = new Date(Date.now() - 5 * 60_000);
+  writeFileSync(join(reports, 'Moyo-2026-11-25-120438.ips'), 'EXC_CRASH ' + 'x'.repeat(600 * 1024));
+  writeFileSync(join(reports, 'Moyo-2026-11-24-090000.ips'), 'older run');
+  writeFileSync(join(reports, 'SpringBoard-2026-11-25-120438.ips'), 'another process');
+  const old = new Date(since.getTime() - 60_000);
+  utimesSync(join(reports, 'Moyo-2026-11-24-090000.ips'), old, old);
+  const destination = join(root, 'artifacts');
+  const result = await retainIosFailureDiagnostics({ kind: 'iPad simulator', udid }, destination, {
+    env: { ...runtimeEnvironment(process.env), PATH: bin }, since: since.toISOString(), reportsDir: reports,
+  });
+  const [args] = readFileSync(calls, 'utf8').trim().split('\n').map(JSON.parse);
+  assert.deepEqual(args.slice(0, 9), ['simctl', 'spawn', udid, 'log', 'show', '--style', 'compact', '--info', '--last']);
+  assert.match(args[9], /^[6-7]m$/);
+  assert.deepEqual(args.slice(10), ['--predicate', 'process == "Moyo" OR eventMessage CONTAINS "com.moyolearn.app"']);
+  assert.deepEqual(result, { files: ['ios-app-log.log', 'ios-crash-Moyo-2026-11-25-120438.ips'], warnings: [] });
+  assert.match(readFileSync(join(destination, 'ios-app-log.log'), 'utf8'), /Library not loaded/);
+  const crash = readFileSync(join(destination, 'ios-crash-Moyo-2026-11-25-120438.ips'));
+  assert.ok(crash.length < 513 * 1024);
+  assert.match(crash.toString(), /^EXC_CRASH/);
+  assert.match(crash.toString(), /truncated at 512 KiB/);
 });
 
 test('requires actual non-skipped test cases and every execution screenshot', () => {
@@ -363,7 +409,10 @@ test('flow requires triangle presentation and new positive frame output after re
   assert.match(flow, /triangle: submitted and presented at \[1-9\]/);
   assert.equal((flow.match(/visible: '\[1-9\]\[0-9\]\* fps'/g) ?? []).length, 3);
   assert.match(flow, /pressKey: Home\n- launchApp:\n    stopApp: false[\s\S]*tapOn: Stop\n- assertNotVisible: '\[0-9\]\+ fps'[\s\S]*tapOn: Cube/);
-  assert.match(flow, /stopApp\n- launchApp\n- openLink: moyo:\/\/native-3d-smoke/);
+  assert.match(flow, /stopApp\n- launchApp\n- extendedWaitUntil:\n    visible: Welcome to Moyo\n    timeout: \d+\n- openLink: moyo:\/\/native-3d-smoke/);
+  // Every deep link waits for the rendered front door; none races bundle load.
+  assert.equal((flow.match(/- openLink:/g) ?? []).length, 2);
+  assert.equal((flow.match(/visible: Welcome to Moyo\n    timeout: \d+\n- openLink:/g) ?? []).length, 2);
   assert.doesNotMatch(flow, /optional: true|retry:|mock|sign-in|sign-up/);
 });
 
