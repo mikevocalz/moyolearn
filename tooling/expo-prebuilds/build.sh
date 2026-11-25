@@ -22,9 +22,11 @@ OUT=${2:?out dir}
 REPO_ROOT=$(cd "$(dirname "$0")/../.." && pwd -P)
 HERE="$REPO_ROOT/tooling/expo-prebuilds"
 
-# expo@58.0.19 and expo-modules-core@58.0.26 were both published from this commit
-# (tags `expo@58.0.19`, `expo-modules-core@58.0.26`). Every package built below has
-# the same version in its package.json at this commit as on npm.
+# expo-commit.txt is the head of expo/expo's sdk-58 branch on 2026-11-25, where
+# expo is 58.0.26, expo-modules-core 58.1.0 and expo-modules-jsi 58.0.23. Every
+# package built below has the same version in its package.json at this commit as
+# the one pnpm installs. Move the pin whenever an Expo patch release changes any
+# of them: the SPM plugin refuses headers built from another expo-modules-jsi.
 EXPO_COMMIT=$(tr -d '[:space:]' < "$HERE/expo-commit.txt")
 RN_VERSION=$(node -p "require('$REPO_ROOT/node_modules/react-native/package.json').version")
 
