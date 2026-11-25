@@ -10,8 +10,8 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §3.1 §6 · packages/auth/src/consent-verification.ts
 // SOT-KEYWORDS: consent service verify code record protected operation guardian h3
 import 'server-only';
-import type { Auth } from '@acme/auth/server';
 import {
+  type Auth,
   readVerifiedConsent,
   recordConsent,
   sendConsentConfirmation,

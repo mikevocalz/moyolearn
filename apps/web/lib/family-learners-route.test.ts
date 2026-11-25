@@ -81,7 +81,7 @@ const post = (body: unknown) =>
 
 const child = { username: 'otter-42', password: 'twelve-chars-long', displayName: 'Sam' };
 
-test('a consent record in the body is not accepted in place of an id', async () => {
+test('H3: a client-supplied consent object alone is refused and creates nothing', async () => {
   fixture.created.length = 0;
   const res = await post({
     ...child,
