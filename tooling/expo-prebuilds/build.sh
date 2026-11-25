@@ -62,10 +62,6 @@ git -C "$EXPO" sparse-checkout set \
 git -C "$EXPO" fetch -q --depth 1 --filter=blob:none origin "$EXPO_COMMIT"
 git -C "$EXPO" checkout -q --force FETCH_HEAD
 
-# Upstream fix pending: `et prebuild` passes the package name as the xcodebuild
-# scheme, and Xcode names no scheme "@expo/ui".
-git -C "$EXPO" apply "$HERE/expotools-scoped-package-scheme.patch"
-
 # expo-task-manager ships no spm.config.json; ours comes from the pnpm patch.
 cp "$REPO_ROOT/node_modules/expo-task-manager/spm.config.json" "$EXPO/packages/expo-task-manager/spm.config.json"
 
