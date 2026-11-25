@@ -35,10 +35,17 @@ import {
   type JobsReporter,
   type LiveQueueName,
 } from '@acme/jobs';
-import { generateSessionSummary, markFannedOut, type NarrativeModel } from '@acme/app/server';
+import {
+  deliverGuardianAlert,
+  generateSessionSummary,
+  markFannedOut,
+  type NarrativeModel,
+} from '@acme/app/server';
 import { POST as retentionSweep } from '@/app/api/retention/sweep/route';
 import { POST as mediaSweep } from '@/app/api/media/sweep/route';
 import { distillTranscript } from './distill.service';
+import { guardianIncidentEmailSender } from './guardian-alert-email';
+import { loadGuardianContacts, loadLearnerFirstName } from './guardian-contact.repository';
 import { loadIncident, loadIncidentsForSession, saveIncident } from './incident.repository';
 import { loadEduPriorFacts, loadEduTurnsInWindow } from './edu.repository';
 import { loadGradeBand } from './student-model.repository';
@@ -212,19 +219,29 @@ export function jobHandlers(): JobHandlers {
       and a handler that threw on absence would retry ten times and dead-letter
       into a JOB-3 page about a row that was correctly deleted.
 
-      WHAT IS DELIBERATELY NOT HERE IS THE DELIVERY. `docs/design/jobs.md` §8.5
-      records that there is no notification sender and no `notificationsSent`
-      store in this repository, and inventing an email call here would be the
-      same mistake the `notify.*` queues are still declared-only to avoid. What
-      these handlers do is make the obligation DURABLE and VISIBLE: the marker
-      and the timeline entry are what a guardian's screen and the §5.3 queue read,
-      and they are what an auditor is shown. The channel is named in the timeline
-      note so the day a sender lands, it lands in one place.
+      THE GUARDIAN LEG DELIVERS. `docs/design/jobs.md` §8.5 recorded that there
+      was no notification sender in this repository; there is one now, the
+      Resend sender Better Auth already uses for verification links
+      (`@acme/auth/server`), and `deliverGuardianAlert` mails every active
+      guardian of the child through it before the marker is written. The mail
+      carries the category, the time, the child's first name and a link to the
+      alerts screen — no words from the session (security pass H1). A send that
+      throws fails the job, pg-boss retries it, and Resend's idempotency key
+      keeps a retry from being a second alert. The timeline note names the
+      channels that actually ran, `in-app, email` or `in-app` alone.
+
+      The review leg is still a marker: no on-call pager exists in this
+      repository, and that gap stays named rather than papered over.
     */
     'safety.alert.guardian': async (payload) => {
       const report = await loadIncident(payload.incidentId);
       if (report === null) return;
-      const notified = markFannedOut(report, 'guardian', 'in-app');
+      const notified = await deliverGuardianAlert(report, {
+        loadGuardianContacts,
+        loadLearnerFirstName,
+        sendEmail: guardianIncidentEmailSender(),
+        alertsUrl: new URL('/alerts', origin()).toString(),
+      });
       if (notified !== report) await saveIncident(notified);
     },
     'safety.review.enqueue': async (payload) => {

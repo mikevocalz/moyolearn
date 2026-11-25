@@ -542,6 +542,20 @@ export {
   type MediaAccessPorts,
 } from './features/media/media-access.service';
 export { MediaKeyRejected } from './features/media/presign.rules';
+/*
+  Doc 31 §4.3's guardian leg, delivered. The job handler composes the sender
+  and the contact reads; the decision — who is mailed, what the mail may say,
+  what the timeline records — is the service's.
+*/
+export {
+  deliverGuardianAlert,
+  incidentCategoryLabel,
+  type GuardianAlertPorts,
+  type GuardianContact,
+  type LoadGuardianContacts,
+  type LoadLearnerFirstName,
+  type SendGuardianIncidentEmail,
+} from './features/safety/guardian-alert.service';
 export {
   saveLearnerProfile,
   loadLearnerProfile,
