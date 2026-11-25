@@ -39,7 +39,7 @@ import { generateSessionSummary, markFannedOut, type NarrativeModel } from '@acm
 import { POST as retentionSweep } from '@/app/api/retention/sweep/route';
 import { POST as mediaSweep } from '@/app/api/media/sweep/route';
 import { distillTranscript } from './distill.service';
-import { loadIncident, saveIncident } from './incident.repository';
+import { loadIncident, loadIncidentsForSession, saveIncident } from './incident.repository';
 import { loadEduPriorFacts, loadEduTurnsInWindow } from './edu.repository';
 import { loadGradeBand } from './student-model.repository';
 import {
@@ -193,6 +193,7 @@ export function jobHandlers(): JobHandlers {
         narrativeModel: summaryNarrativeModel,
         saveSummary: saveSummaryReport,
         loadHomeworkForSession: loadSubmissionByTutorSession,
+        loadSessionIncidents: loadIncidentsForSession,
       });
     },
     /*
