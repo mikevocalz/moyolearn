@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AGENT_DEVICE, IOS_STARTUP_BUDGET, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
+  AGENT_DEVICE, IOS_STARTUP_BUDGET, appBundleUrl, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
   retainAgentDiagnostics, retainAndroidFailureDiagnostics, retainIosFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
@@ -107,6 +107,17 @@ async function localHttpServer(t, handler) {
   t.after(async () => { server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); });
   return { url: `http://127.0.0.1:${server.address().port}`, requests: () => requests };
 }
+
+test('Metro preflight warms the graph the debug app requests, on loopback only', () => {
+  for (const platform of ['ios', 'android']) {
+    const url = new URL(appBundleUrl(platform));
+    assert.equal(url.origin, 'http://127.0.0.1:8081');
+    assert.equal(url.pathname, '/.expo/.virtual-metro-entry.bundle');
+    assert.deepEqual(Object.fromEntries(url.searchParams), {
+      platform, dev: 'true', lazy: 'true', minify: 'false', app: 'com.moyolearn.app', modulesOnly: 'false', runModule: 'true',
+    });
+  }
+});
 
 test('Metro streams and hashes actual binary chunks after delayed headers under the unchanged total budget', async (t) => {
   assert.equal(METRO_BUNDLE_TIMEOUT_MS, 360_000);
@@ -363,6 +374,10 @@ test('iOS failure diagnostics keep this run\'s app log and only this app\'s new 
     console.log('Moyo: dyld: Library not loaded');
   `);
   chmodSync(join(bin, 'xcrun'), 0o755);
+  for (const [tool, output] of [['vm_stat', 'Pages free: 1024.'], ['ps', '4194304 98.0 node']]) {
+    writeFileSync(join(bin, tool), `#!${process.execPath}\n console.log(${JSON.stringify(output)});\n`);
+    chmodSync(join(bin, tool), 0o755);
+  }
   const reports = join(root, 'reports'); mkdirSync(reports);
   const since = new Date(Date.now() - 5 * 60_000);
   writeFileSync(join(reports, 'Moyo-2026-11-25-120438.ips'), 'EXC_CRASH ' + 'x'.repeat(600 * 1024));
@@ -378,7 +393,10 @@ test('iOS failure diagnostics keep this run\'s app log and only this app\'s new 
   assert.deepEqual(args.slice(0, 9), ['simctl', 'spawn', udid, 'log', 'show', '--style', 'compact', '--info', '--last']);
   assert.match(args[9], /^[6-7]m$/);
   assert.deepEqual(args.slice(10), ['--predicate', 'process == "Moyo" OR eventMessage CONTAINS "com.moyolearn.app"']);
-  assert.deepEqual(result, { files: ['ios-app-log.log', 'ios-crash-Moyo-2026-11-25-120438.ips'], warnings: [] });
+  assert.deepEqual(result, { files: ['ios-app-log.log', 'ios-host-vm-stat.log', 'ios-host-processes.log',
+    'ios-crash-Moyo-2026-11-25-120438.ips'], warnings: [] });
+  assert.match(readFileSync(join(destination, 'ios-host-vm-stat.log'), 'utf8'), /Pages free/);
+  assert.match(readFileSync(join(destination, 'ios-host-processes.log'), 'utf8'), /node/);
   assert.match(readFileSync(join(destination, 'ios-app-log.log'), 'utf8'), /Library not loaded/);
   const crash = readFileSync(join(destination, 'ios-crash-Moyo-2026-11-25-120438.ips'));
   assert.ok(crash.length < 513 * 1024);

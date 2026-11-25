@@ -184,6 +184,9 @@ export async function retainIosFailureDiagnostics(device, destination, {
     '--predicate', `process == "Moyo" OR eventMessage CONTAINS "${APP_ID}"`,
   // `log show` reads the simulator's whole log store; 20s was not enough in run 45615528693.
   ], { env, files, warnings, timeout: 90_000 });
+  // Memory and process evidence for a host too loaded to run simctl in time.
+  await retainCommandOutput(destination, 'ios-host-vm-stat.log', 'ios-host-vm-stat', 'vm_stat', [], { env, files, warnings });
+  await retainCommandOutput(destination, 'ios-host-processes.log', 'ios-host-processes', 'ps', ['-axm', '-o', 'rss=,%cpu=,comm='], { env, files, warnings });
   let reports = [];
   try { reports = await readdir(reportsDir, { withFileTypes: true }); } catch (error) {
     if (error.code !== 'ENOENT') warnings.push(`crash report listing failed (${error.code ?? error.name})`);
@@ -255,6 +258,20 @@ export function runtimeFailureDetails(error, metro) {
     metroExitCode: metro?.exitCode ?? null,
     metroSignalCode: diagnosticIdentifier(metro?.signalCode),
   };
+}
+
+// The graph options the debug app asks Metro for at launch (RCTBundleURLProvider on
+// iOS, DevServerHelper on Android): dev builds request lazy=true, which leaves
+// import() targets out of the main graph. Without it the preflight built a
+// second graph (9271 modules) that the app never used; the app's own request
+// (9206) was then built again while the app and the XCTest runner were starting,
+// for 30.7 s in iOS run 45645263048. The remaining parameters are serializer
+// options and do not create another graph.
+export function appBundleUrl(platform) {
+  const query = new URLSearchParams({
+    platform, dev: 'true', lazy: 'true', minify: 'false', app: APP_ID, modulesOnly: 'false', runModule: 'true',
+  });
+  return `http://127.0.0.1:${METRO_PORT}/.expo/.virtual-metro-entry.bundle?${query}`;
 }
 
 export async function hashMetroBundle(url, { log, timeout = METRO_BUNDLE_TIMEOUT_MS } = {}) {
@@ -468,7 +485,7 @@ async function main() {
     metro.stdout.pipe(metroLog, { end: false }); metro.stderr.pipe(metroLog, { end: false });
     metro.on('error', (error) => { log.write(`Metro process error: ${error.message}\n`); });
     await waitForMetro(metro);
-    const bundleUrl = `http://127.0.0.1:${METRO_PORT}/.expo/.virtual-metro-entry.bundle?platform=${values.platform}&dev=true&minify=false`;
+    const bundleUrl = appBundleUrl(values.platform);
     const bundle = await hashMetroBundle(bundleUrl, { log });
     receipt.metroBundleSha256 = bundle.sha256;
     receipt.metroBundleRequest = bundle;
