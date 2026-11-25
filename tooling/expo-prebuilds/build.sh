@@ -24,7 +24,12 @@ HERE="$REPO_ROOT/tooling/expo-prebuilds"
 
 # expo@58.0.19 and expo-modules-core@58.0.26 were both published from this commit
 # (tags `expo@58.0.19`, `expo-modules-core@58.0.26`). Every package built below has
-# the same version in its package.json at this commit as on npm.
+# the same version in its package.json at this commit as on npm, except expo-print:
+# it is 58.0.7 here and 58.0.8 on npm. 58.0.8 changed no source; it only republished
+# the npm prebuild, compiled against a newer ExpoModulesCore that exports
+# AnyModule._classTypes. Linking that prebuild against this ExpoModulesCore stopped
+# dyld at launch with "Symbol not found" (iOS native run 45615528693), so expo-print
+# is built here from the same commit as the core.
 EXPO_COMMIT=$(tr -d '[:space:]' < "$HERE/expo-commit.txt")
 RN_VERSION=$(node -p "require('$REPO_ROOT/node_modules/react-native/package.json').version")
 
@@ -39,6 +44,7 @@ PACKAGES=(
   expo-font
   expo-image
   expo-image-manipulator
+  expo-print
 )
 
 EXPO="$WORK/expo"
@@ -56,7 +62,7 @@ git -C "$EXPO" sparse-checkout set \
   packages/@expo/internal-scripts packages/@expo/require-utils \
   packages/unimodules-app-loader packages/expo-task-manager packages/expo-background-task \
   packages/expo-ui packages/expo-file-system packages/expo-font packages/expo-image \
-  packages/expo-image-manipulator
+  packages/expo-image-manipulator packages/expo-print
 git -C "$EXPO" fetch -q --depth 1 --filter=blob:none origin "$EXPO_COMMIT"
 git -C "$EXPO" checkout -q --force FETCH_HEAD
 

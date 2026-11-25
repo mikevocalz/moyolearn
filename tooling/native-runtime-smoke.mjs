@@ -119,7 +119,7 @@ const DIAGNOSTIC_LIMIT = 512 * 1024;
 
 // Run one OS diagnostic command into a file, keeping the first 512 KiB. A
 // failed or slow command becomes a warning; it never replaces the test result.
-async function retainCommandOutput(destination, name, phase, executable, args, { env, files, warnings }) {
+async function retainCommandOutput(destination, name, phase, executable, args, { env, files, warnings, timeout = 20_000 }) {
   const chunks = []; let bytes = 0; let truncated = false;
   const log = { write: (chunk) => {
     const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
@@ -129,7 +129,7 @@ async function retainCommandOutput(destination, name, phase, executable, args, {
     const retained = data.subarray(0, remaining);
     chunks.push(retained); bytes += retained.length;
   } };
-  await command(executable, args, { env, log, phase, timeout: 20_000 })
+  await command(executable, args, { env, log, phase, timeout })
     .catch((error) => { warnings.push(error.message); });
   if (truncated) chunks.push(Buffer.from('\n[diagnostic output truncated at 512 KiB]\n'));
   await writeFile(join(destination, name), Buffer.concat(chunks));
@@ -182,7 +182,8 @@ export async function retainIosFailureDiagnostics(device, destination, {
   await retainCommandOutput(destination, 'ios-app-log.log', 'ios-app-log', 'xcrun', [
     'simctl', 'spawn', device.udid, 'log', 'show', '--style', 'compact', '--info', '--last', `${minutes}m`,
     '--predicate', `process == "Moyo" OR eventMessage CONTAINS "${APP_ID}"`,
-  ], { env, files, warnings });
+  // `log show` reads the simulator's whole log store; 20s was not enough in run 45615528693.
+  ], { env, files, warnings, timeout: 90_000 });
   let reports = [];
   try { reports = await readdir(reportsDir, { withFileTypes: true }); } catch (error) {
     if (error.code !== 'ENOENT') warnings.push(`crash report listing failed (${error.code ?? error.name})`);

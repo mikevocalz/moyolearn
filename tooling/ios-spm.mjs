@@ -121,7 +121,27 @@ if (existsSync(audioApi)) {
   }
 }
 
-run('npx', ['react-native', 'spm', 'add', '--deintegrate', '--yes'], mobile);
+// The Expo plugin only warns when a precompiled module comes from a different place
+// than ExpoModulesCore. The build still succeeds, and dyld then stops the app at
+// launch on the first symbol the two builds disagree on. Treat the warning as fatal.
+console.log(`$ npx react-native spm add --deintegrate --yes  (in ${mobile})`);
+const spmAdd = spawnSync('npx', ['react-native', 'spm', 'add', '--deintegrate', '--yes'], {
+  cwd: mobile, env: process.env, encoding: 'utf8', maxBuffer: 256 * 1024 * 1024,
+  stdio: ['inherit', 'pipe', 'pipe'],
+});
+process.stdout.write(spmAdd.stdout ?? '');
+process.stderr.write(spmAdd.stderr ?? '');
+if (spmAdd.status !== 0) {
+  console.error(`npx exited with ${spmAdd.status ?? spmAdd.signal}`);
+  process.exit(spmAdd.status ?? 1);
+}
+const mixedPrebuilds = `${spmAdd.stdout}\n${spmAdd.stderr}`.split('\n')
+  .filter((line) => /\[expo-spm-plugin\] WARNING: .* but ExpoModulesCore comes from /.test(line));
+if (mixedPrebuilds.length > 0) {
+  console.error('Precompiled Expo modules must come from the same build as ExpoModulesCore.');
+  console.error('Add the package to PACKAGES in tooling/expo-prebuilds/build.sh.');
+  process.exit(1);
+}
 
 // `react-native spm add` links only the app's direct dependencies. CocoaPods went
 // through Expo's autolinking, which also finds native packages that workspace
