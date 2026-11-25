@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { protectedOperation } from '@acme/app/server';
+import { MediaNotFound, signOwnedMediaUrl } from '@acme/app/server';
+import { loadGuardianWards } from '@/lib/summary.repository';
 import { auth } from '@/lib/auth';
 import { signCdnUrl } from '@/lib/bunny-token';
 import { reportRouteError } from '@/lib/report-error';
@@ -9,14 +10,19 @@ import { reportRouteError } from '@/lib/report-error';
 //
 // The session route signs its own attachments inline because it is already
 // assembling them. Everything else that holds a bare CDN URL — an editor note's
-// waveform, any future embed — comes through here: authenticate, sign, 302.
-// A redirect rather than a proxy, so the bytes still come off Bunny's edge and
-// this route costs one signature.
+// waveform, any future embed — comes through here: authenticate, PROVE THE
+// CALLER MAY SEE IT, sign, 302. A redirect rather than a proxy, so the bytes
+// still come off Bunny's edge and this route costs one signature.
+//
+// Ownership is the service's question (`signOwnedMediaUrl`): the key names its
+// owner, and the caller must be that learner, that org, or an active guardian
+// of that learner. A miss is 404, the same answer as a URL outside the zone,
+// so the route confirms nothing about objects it will not serve.
 //
 // `practise` floor on purpose: viewing media you can already see in the app is
 // not a paid capability, and gating it would strand a learner's own homework.
-// SOT: docs/pack/29-bunny-media-spec.md §5
-// SOT-KEYWORDS: media view signed url redirect token auth cdn read door
+// SOT: docs/pack/29-bunny-media-spec.md §5 · packages/app/features/media/media-access.service.ts
+// SOT-KEYWORDS: media view signed url redirect token auth cdn read door ownership ward
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
@@ -30,13 +36,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const signed = await protectedOperation(auth, request.headers, async () => signCdnUrl(url), {
-      telemetry: { op: 'media.view', resource: 'media', action: 'read' },
+    const signed = await signOwnedMediaUrl(auth, request.headers, url, {
+      loadGuardianWards,
+      sign: signCdnUrl,
+      cdnBase: base,
     });
     return NextResponse.redirect(signed, { status: 302 });
   } catch (error) {
+    if (error instanceof MediaNotFound) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+    if (error instanceof Error && error.message === 'Unauthenticated') {
+      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    }
     if (error instanceof Error) reportRouteError(error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: message === 'Unauthenticated' ? 401 : 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

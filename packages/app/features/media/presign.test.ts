@@ -5,11 +5,15 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  assertOwnMediaKey,
   assertUploadable,
   buildKey,
   buildVoiceNoteKeys,
+  mediaKeyOwner,
+  MediaKeyRejected,
   PresignRejected,
   safeName,
+  storageKeyFromCdnUrl,
 } from './presign.rules.ts';
 import { MAX_BYTES, type MediaKind } from './media.types.ts';
 
@@ -103,5 +107,51 @@ describe('voice note keys', () => {
 
   it('scopes to the owner, like every other key', () => {
     assert.ok(keys.audio.startsWith('audio/riverside-unified/'), keys.audio);
+  });
+});
+
+// ── Security pass H4: the reading side ───────────────────────────────────────
+
+describe('media key ownership (security pass H4)', () => {
+  const BASE = 'https://cdn.example.test';
+
+  it('reads the key off a zone URL and the owner off the key', () => {
+    const key = storageKeyFromCdnUrl(`${BASE}/image/ada_1/2026-10-15/u-1/page.jpg?token=x`, BASE);
+    assert.equal(key, 'image/ada_1/2026-10-15/u-1/page.jpg');
+    assert.equal(mediaKeyOwner(key ?? ''), 'ada_1');
+  });
+
+  it('agrees with buildKey and buildVoiceNoteKeys about who owns what they mint', () => {
+    assert.equal(mediaKeyOwner(buildKey('image', 'ada_1', 'page.jpg', 'u-1', AT)), 'ada_1');
+    const keys = buildVoiceNoteKeys('riverside', 'm4a', 'u-2', AT);
+    assert.equal(mediaKeyOwner(keys.audio), 'riverside');
+    assert.equal(mediaKeyOwner(keys.waveform), 'riverside');
+  });
+
+  it('decodes before deciding, and refuses what does not decode to a clean key', () => {
+    assert.equal(storageKeyFromCdnUrl(`${BASE}/image/%61da_1/d/u/p.jpg`, BASE), 'image/ada_1/d/u/p.jpg');
+    assert.equal(storageKeyFromCdnUrl(`${BASE}/image/ada_1/../ben_1/u/p.jpg`, BASE), null);
+    assert.equal(storageKeyFromCdnUrl(`${BASE}/image//ada_1/u/p.jpg`, BASE), null);
+    assert.equal(storageKeyFromCdnUrl(`${BASE}/image/%ZZ/u/p.jpg`, BASE), null);
+    assert.equal(storageKeyFromCdnUrl('https://evil.test/image/ada_1/u/p.jpg', BASE), null);
+    assert.equal(storageKeyFromCdnUrl(`${BASE}/image/ada_1/u/p.jpg`, ''), null);
+  });
+
+  it('owns nothing for a key of another shape', () => {
+    assert.equal(mediaKeyOwner('avatars/ada_1/x.png'), null);
+    assert.equal(mediaKeyOwner('image/ada_1'), null);
+    assert.equal(mediaKeyOwner('image//x/y.png'), null);
+  });
+
+  it('accepts an attachment report only for the caller’s own folder at its own URL', () => {
+    const key = 'image/ada_1/2026-10-15/u-1/page.jpg';
+    assert.doesNotThrow(() => assertOwnMediaKey('ada_1', key, `${BASE}/${key}`, BASE));
+    assert.throws(() => assertOwnMediaKey('ben_1', key, `${BASE}/${key}`, BASE), MediaKeyRejected);
+    assert.throws(
+      () => assertOwnMediaKey('ada_1', key, `${BASE}/image/ben_1/2026-10-15/u-9/page.jpg`, BASE),
+      MediaKeyRejected,
+    );
+    assert.throws(() => assertOwnMediaKey('ada_1', key, `https://evil.test/${key}`, BASE), MediaKeyRejected);
+    assert.throws(() => assertOwnMediaKey('ada_1', key, `${BASE}/${key}`, ''), MediaKeyRejected);
   });
 });

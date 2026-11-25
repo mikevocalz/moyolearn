@@ -28,6 +28,7 @@ import { transcriptExpiry } from '@acme/student-model';
 */
 import { inferenceGateway, type InferenceGateway, type SessionBudgetState } from '@acme/inference';
 import { mediaExpiry } from '../media/retention';
+import { assertOwnMediaKey, mediaOwner } from '../media/presign.rules';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation';
 import type { StoredAttachment, StoredMessage, TutorSessionSnapshot } from './session.types';
 
@@ -283,20 +284,34 @@ export async function saveBoardUpdate(
   });
 }
 
+export interface AttachUploadedMediaRules {
+  /** `NEXT_PUBLIC_BUNNY_CDN_BASE_URL`. Empty means no URL can be ours. */
+  readonly cdnBase: string;
+}
+
 /**
  * Fills in one attachment's URL once its upload has landed.
  *
  * Separate from `addMessage` because the turn is written the moment the child
  * sends it and the bytes drain afterwards — a second device legitimately sees
  * the message before the picture, and this is the call that catches it up.
+ *
+ * THE KEY AND THE URL ARE CLAIMS, checked before anything is written. The
+ * presign step filed the object under `mediaOwner(ctx)`; a report that it
+ * landed somewhere else — another family's folder, a URL off our zone — is a
+ * client naming an object it never uploaded, and the row it would patch is
+ * rendered to a guardian as the child's own picture (security pass H4).
+ * `assertOwnMediaKey` throws `MediaKeyRejected`, which the route answers 400.
  */
 export async function attachUploadedMedia(
   auth: Auth,
   headers: Headers,
   input: AttachUploadedMediaInput,
   patchAttachment: PatchAttachment,
+  rules: AttachUploadedMediaRules,
 ): Promise<void> {
   return protectedOperation(auth, headers, async (ctx) => {
+    assertOwnMediaKey(mediaOwner(ctx.learnerId, ctx.orgId), input.storageKey, input.url, rules.cdnBase);
     const patched = await patchAttachment(ctx, input.sessionId, input.messageId, input.attachmentId, {
       url: input.url,
       storageKey: input.storageKey,

@@ -526,6 +526,19 @@ export {
   type MediaKind,
   type SignUpload,
 } from './features/media/presign.service';
+/*
+  The READ side of media (security pass H4): `/api/media/view` proves the
+  caller may see an object before it signs the URL, and the attachment route
+  refuses a key outside the caller's own folder. `MediaKeyRejected` is the
+  rules module's error, re-exported so the route can map it to a 400 without
+  importing a deep path.
+*/
+export {
+  MediaNotFound,
+  signOwnedMediaUrl,
+  type MediaAccessPorts,
+} from './features/media/media-access.service';
+export { MediaKeyRejected } from './features/media/presign.rules';
 export {
   saveLearnerProfile,
   loadLearnerProfile,
