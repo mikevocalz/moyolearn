@@ -1,44 +1,58 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { create } from 'zustand';
-import { PlanCard } from './PlanCard';
+import { PlanCard, type PlanCardScope } from './PlanCard';
 import { RoleScope } from './RoleScope';
 import { View } from './primitives';
 
 // Story state — zustand always (repo rule).
 const usePlanStory = create<{ selected: string | null; select: (id: string) => void }>((set) => ({
-  selected: 'early-bird',
+  selected: 'plus',
   select: (id) => set({ selected: id }),
 }));
 
-// Prices live HERE and only here: the component takes data props; product code
-// feeds it from the role-scoped plan query (doc 38 §5 FD-13 · doc 33 FR-11.1).
-const FAMILY_INCLUDES = ['Up to 4 learners', 'Unlimited homework help', 'Session reports for you'] as const;
+// Story FIXTURES. The component takes data props and product code feeds it from
+// `@acme/auth/plan-catalog`, which packages/ui may not import (eslint boundaries:
+// ui depends only on theme). These strings mirror the catalogue on 2026-11-25
+// and exist to exercise the card's states, not to be the price of record.
+const FAMILY_INCLUDES = ['Up to 3 children', 'Unlimited homework help', 'Session reports for you'] as const;
+const PLUS_INCLUDES = ['One learner', 'Unlimited homework help', 'Session reports for you'] as const;
 
 const meta = {
   title: 'UI/PlanCard',
   component: PlanCard,
-  args: { name: 'Family', price: '$11', period: '/mo', tier: 'family' },
+  args: { name: 'Moyo Family', price: '$24.99', period: '/mo', context: 'guardian', tier: 'family' },
 } satisfies Meta<typeof PlanCard>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// FD-13: the guardian sees ONE family price — early bird OR regular, never both.
-export const FamilyEarlyBird: Story = {
+// FD-13: the guardian chooses between the two consumer plans and nothing else.
+export const GuardianChooser: Story = {
   render: function Render() {
     const { selected, select } = usePlanStory();
     return (
       <RoleScope role="guardian">
         <View role="radiogroup" aria-label="Choose plan" className="max-w-content-form gap-stack p-4">
           <PlanCard
+            context="guardian"
             tier="family"
-            name="Family"
-            price="$11"
+            name="Moyo Plus"
+            price="$14.99"
             period="/mo"
             trialLine="after your free month"
-            badge="Early-bird price"
+            includes={PLUS_INCLUDES}
+            selected={selected === 'plus'}
+            onSelect={() => select('plus')}
+          />
+          <PlanCard
+            context="guardian"
+            tier="family"
+            name="Moyo Family"
+            price="$24.99"
+            period="/mo"
+            trialLine="after your free month"
             includes={FAMILY_INCLUDES}
-            selected={selected === 'early-bird'}
-            onSelect={() => select('early-bird')}
+            selected={selected === 'family'}
+            onSelect={() => select('family')}
           />
         </View>
       </RoleScope>
@@ -46,26 +60,9 @@ export const FamilyEarlyBird: Story = {
   },
 };
 
-export const FamilyRegular: Story = {
-  render: () => (
-    <RoleScope role="guardian">
-      <View className="max-w-content-form gap-stack p-4">
-        <PlanCard
-          tier="family"
-          name="Family"
-          price="$15.99"
-          period="/mo"
-          trialLine="after your free month"
-          includes={FAMILY_INCLUDES}
-          onSelect={() => undefined}
-        />
-      </View>
-    </RoleScope>
-  ),
-};
-
 // PW-08: business tiers render only on org routes — never on a guardian
-// surface, and this component never mounts on a learner surface at all.
+// surface, and this component never mounts on a learner surface at all. The
+// figures are the ops display table's (packages/app/features/billing).
 export const BusinessTier: Story = {
   render: function Render() {
     const { selected, select } = usePlanStory();
@@ -73,24 +70,41 @@ export const BusinessTier: Story = {
       <RoleScope role="org">
         <View role="radiogroup" aria-label="Business plan" className="max-w-content-form gap-stack p-4">
           <PlanCard
+            context="org"
             tier="business"
-            name="Studio"
-            price="$49"
+            name="Ops · Solo"
+            price="$19"
             period="/mo"
-            includes={['Up to 5 tutors', 'CRM and scheduling', 'Payouts via Stripe']}
+            includes={['One tutor', 'CRM and scheduling', 'Manual pay runs']}
+            selected={selected === 'solo'}
+            onSelect={() => select('solo')}
+          />
+          <PlanCard
+            context="org"
+            tier="business"
+            name="Ops · Studio"
+            price="$99"
+            period="/mo"
+            badge="Automated pay runs"
+            includes={['Up to 5 tutors', 'CRM and scheduling', 'Automated pay runs']}
             selected={selected === 'studio'}
             onSelect={() => select('studio')}
           />
-          <PlanCard
-            tier="business"
-            name="Growth"
-            price="$99"
-            period="/mo"
-            badge="Most popular"
-            includes={['Unlimited tutors', 'Multiple locations', 'Priority support']}
-            selected={selected === 'growth'}
-            onSelect={() => select('growth')}
-          />
+        </View>
+      </RoleScope>
+    );
+  },
+};
+
+// The guard, visible: a guardian scope handed a business tier draws nothing.
+// Typed callers cannot write this pairing, so the props are widened on purpose.
+export const RefusedOnGuardianSurface: Story = {
+  render: () => {
+    const refused = { context: 'guardian', tier: 'business' } as unknown as PlanCardScope;
+    return (
+      <RoleScope role="guardian">
+        <View className="max-w-content-form gap-stack p-4">
+          <PlanCard {...refused} name="Ops · Studio" price="$99" period="/mo" />
         </View>
       </RoleScope>
     );
@@ -103,12 +117,12 @@ export const StaticSummary: Story = {
     <RoleScope role="guardian">
       <View className="max-w-content-form gap-stack p-4">
         <PlanCard
+          context="guardian"
           tier="family"
-          name="Family"
-          price="$11"
+          name="Moyo Family"
+          price="$24.99"
           period="/mo"
           trialLine="renews Oct 1"
-          badge="Early-bird price"
           includes={FAMILY_INCLUDES}
         />
       </View>
