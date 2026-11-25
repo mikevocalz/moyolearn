@@ -92,3 +92,30 @@ with `cannot find type 'URL' in scope` (#141 iOS `simulator` run 41930144115).
 
 **What the patch does:** adds `import Foundation` at the top of that file.
 Remove it when an expo-sharing release adds the import.
+
+## `react-native@0.88.1`
+
+**Why:** the iOS `simulator` job failed some of the time with
+`Moyo.xcodeproj: error: Missing package product 'reactnativewebgpu_ReactNativeWebGPU.ReactNativeWebGPU'`
+(integration head 7a0c8479, job 139454295287; PR #158 head e982cd31). The same
+code passed on d3c359bc (job 139406662172) and 02ada6e4.
+
+`react-native-webgpu` 0.26.0 registers its package through an autolinking
+plugin that creates `build/generated/autolinking/libs/ReactNativeWebGPU`, a
+symlink to the package. `scripts/spm/generate-spm-autolinking.js` prunes
+`libs/` before it runs plugins and keeps only the aliases React Native wrote
+itself, so every regeneration deleted that symlink ("Removed stale
+libs/ReactNativeWebGPU") and the plugin made a new one. The scheme pre-action
+"Sync SPM Autolinking" regenerates right after Xcode's "Resolve Package Graph",
+so the alias Xcode had loaded was replaced mid-build. The file's own comment
+names the result: recreating a package root Xcode already resolved fails with
+"Missing package product". Whether Xcode noticed the swap before planning the
+build decided the outcome: the failing run planned 153 targets, the passing
+run 157 (the four `ReactNativeWebGPU*` targets).
+
+**What the patch does:** runs the prune after the plugins and keeps any
+`libs/<Name>` alias a plugin returns as a package path. The alias now keeps
+its inode across syncs, and aliases for removed dependencies are still pruned.
+
+**Remove it when** React Native's generator keeps plugin-owned `libs/`
+aliases on its own.
