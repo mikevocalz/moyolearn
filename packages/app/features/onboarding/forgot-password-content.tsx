@@ -6,6 +6,14 @@
 // enumeration), so the screen's "we sent it" line is a promise about the
 // sender, not about the account; the only failure it can report is the sender,
 // which `createAuth` already logs loudly when RESEND_API_KEY is missing.
+//
+// Mobbin: https://mobbin.com/flows/73460bda-d866-4824-b7b4-776987353037 (AllTrails
+// "Forgot password" — one field, one button, and the sent state names the
+// address it went to) · https://mobbin.com/flows/107fb479-5742-442a-9188-855f03fe5d3f
+// (Mercury — the request screen says what the link does before asking for the
+// address) · https://mobbin.com/flows/92fdcc10-d861-480d-8071-5926cae74ed8
+// (pliability — "Reset sent." is its own state, not a toast). Structure only;
+// style stays on docs 02/08.
 // SOT: docs/pack/06-auth-onboarding-spec.md §2 §6 · packages/auth/src/auth-email.ts
 // SOT-KEYWORDS: forgot password reset request email better auth native zustand
 

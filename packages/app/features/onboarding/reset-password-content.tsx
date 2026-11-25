@@ -7,6 +7,15 @@
 // `?error=INVALID_TOKEN` is Better Auth's own answer for an expired or used
 // link (one hour, `resetPasswordTokenExpiresIn`). It is shown as the way back
 // to requesting a fresh one, not as a dead end.
+//
+// Mobbin: https://mobbin.com/screens/552e3ff3-cf85-40f7-8ecf-d3e2b6706630 (Venmo
+// "Create a new password" — says up front that saving signs out every other
+// device, which `revokeSessionsOnPasswordReset` makes true here) ·
+// https://mobbin.com/screens/9cf60de8-12b0-40af-ba41-a32c9f8549fa (Klook — new
+// and retype fields with the rule stated once beneath them) ·
+// https://mobbin.com/screens/b0250709-b455-4a0b-bab6-5cbe5ccc379c (Aave — the
+// length rule as live guidance under the field, not a post-submit error).
+// Structure only; style stays on docs 02/08.
 // SOT: docs/pack/06-auth-onboarding-spec.md §2 §6 · packages/auth/src/auth-email.ts
 // SOT-KEYWORDS: reset password token new password better auth native zustand
 
