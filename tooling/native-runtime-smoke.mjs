@@ -152,7 +152,11 @@ export async function retainAndroidFailureDiagnostics(device, destination, { env
     ['android-crash.log', 'android-crash-buffer', ['logcat', '-b', 'crash', '-d', '-v', 'threadtime', '-t', '400']],
     ['android-app-exit-info.log', 'android-app-exit-info', ['shell', 'dumpsys', 'activity', 'exit-info', APP_ID]],
     ['android-react-native.log', 'android-react-native-log', ['logcat', '-b', 'main', '-d', '-v', 'threadtime', '-t', '1500',
-      '-s', 'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'unknown:ReactNative:V', 'OkHttp:V', 'AndroidRuntime:V']],
+      'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'OkHttp:V', 'AndroidRuntime:V', '*:S']],
+    // Whether the device can still reach Metro through the harness's reverse.
+    ['android-port-reverse.log', 'android-port-reverse', ['reverse', '--list']],
+    ['android-metro-reachability.log', 'android-metro-reachability',
+      ['shell', `printf 'GET /status HTTP/1.0\\r\\n\\r\\n' | toybox nc -w 5 127.0.0.1 ${METRO_PORT}`]],
   ];
   for (const [name, phase, args] of diagnostics) {
     await retainCommandOutput(destination, name, phase, 'adb', ['-s', device.serial, ...args], { env, files, warnings });
