@@ -25,17 +25,19 @@ import { onboardingPath } from './flow/flow';
  */
 function devPersonaSwitch(): ComponentType | null {
   if (getAuthMode() === 'live') return null;
-  const devBuild =
-    typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-  if (!devBuild) return null;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('./dev-persona-switch') as typeof import('./dev-persona-switch');
-  return mod.DevPersonaSwitch;
+  if (typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('./dev-persona-switch') as typeof import('./dev-persona-switch');
+    return mod.DevPersonaSwitch;
+  }
+  return null;
 }
+
+/** Resolved once at module scope; see `providers/session/session.tsx`. */
+const DevPersonaSwitch = devPersonaSwitch();
 
 export function PublicEntryContent() {
   const router = useRouter();
-  const DevPersonaSwitch = devPersonaSwitch();
 
   return (
     <Section className="gap-group p-inset-roomy">

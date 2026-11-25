@@ -14,12 +14,12 @@ import { useSessionStore } from './store';
  * see `session.tsx` for why the test is spelled out rather than shared.
  */
 function devPersonas(): readonly Persona[] {
-  const devBuild =
-    typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-  if (!devBuild) return [];
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PERSONAS } = require('../../fixtures/personas') as typeof import('../../fixtures/personas');
-  return PERSONAS;
+  if (typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { PERSONAS } = require('../../fixtures/personas') as typeof import('../../fixtures/personas');
+    return PERSONAS;
+  }
+  return [];
 }
 
 export function RoleSwitcher() {

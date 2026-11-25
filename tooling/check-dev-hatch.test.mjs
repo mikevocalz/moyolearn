@@ -58,11 +58,19 @@ for (const { file, specifier } of DEV_ONLY) {
     assert.doesNotMatch(source, staticImport, `${file} imports ${specifier} statically`);
     const required = new RegExp(`require\\(\\s*['"]${spec}['"]\\s*\\)`);
     assert.match(source, required, `${file} does not require ${specifier}`);
-    assert.match(
-      source,
-      /typeof __DEV__ !== 'undefined' \? __DEV__ : process\.env\.NODE_ENV === 'development'/,
-      `${file} has no literal __DEV__ test for the bundler to fold`,
+    /*
+      The require has to sit INSIDE an \`if\` whose test is the literal. Two
+      other shapes compile, pass review and still ship the module: the test
+      read through a \`const\`, and an early \`return\` ahead of the require.
+      Metro's constant folder deletes the branch in both but leaves the
+      unreachable \`require\`, and the dependency collector still bundles it.
+      This was caught by grepping an exported release bundle.
+    */
+    const guarded = new RegExp(
+      `if \\(typeof __DEV__ !== 'undefined' \\? __DEV__ : process\\.env\\.NODE_ENV === 'development'\\) \\{\\n(?:[^\\n]*\\n){0,4}[^\\n]*require\\(\\s*['"]${spec}['"]`,
     );
+    assert.match(source, guarded, `${file} requires ${specifier} outside an if-block on the literal __DEV__ test`);
+    assert.doesNotMatch(source, /const devBuild\s*=/, `${file} reads the __DEV__ test through a const, which does not fold`);
   });
 }
 

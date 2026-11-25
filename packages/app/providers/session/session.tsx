@@ -23,18 +23,20 @@ type SessionProviderComponent = ComponentType<{ children: ReactNode }>;
  * A static import put `MockSessionProvider` and every fixture persona into the
  * release bundle, where `getAuthMode()` never selected it but a reverse of the
  * binary still found eleven ready-made identities. Metro inlines `__DEV__` and
- * drops the dead branch together with the module it required; the test is
- * written out here, not read through `isDevBuild()`, because only a literal
- * folds. On Next `__DEV__` is undefined and `NODE_ENV` is the inlined signal.
+ * drops the dead branch together with the module it required. Two shapes
+ * defeat that, and both shipped the fixtures in a release bundle before this
+ * was checked: reading the test through `isDevBuild()` or a `const`, and an
+ * early `return` ahead of the `require` (the constant folder deletes the
+ * branch but leaves the unreachable `require`, and Metro still collects it).
+ * So the test is written out INSIDE the `if` that holds the `require`.
+ * On Next `__DEV__` is undefined and `NODE_ENV` is the inlined signal.
  *
  * In a release build this returns the live provider whatever the env said —
  * `getAuthMode()` already answers `live` there, so the two agree.
  */
 function resolveProvider(): SessionProviderComponent {
   if (getAuthMode() === 'live') return LiveSessionProvider;
-  const devBuild =
-    typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development';
-  if (devBuild) {
+  if (typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mock = require('./mock') as typeof import('./mock');
     return mock.MockSessionProvider;
@@ -49,8 +51,14 @@ function resolveProvider(): SessionProviderComponent {
  * depending on which shell you entered through. A session and the plans attached
  * to it arrive together or the pair is a bug.
  */
+/**
+ * Resolved once, at module scope. Auth mode and the build flag are both fixed
+ * at build time, and a component chosen during render is a new component type
+ * to React on every render (react-hooks/static-components).
+ */
+const Provider = resolveProvider();
+
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const Provider = resolveProvider();
   return (
     <Provider>
       <EntitlementsSync />

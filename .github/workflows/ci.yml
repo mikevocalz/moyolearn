@@ -68,10 +68,16 @@ jobs:
 
   # The release bundle must not carry the QA tooling. `expo export` with
   # EXPO_PUBLIC_AUTH_MODE=live and no `--dev` is the same Metro pass an EAS
-  # production build runs; the grep is the proof that the `__DEV__`-guarded
-  # `require()`s in packages/app really folded away. Three names, because each
-  # is an export property that survives minification: the persona switch, the
-  # mock session provider, and the fixture persona table.
+  # production build runs, and this grep is what proves the `__DEV__`-guarded
+  # `require()`s in packages/app folded away. The markers are strings that
+  # exist only in the dev-only modules: a fixture persona's name, the copy of
+  # the persona switch, and two function names. RoleSwitcher's own label is
+  # not one: that component ships (the drawer imports it) and renders nothing
+  # in a release build because it has no personas to list.
+  # Short identifiers such as PERSONAS are not usable here: Hermes packs its
+  # string table with overlaps, and "GRASSHOPPERSONASTC" matches by accident.
+  # `grep -a` reads the .hbc as text; without it ugrep and GNU grep disagree
+  # about binary files and the check passes vacuously.
   mobile-release-bundle:
     name: mobile release bundle carries no mock auth
     runs-on: ubuntu-latest
@@ -92,17 +98,23 @@ jobs:
           EXPO_PUBLIC_AUTH_URL: https://app.moyolearn.com
           CI: '1'
         run: npx expo export --platform android --output-dir "$RUNNER_TEMP/bundle"
-      - name: Fail if the bundle names the dev persona switch, the mock session or the fixture personas
+      - name: Fail if the bundle carries the persona switch, the mock session or the fixtures
         run: |
           set -euo pipefail
+          bundle="$RUNNER_TEMP/bundle"
+          # A marker that must be present, so an empty or unreadable bundle fails
+          # instead of passing every absence check below.
+          if ! grep -rqaF 'LiveSessionProvider' "$bundle"; then
+            echo "::error::LiveSessionProvider not found; the grep is not reading the bundle"
+            exit 1
+          fi
           status=0
-          for name in DevPersonaSwitch MockSessionProvider PERSONAS; do
-            if grep -rl --include='*.js' --include='*.hbc' -e "$name" "$RUNNER_TEMP/bundle" >/dev/null; then
-              echo "::error::release bundle contains $name"
-              grep -rl --include='*.js' --include='*.hbc' -e "$name" "$RUNNER_TEMP/bundle"
+          for marker in 'Ms. Rivera' 'For QA and design review' 'MockSessionProvider' 'isDevPersonaSwitchAvailable'; do
+            if grep -rqaF -- "$marker" "$bundle"; then
+              echo "::error::release bundle contains '$marker'"
               status=1
             else
-              echo "ok  $name is absent from the release bundle"
+              echo "ok  '$marker' is absent from the release bundle"
             fi
           done
           exit $status
