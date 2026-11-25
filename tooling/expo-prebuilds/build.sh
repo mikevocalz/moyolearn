@@ -55,7 +55,7 @@ git -C "$EXPO" sparse-checkout set \
   packages/expo packages/precompile packages/expo-modules-core packages/expo-modules-jsi \
   packages/expo-modules-autolinking \
   packages/@expo/json-file packages/@expo/osascript packages/@expo/plist \
-  packages/@expo/internal-scripts packages/@expo/require-utils \
+  packages/@expo/internal-scripts packages/@expo/require-utils packages/@expo/platforms \
   packages/unimodules-app-loader packages/expo-task-manager packages/expo-background-task \
   packages/expo-ui packages/expo-file-system packages/expo-font packages/expo-image \
   packages/expo-image-manipulator
@@ -72,8 +72,13 @@ ln -sfn "$REPO_ROOT/node_modules/react-native" "$EXPO/apps/bare-expo/node_module
 
 cd "$EXPO"
 npx -y pnpm@12.2.1 install --filter 'expotools...' --filter 'expo-modules-core...' --ignore-scripts
-for pkg in json-file osascript plist; do
-  (cd "packages/@expo/$pkg" && npx -y pnpm@12.2.1 run build)
+# --ignore-scripts skips every workspace build, so build the ones expotools
+# loads from build/. At the expo-commit.txt pin that includes
+# expo-modules-autolinking/internal/prebuiltArtifactPaths, and autolinking
+# needs @expo/platforms and @expo/require-utils built first.
+for pkg in @expo/json-file @expo/osascript @expo/plist \
+  @expo/platforms @expo/require-utils expo-modules-autolinking; do
+  (cd "packages/$pkg" && npx -y pnpm@12.2.1 run build)
 done
 
 CI=1 node tools/bin/expotools.js prebuild --react-native-version "$RN_VERSION" "${PACKAGES[@]}"
