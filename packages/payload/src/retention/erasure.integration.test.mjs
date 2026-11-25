@@ -1700,20 +1700,22 @@ test(
     try {
       await c.query(
         `insert into payload.homework_questions
-           (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text, crop, crop_expires_at)
-         values ($1, $3, $4, 0, 1, 'r1', '1/2 + 1/4', $5::jsonb, now() - interval '1 hour'),
-                ($2, $3, $4, 1, 1, 'r1', '3/4 - 1/8', $5::jsonb, now() + interval '6 days')`,
-        [`${stamp}-old`, `${stamp}-new`, `${stamp}-sub`, learner, crop],
+           (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text, crop, crop_expires_at, prior_work, prior_work_source, prior_work_revisions)
+         values ($1, $3, $4, 0, 1, 'r1', '1/2 + 1/4', $5::jsonb, now() - interval '1 hour', 'complete', 'guardian', $6::jsonb),
+                ($2, $3, $4, 1, 1, 'r1', '3/4 - 1/8', $5::jsonb, now() + interval '6 days', 'none', null, '[]'::jsonb)`,
+        [`${stamp}-old`, `${stamp}-new`, `${stamp}-sub`, learner, crop, JSON.stringify([{ priorWork: 'complete', source: 'guardian', createdAt: new Date().toISOString() }])],
       );
 
       await applySweepSql(c);
 
       const { rows } = await c.query(
-        'select question_id, crop is null as gone from payload.homework_questions where learner_auth_id = $1 order by order_index',
+        'select question_id, crop is null as gone, prior_work, prior_work_revisions from payload.homework_questions where learner_auth_id = $1 order by order_index',
         [learner],
       );
       assert.equal(rows.length, 2, 'the sweep deleted a homework question; it may only null the crop');
       assert.equal(rows[0].gone, true, 'an expired crop survived the sweep');
+      assert.equal(rows[0].prior_work, 'complete', 'crop expiry must preserve the separate mark');
+      assert.equal(rows[0].prior_work_revisions[0].source, 'guardian');
       assert.equal(rows[1].gone, false, 'control failed: a crop inside its seven days was nulled');
     } finally {
       await c.query('delete from payload.homework_questions where learner_auth_id = $1', [learner]);
@@ -1747,9 +1749,9 @@ test(
         );
         await c.query(
           `insert into payload.homework_questions
-             (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text)
-           values ($1::text || '-q', $1::text, $2, 0, 1, 'r1', '1/2 + 1/4')`,
-          [sub, learnerId],
+             (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text, prior_work, prior_work_source, prior_work_revisions)
+           values ($1::text || '-q', $1::text, $2, 0, 1, 'r1', '1/2 + 1/4', 'complete', 'guardian', $3::jsonb)`,
+          [sub, learnerId, JSON.stringify([{ priorWork: 'complete', source: 'guardian', createdAt: new Date().toISOString() }])],
         );
       }
       await c.query(

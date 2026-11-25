@@ -1,5 +1,5 @@
 // The worksheet half of a session report: one problems-block row per
-// homework question, the facts block recounted from outcomes, and block 6's
+// homework question worked with Moyo, the facts block recounted from outcomes, and block 6's
 // next step derived from misconception tags and outcome counts.
 //
 // The narrative model never sees a revision. `narrativeEvidence` blanks the
@@ -25,9 +25,10 @@ export function statusForOutcome(outcome: QuestionOutcome): ProblemStatus {
   return 'still-working';
 }
 
-/** One row per question, in worksheet order. No answer text: there is no transcript to quote. */
+/** Tutor-work rows in worksheet order; prior finished work earns no Moyo credit. */
 export function homeworkProblemRows(submission: HomeworkSubmissionView): ProblemRow[] {
   return [...submission.questions]
+    .filter((question) => question.priorWork !== 'complete')
     .sort((a, b) => a.orderIndex - b.orderIndex)
     .map((question) => ({
       subject: submission.subject,
@@ -56,7 +57,7 @@ export function homeworkFacts(
   durationMin: number,
 ): SummaryFacts {
   const count = (test: (outcome: QuestionOutcome) => boolean) =>
-    submission.questions.filter((question) => test(question.outcome)).length;
+    submission.questions.filter((question) => question.priorWork !== 'complete' && test(question.outcome)).length;
   return {
     durationMin,
     attempted: count((outcome) => !NOT_WORKED.has(outcome)),
@@ -109,12 +110,12 @@ export function homeworkNextStep(
   evidence: ExtractedEvidence,
   candidate: NarrativeCandidate,
 ): string {
-  const open = submission.questions.filter((q) => statusForOutcome(q.outcome) === 'still-working');
-  const helped = submission.questions.filter((q) => q.outcome === 'supported-with-hints');
+  const open = submission.questions.filter((q) => q.priorWork !== 'complete' && statusForOutcome(q.outcome) === 'still-working');
+  const helped = submission.questions.filter((q) => q.priorWork !== 'complete' && q.outcome === 'supported-with-hints');
   const tags = [
     ...new Set(
       submission.questions
-        .filter((q) => q.outcome !== 'solved-independently')
+        .filter((q) => q.priorWork !== 'complete' && q.outcome !== 'solved-independently')
         .flatMap((q) => q.misconceptionTags)
         .map(humanTag)
         .filter((tag): tag is string => tag !== null),

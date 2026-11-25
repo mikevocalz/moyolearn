@@ -80,6 +80,17 @@ export const HomeworkQuestions: CollectionConfig = {
     { name: 'crop', type: 'json' },
     { name: 'cropExpiresAt', type: 'date', index: true },
     {
+      name: 'priorWork',
+      type: 'select',
+      required: true,
+      defaultValue: 'none',
+      options: ['none', 'partial', 'complete'],
+    },
+    { name: 'priorWorkConfidence', type: 'number', min: 0, max: 1 },
+    { name: 'priorWorkSource', type: 'select', options: ['detected', 'guardian'] },
+    // Append-only mark history, separate from transcription and learning outcomes.
+    { name: 'priorWorkRevisions', type: 'json', required: true, defaultValue: [] },
+    {
       name: 'outcome',
       type: 'select',
       required: true,
