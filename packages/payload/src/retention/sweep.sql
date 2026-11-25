@@ -69,6 +69,28 @@ DELETE FROM payload.tutor_sessions      WHERE expires_at < now();
 DELETE FROM payload.session_transcripts WHERE expires_at < now();
 
 /*
+  The TURNS, on the same 30-day clock as the session they belong to.
+
+  `TutorMessages.ts` moved every turn out of `tutor_sessions.messages` into one
+  row per message, each with its own `expires_at`, so a single exchange could be
+  erased without the conversation around it. The DELETE above then removed the
+  session row — by now an empty shell — and left the child's and tutor's words
+  standing in `tutor_messages` with nothing pointing at them (security pass H5).
+  A 30-day promise that deletes the index and keeps the text is not kept.
+
+  GUARDED with `to_regclass`, for the reason the header records: the table comes
+  from Payload's schema push rather than from a migration in this tree, and a
+  database it has not reached yet must be a no-op here, not a sweep that aborts
+  every statement with it. `tutor-messages-sweep.integration.test.mjs` holds
+  both halves: an expired turn goes, a live one stays.
+*/
+DO $$ BEGIN
+  IF to_regclass('payload.tutor_messages') IS NOT NULL THEN
+    EXECUTE 'DELETE FROM payload.tutor_messages WHERE expires_at < now()';
+  END IF;
+END $$;
+
+/*
   SESSION SUMMARIES ARE ABSENT FROM THIS FILE ON PURPOSE.
 
   Doc 34 §3: "summaries are their own retention class — they are the durable

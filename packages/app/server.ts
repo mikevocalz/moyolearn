@@ -204,6 +204,8 @@ export {
   sharedSummaryView,
   summaryQueue,
   suppressSummary,
+  excludeIncidentTurns,
+  INCIDENT_TURN_WINDOW_MS,
   TEACHER_SHARE_TTL_DAYS,
   type CloseTutorSession,
   type DraftActionPorts,
@@ -218,6 +220,7 @@ export {
   type LoadGuardianSummaries,
   type LoadGuardianWards,
   type LoadSessionForSummary,
+  type LoadSessionIncidents,
   type LoadSummaryBySession,
   type LoadSummaryQueue,
   type MarkGuardianViewed,
@@ -526,6 +529,33 @@ export {
   type MediaKind,
   type SignUpload,
 } from './features/media/presign.service';
+/*
+  The READ side of media (security pass H4): `/api/media/view` proves the
+  caller may see an object before it signs the URL, and the attachment route
+  refuses a key outside the caller's own folder. `MediaKeyRejected` is the
+  rules module's error, re-exported so the route can map it to a 400 without
+  importing a deep path.
+*/
+export {
+  MediaNotFound,
+  signOwnedMediaUrl,
+  type MediaAccessPorts,
+} from './features/media/media-access.service';
+export { MediaKeyRejected } from './features/media/presign.rules';
+/*
+  Doc 31 §4.3's guardian leg, delivered. The job handler composes the sender
+  and the contact reads; the decision — who is mailed, what the mail may say,
+  what the timeline records — is the service's.
+*/
+export {
+  deliverGuardianAlert,
+  incidentCategoryLabel,
+  type GuardianAlertPorts,
+  type GuardianContact,
+  type LoadGuardianContacts,
+  type LoadLearnerFirstName,
+  type SendGuardianIncidentEmail,
+} from './features/safety/guardian-alert.service';
 export {
   saveLearnerProfile,
   loadLearnerProfile,

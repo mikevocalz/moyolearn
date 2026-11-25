@@ -32,6 +32,7 @@ import type {
   LoadGuardianIncidents,
   LoadIncident,
   LoadIncidentQueue,
+  LoadSessionIncidents,
   LoadTutorIncidents,
   SaveIncident,
 } from '@acme/app/server';
@@ -158,6 +159,24 @@ const dataFrom = (report: IncidentReport) => ({
   expiresAt: report.expiresAt,
   legalHold: report.legalHold,
 });
+
+/**
+ * Every incident filed against one tutoring session, for the summary pipeline
+ * (doc 34 §4 step 4). UNSCOPED on purpose, like `loadSessionForSummary`: the
+ * caller is the job handler, which has no session and takes its identity from
+ * the session row. Bounded because a session is twenty minutes long and a
+ * hundred incidents in one is not a list-length problem.
+ */
+export const loadIncidentsForSession: LoadSessionIncidents = async (sessionId) =>
+  withPayload(async (payload) => {
+    const { docs } = await payload.find({
+      collection: 'incidentReports',
+      where: { relatedSessionId: { equals: sessionId } },
+      sort: 'occurredAt',
+      limit: 100,
+    });
+    return docs.map(incidentFromDoc);
+  });
 
 /** One incident by its minted id. `null` when the sweep has already taken it. */
 export const loadIncident: LoadIncident = async (incidentId) =>

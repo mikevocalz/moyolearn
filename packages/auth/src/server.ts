@@ -508,6 +508,20 @@ export { readMembershipRole } from './membership-reader.ts';
 */
 export { createManagedLearner, CreateLearnerError } from './create-managed-learner.ts';
 export type { LearnerWriter } from './create-managed-learner.ts';
+/*
+  The transactional sender, for the one caller outside Better Auth's own
+  callbacks: the incident fan-out job (doc 31 §4.3) mails a guardian through
+  the same `from`, key and redaction rule as a verification link. Server-only
+  by nature — it holds an API key — so it is exported here and not from the
+  barrel.
+*/
+export { readAuthEmailConfig, sendIncidentEmailFor } from './auth-email.ts';
+export type {
+  AuthEmailConfig,
+  IncidentEmailDelivery,
+  IncidentEmailFacts,
+  SendOutcome,
+} from './auth-email.ts';
 export { createPayloadLearnerWriter } from './payload-learner-writer.ts';
 export {
   createDeviceHandoff,

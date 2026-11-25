@@ -12,12 +12,15 @@ import {
   AuthEmailSendError,
   escapeHtml,
   idempotencyKeyFor,
+  incidentEmail,
   readAuthEmailConfig,
   resetPasswordEmail,
   sendAuthEmail,
+  sendIncidentEmailFor,
   sendResetPasswordEmailFor,
   sendVerificationEmailFor,
   verificationEmail,
+  type IncidentEmailFacts,
   type AuthEmailConfig,
   type FetchLike,
 } from './auth-email.ts';
@@ -318,5 +321,102 @@ describe('the callbacks Better Auth invokes', () => {
     assert.match(String(line[0]), /verification email failed/);
     assert.ok(!JSON.stringify(line).includes('parent@example.com'));
     assert.deepEqual(line[1], { error: 'AuthEmailSendError', status: 422 });
+  });
+});
+
+// ── Doc 31 §4.3: the guardian incident mail (security pass H1) ───────────────
+
+const FACTS: IncidentEmailFacts = {
+  learnerFirstName: 'Ada',
+  categoryLabel: 'a safety concern',
+  occurredAt: '2026-08-27T10:12:00.000Z',
+  alertsUrl: 'https://app.moyolearn.com/alerts',
+};
+
+describe('the incident mail', () => {
+  it('names the kind, the time, the first name and the alerts link, and nothing from the session', () => {
+    const mail = incidentEmail('parent@example.com', FACTS);
+    assert.equal(mail.subject, 'Moyo: a safety alert about Ada');
+    assert.match(mail.text, /a safety concern/);
+    assert.match(mail.text, /2026-08-27 10:12 UTC/);
+    assert.match(mail.text, /https:\/\/app\.moyolearn\.com\/alerts/);
+    assert.match(mail.html, /<a href="https:\/\/app\.moyolearn\.com\/alerts">/);
+    // The composer's input type has no field for an excerpt, a summary or a
+    // transcript; this pins the rendered body to the four facts it was given.
+    const rendered = `${mail.subject}\n${mail.text}\n${mail.html}`;
+    for (const word of rendered.replace(/<[^>]+>/g, ' ').split(/\s+/)) {
+      if (word.length > 20 && !word.startsWith('http')) {
+        assert.fail(`unexpected long token in the incident mail: ${word}`);
+      }
+    }
+  });
+
+  it('escapes the name and label in the HTML half', () => {
+    const mail = incidentEmail('parent@example.com', {
+      ...FACTS,
+      learnerFirstName: '<Ada>',
+      categoryLabel: 'a & b',
+    });
+    assert.match(mail.html, /&lt;Ada&gt;/);
+    assert.match(mail.html, /a &amp; b/);
+    assert.ok(!mail.html.includes('<Ada>'));
+  });
+
+  it('falls back to "your child" when the name is blank', () => {
+    const mail = incidentEmail('parent@example.com', { ...FACTS, learnerFirstName: '  ' });
+    assert.equal(mail.subject, 'Moyo: a safety alert about your child');
+  });
+
+  it('refuses a placeholder address and an absent one, like the two Better Auth callbacks', async () => {
+    const { fetch } = stubFetch(new Response('{"id":"x"}', { status: 200 }));
+    assert.equal(
+      await sendIncidentEmailFor(
+        CONFIG,
+        { guardian: { id: 'u-1', email: learnerPlaceholderEmail('u-1') }, incidentId: 'inc_1', facts: FACTS },
+        { fetch },
+      ),
+      'skipped-placeholder',
+    );
+    assert.equal(
+      await sendIncidentEmailFor(CONFIG, { guardian: { id: 'u-1', email: null }, incidentId: 'inc_1', facts: FACTS }, { fetch }),
+      'skipped-no-address',
+    );
+  });
+
+  it('sends with an idempotency key over (guardian, incident) under its own prefix', async () => {
+    const { fetch, calls } = stubFetch(new Response('{"id":"x"}', { status: 200 }));
+    const outcome = await sendIncidentEmailFor(
+      CONFIG,
+      { guardian: { id: 'g-1', email: 'parent@example.com' }, incidentId: 'inc_1', facts: FACTS },
+      { fetch },
+    );
+    assert.equal(outcome, 'sent');
+    const init = calls[0]!.init;
+    assert.equal(headerOf(init, 'Idempotency-Key'), idempotencyKeyFor('incident', 'g-1', 'inc_1'));
+    assert.match(headerOf(init, 'Idempotency-Key') ?? '', /^incident-[0-9a-f]{64}$/);
+    const body = JSON.parse(String(init.body)) as { to: string; subject: string };
+    assert.equal(body.to, 'parent@example.com');
+    assert.equal(body.subject, 'Moyo: a safety alert about Ada');
+  });
+
+  it('logs the class and status on failure, never the address, and rethrows', async () => {
+    const { fetch } = stubFetch(new Response('{"message":"Invalid `to` field: parent@example.com"}', { status: 422 }));
+    const error = mock.method(console, 'error', () => {});
+    try {
+      await assert.rejects(
+        () =>
+          sendIncidentEmailFor(
+            CONFIG,
+            { guardian: { id: 'g-1', email: 'parent@example.com' }, incidentId: 'inc_1', facts: FACTS },
+            { fetch },
+          ),
+        AuthEmailSendError,
+      );
+    } finally {
+      error.mock.restore();
+    }
+    const line = error.mock.calls[0]?.arguments ?? [];
+    assert.match(String(line[0]), /guardian incident email failed/);
+    assert.ok(!JSON.stringify(line).includes('parent@example.com'));
   });
 });
