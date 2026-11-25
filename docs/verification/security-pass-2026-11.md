@@ -141,3 +141,7 @@ See M2, M3. Session cookie: SecureStore with `WHEN_UNLOCKED_THIS_DEVICE_ONLY`, 2
 10. Dependency CVEs (no `npm audit`, install not run).
 
 No fixes were applied. No clones were made, so none to delete.
+
+## Status after lane C2 (2026-11-25)
+
+PR #159 fixes H1, H2, H4 and H5 and the M7 error-message leak. H3 (consent from the request body) is assigned to the front-door branch and is still open.

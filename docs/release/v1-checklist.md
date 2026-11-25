@@ -48,7 +48,7 @@ Status values: `open`, `blocked`, `in review`, `done`. "Done" needs the evidence
 | Security pass findings resolved | lane B | in review | `docs/verification/security-pass-2026-11.md` |
 | Sentry reporting with child-privacy scrubbing confirmed | lane B | open | one scrubbed event in Sentry |
 | Vercel spend cap and deployment retention set; only `main` and `release/*` build (not configured in-repo) | Mike (dashboard) | open | dashboard screenshot |
-| Guardian incident reaches a real parent channel (today an in-app timeline marker only) | lane C | open | device run |
+| Guardian incident reaches a real parent channel (today an in-app timeline marker only) | lane C | in source, PR #159 (email through the Resend sender, idempotent per guardian and incident); delivery to a real inbox still owed | device run |
 
 ## Non-code blockers (Mike)
 
