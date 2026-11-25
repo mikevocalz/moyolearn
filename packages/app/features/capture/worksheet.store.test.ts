@@ -10,7 +10,7 @@ import { ApiError } from '../../core/api-fetch.ts';
 import { StaleCursorError, type HomeworkClient } from '../homework/homework.client.ts';
 import type { AdvanceResult, HomeworkSubmissionView } from '../homework/homework.types.ts';
 import type { ProblemStorage } from './problem-storage.shared.ts';
-import { worksheetKeyFor, worksheetStateCreator, outcomeForAdvance, currentPrompt, isCurrentWorksheetQuestion } from './worksheet-cache.ts';
+import { worksheetKeyFor, worksheetStateCreator, outcomeForAdvance, currentPrompt, isCurrentWorksheetQuestion, applyMove } from './worksheet-cache.ts';
 import { writeWorksheet } from './worksheet-session.ts';
 
 function fakeStorage(): ProblemStorage & { values: Map<string, string> } {
@@ -147,6 +147,143 @@ const input = (submissionId = 'sub-1') => ({
 });
 
 const step = { outcome: 'attempted' as const, attempts: 1, hintsUsed: 0, misconceptionTags: [] };
+
+test('offline cursor skips prior-complete questions and never changes their learning outcomes', async () => {
+  const { store } = setup();
+  const initial = await store.getState().begin('learner-1', input());
+  const questions = initial.questions.map((question, index) => ({ ...question, priorWork: index === 1 ? 'complete' as const : 'none' as const }));
+  const view = { ...initial, questions };
+  const moved = applyMove(view, { ...step, fromQuestionId: questions[0]!.questionId, expectedIndex: 0 }, '2026-11-14T12:00:00Z');
+  assert.equal(moved.currentIndex, 2);
+  assert.equal(moved.questions[1]!.outcome, 'unattempted');
+  const lastMarked = { ...view, questions: questions.map((question, index) => index > 0 ? { ...question, priorWork: 'complete' as const } : question) };
+  const complete = applyMove(lastMarked, { ...step, fromQuestionId: questions[0]!.questionId, expectedIndex: 0 }, '2026-11-14T12:00:00Z');
+  assert.equal(complete.status, 'complete');
+  assert.equal(currentPrompt(complete), null);
+  assert.equal(currentPrompt({ ...view, currentIndex: 1 }), null);
+});
+
+test('starting adopts guardian marks and the authoritative cursor instead of only the session id', async () => {
+  const { store, server } = setup();
+  const initial = await store.getState().begin('learner-1', input());
+  const questions = initial.questions.map((question, index) => ({ ...question, priorWork: index === 0 ? 'complete' as const : 'none' as const }));
+  server.rows.set(initial.submissionId, { ...initial, questions, currentIndex: 1, currentQuestionId: questions[1]!.questionId });
+  await store.getState().start('session-1');
+  assert.equal(store.getState().current?.currentIndex, 1);
+  assert.equal(store.getState().current?.questions[0]!.priorWork, 'complete');
+  server.rows.set(initial.submissionId, { ...initial, status: 'complete', questions: questions.map((question) => ({ ...question, priorWork: 'complete' })) });
+  await store.getState().start('session-2');
+  assert.equal(store.getState().current?.status, 'complete');
+  assert.equal(currentPrompt(store.getState().current!), null);
+});
+
+test('an advance cannot race the start response and overwrite guardian cursor selection', async () => {
+  const { store, server } = setup();
+  const initial = await store.getState().begin('learner-1', input());
+  let resolveStart: ((view: HomeworkSubmissionView) => void) | undefined;
+  let requestStarted: (() => void) | undefined;
+  const requested = new Promise<void>((resolve) => { requestStarted = resolve; });
+  server.client.startSubmission = async () => new Promise<HomeworkSubmissionView>((resolve) => { resolveStart = resolve; requestStarted!(); });
+  const starting = store.getState().start('session-1');
+  await requested;
+  await store.getState().advance(step);
+  assert.equal(server.net.advanceCalls, 0);
+  assert.equal(store.getState().current?.currentIndex, 0);
+  resolveStart!({ ...initial, tutorSessionId: 'session-1' });
+  await starting;
+  assert.equal(store.getState().current?.tutorSessionId, 'session-1');
+});
+
+test('a hydrate started before tutoring cannot restore marks and cursor from before start', async () => {
+  const { store, server } = setup();
+  const initial = await store.getState().begin('learner-1', input());
+  let resolveRead!: (view: HomeworkSubmissionView) => void;
+  let readRequested!: () => void;
+  const requested = new Promise<void>((resolve) => { readRequested = resolve; });
+  server.client.getSubmission = async () => new Promise<HomeworkSubmissionView>((resolve) => {
+    resolveRead = resolve;
+    readRequested();
+  });
+  const hydrating = store.getState().hydrate('learner-1');
+  await requested;
+  const questions = initial.questions.map((question, index) => ({
+    ...question,
+    priorWork: index === 0 ? 'complete' as const : 'none' as const,
+  }));
+  server.rows.set(initial.submissionId, {
+    ...initial, questions, currentIndex: 1, currentQuestionId: questions[1]!.questionId,
+  });
+  await store.getState().start('session-1');
+  resolveRead(initial);
+  await hydrating;
+  assert.equal(store.getState().current?.tutorSessionId, 'session-1');
+  assert.equal(store.getState().current?.currentIndex, 1);
+  assert.equal(store.getState().current?.questions[0]!.priorWork, 'complete');
+});
+
+test('a delayed hydrate cannot discard an offline cursor move or its pending sync feedback', async () => {
+  const { store, server } = setup();
+  const initial = await store.getState().begin('learner-1', input());
+  let resolveRead!: (view: HomeworkSubmissionView) => void;
+  let readRequested!: () => void;
+  const requested = new Promise<void>((resolve) => { readRequested = resolve; });
+  server.client.getSubmission = async () => new Promise<HomeworkSubmissionView>((resolve) => {
+    resolveRead = resolve;
+    readRequested();
+  });
+  const hydrating = store.getState().hydrate('learner-1');
+  await requested;
+  server.net.online = false;
+  await store.getState().advance(step);
+  resolveRead(initial);
+  await hydrating;
+  assert.equal(store.getState().current?.currentIndex, 1);
+  assert.equal(store.getState().pending.length, 1);
+  assert.equal(store.getState().status, 'pending');
+});
+
+test('moves queued while an earlier advance is awaiting confirmation are all sent in order', async () => {
+  const { store, server } = setup();
+  await store.getState().begin('learner-1', input());
+  const advance = server.client.advance;
+  let resumeFirst!: () => void;
+  const waiting = new Promise<void>((resolve) => { resumeFirst = resolve; });
+  let first = true;
+  server.client.advance = async (id, move) => {
+    if (first) { first = false; await waiting; }
+    return advance(id, move);
+  };
+  const firstMove = store.getState().advance(step);
+  const secondMove = store.getState().advance(step);
+  assert.equal(store.getState().current?.currentIndex, 2);
+  assert.equal(store.getState().pending.length, 2);
+  resumeFirst();
+  await Promise.all([firstMove, secondMove]);
+  assert.equal(server.net.advanceCalls, 2);
+  assert.equal(server.rows.get('sub-1')?.currentIndex, 2);
+  assert.equal(store.getState().current?.currentIndex, 2);
+  assert.equal(store.getState().pending.length, 0);
+});
+
+test('a delayed failed advance retains every move queued during the request', async () => {
+  const { store, server } = setup();
+  await store.getState().begin('learner-1', input());
+  const advance = server.client.advance;
+  let failFirst!: (reason: Error) => void;
+  server.client.advance = async () => new Promise<AdvanceResult>((_, reject) => { failFirst = reject; });
+  const firstMove = store.getState().advance(step);
+  const secondMove = store.getState().advance(step);
+  failFirst(new TypeError('Failed to fetch'));
+  await Promise.all([firstMove, secondMove]);
+  assert.equal(store.getState().current?.currentIndex, 2);
+  assert.equal(store.getState().pending.length, 2);
+  assert.equal(store.getState().status, 'pending');
+  server.client.advance = advance;
+  await store.getState().hydrate('learner-1');
+  assert.equal(server.net.advanceCalls, 2);
+  assert.equal(store.getState().pending.length, 0);
+  assert.equal(store.getState().current?.currentIndex, 2);
+});
 
 function setup() {
   const storage = fakeStorage();
