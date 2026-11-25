@@ -27,10 +27,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ subscriptions } satisfies EntitlementsResponse);
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json(
-      { error: message },
-      { status: message === 'Unauthenticated' ? 401 : 500 },
-    );
+    // The 401 names itself; anything else is a fixed sentence. The real
+    // message has gone to Sentry above (security pass M7).
+    if (error instanceof Error && error.message === 'Unauthenticated') {
+      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    }
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
