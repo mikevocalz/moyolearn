@@ -30,8 +30,12 @@ jobs:
         id: expo-key
         run: |
           rn=$(node -p "require('./node_modules/react-native/package.json').version")
+          # The plugin refuses frameworks built from another expo-modules-jsi, so
+          # an Expo patch release must miss the cache rather than restore stale headers.
+          expo=$(node -p "require('./node_modules/expo/package.json').version")
+          jsi=$(node -p "require('./node_modules/expo-modules-jsi/package.json').version")
           xcode=$(xcodebuild -version | head -1 | tr ' ' '-')
-          echo "key=expo-xcframeworks-$rn-$xcode-${{ hashFiles('tooling/expo-prebuilds/**', 'patches/expo-task-manager@*.patch') }}" >> "$GITHUB_OUTPUT"
+          echo "key=expo-xcframeworks-$rn-expo$expo-jsi$jsi-$xcode-${{ hashFiles('tooling/expo-prebuilds/**', 'patches/expo-task-manager@*.patch') }}" >> "$GITHUB_OUTPUT"
       - uses: actions/cache/restore@v4
         id: expo-cache
         with:
@@ -56,7 +60,7 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
       - name: Execute iPad simulator rendering and lifecycle checks
         env:
           MOYO_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
