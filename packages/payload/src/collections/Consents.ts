@@ -46,6 +46,9 @@ export const Consents: CollectionConfig = {
     { name: 'scope', type: 'text', required: true },
     { name: 'policyVersion', type: 'text', required: true },
     { name: 'evidenceRef', type: 'text' },
+    // The `consent-verifications` row this grant was read from. Absent on rows
+    // written before the server verified consent itself.
+    { name: 'verificationId', type: 'text', index: true },
     { name: 'grantedAt', type: 'date', required: true },
   ],
 };

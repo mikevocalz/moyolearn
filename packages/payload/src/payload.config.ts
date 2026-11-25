@@ -11,6 +11,7 @@ import { Media } from './collections/Media';
 import { Guardianships } from './collections/Guardianships';
 import { HandoffCodes } from './collections/HandoffCodes';
 import { Consents } from './collections/Consents';
+import { ConsentVerifications } from './collections/ConsentVerifications';
 import { Skills } from './collections/Skills';
 import { Misconceptions } from './collections/Misconceptions';
 import { SessionTranscripts } from './collections/SessionTranscripts';
@@ -115,6 +116,9 @@ export default buildConfig({
     // motion: a code is a guardian handing a session to their own ward.
     HandoffCodes,
     Consents,
+    // The verification that produced a consent: the server mints and checks
+    // the code, and the learner route reads the grant from this row by id.
+    ConsentVerifications,
     // Loop A (doc 07 §4): curriculum content, then the per-learner model
     // derived from it. The two are separate collections because only the
     // second is learner data and only the second is erasable.

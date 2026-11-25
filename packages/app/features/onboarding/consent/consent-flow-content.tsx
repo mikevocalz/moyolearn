@@ -58,11 +58,12 @@ const METHOD_LABELS: Record<ConsentMethod, { label: string; hint: string; target
 export interface ConsentFlowProps {
   scope: string;
   policyVersion: string;
-  onComplete: (record: ConsentRecord) => void;
+  /** The record for the screen's copy, and the server's id for the wire. */
+  onComplete: (record: ConsentRecord, consentId: string) => void;
 }
 
 export function ConsentFlowContent({ scope, policyVersion, onComplete }: ConsentFlowProps) {
-  const { stage, env, challenge, problem, setStage, begin, finish, record } = useConsentFlow();
+  const { stage, env, challenge, problem, setStage, begin, finish, record, consentId } = useConsentFlow();
   const [method, setMethod] = useState<ConsentMethod>('email-plus');
   const [target, setTarget] = useState('');
   const [showFallback, setShowFallback] = useState(false);
@@ -71,7 +72,7 @@ export function ConsentFlowContent({ scope, policyVersion, onComplete }: Consent
   const primary = methods.filter((m) => !isFallbackMethod(m));
   const fallback = methods.filter(isFallbackMethod);
 
-  if (stage === 'done' && record) {
+  if (stage === 'done' && record && consentId) {
     return (
       <Card className="gap-stack">
         <Heading level={2} size="display-sm" className="text-xl font-semibold text-text">
@@ -81,16 +82,16 @@ export function ConsentFlowContent({ scope, policyVersion, onComplete }: Consent
           Verified {METHOD_LABELS[record.method].label.toLowerCase()}. We keep a record of how and
           when — you can withdraw it any time from the family screen.
         </TWText>
-        <Button title="Continue" onPress={() => onComplete(record)} />
+        <Button title="Continue" onPress={() => onComplete(record, consentId)} />
       </Card>
     );
   }
 
   if (stage === 'challenge' && challenge) {
     return challenge.method === 'kba' ? (
-      <KbaChallenge onDone={() => finish(scope, policyVersion)} />
+      <KbaChallenge onDone={() => void finish(scope, policyVersion)} />
     ) : (
-      <CodeChallenge onDone={() => finish(scope, policyVersion)} />
+      <CodeChallenge onDone={() => void finish(scope, policyVersion)} />
     );
   }
 

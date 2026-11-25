@@ -23,6 +23,8 @@ export type {
   Class,
   Assignment,
   AssignmentCompletion,
+  // The server-side consent verification row (doc 06 §3.1); `consent.repository.ts` reads it.
+  ConsentVerification,
 } from './src/payload-types';
 
 // ADR-108's roster edge. No domain-object collision — the intake service

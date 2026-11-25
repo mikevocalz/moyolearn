@@ -12,7 +12,14 @@ export interface CreateLearnerInput {
   username: string;
   password: string;
   displayName: string;
-  consent: { method: ConsentMethod; scope: string; policyVersion: string; evidenceRef?: string };
+  consent: {
+    method: ConsentMethod;
+    scope: string;
+    policyVersion: string;
+    evidenceRef?: string;
+    /** The server-side verification row this consent was READ from, when it was. */
+    verificationId?: string;
+  };
 }
 
 /**
