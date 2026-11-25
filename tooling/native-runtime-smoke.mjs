@@ -190,7 +190,7 @@ export async function retainIosFailureDiagnostics(device, destination, {
   ], { env, files, warnings, timeout: 90_000 });
   // Memory and process evidence for a host too loaded to run simctl in time.
   await retainCommandOutput(destination, 'ios-host-vm-stat.log', 'ios-host-vm-stat', 'vm_stat', [], { env, files, warnings });
-  await retainCommandOutput(destination, 'ios-host-processes.log', 'ios-host-processes', 'ps', ['-axm', '-o', 'rss=,%cpu=,comm='], { env, files, warnings });
+  await retainCommandOutput(destination, 'ios-host-processes.log', 'ios-host-processes', 'ps', ['-axm', '-o', 'rss=,%cpu=,comm='], { env, files, warnings, timeout: 60_000 });
   let reports = [];
   try { reports = await readdir(reportsDir, { withFileTypes: true }); } catch (error) {
     if (error.code !== 'ENOENT') warnings.push(`crash report listing failed (${error.code ?? error.name})`);
