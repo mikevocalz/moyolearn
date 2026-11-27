@@ -59,7 +59,7 @@ interface TutorState {
    * ask the same question and get the same answer. Identity never travels —
    * the server reads it from `ctx`.
    */
-  hydrate: (problem: string, isReading?: boolean) => Promise<void>;
+  hydrate: (problem: string, onWorksheetCursor?: boolean) => Promise<void>;
   /**
    * Appends a learner turn. Pass `id` to adopt the server's, which is what
    * lets a queued upload address its attachment later.
@@ -221,13 +221,13 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   hintDepth: 0,
   masteryBySkill: {},
   attemptsBySkill: {},
-  hydrate: async (problem, isReading = false) => {
+  hydrate: async (problem, onWorksheetCursor = false) => {
     const generation = get().sessionGeneration;
     const snapshot = await fetchSession(problem);
     if (get().sessionGeneration !== generation) return;
     if (snapshot === null) return;
 
-    const problemText = resumedProblem(snapshot.problem, problem, isReading);
+    const { opener: problemText, coaching } = resumedProblem(snapshot.problem, problem, onWorksheetCursor);
     const sessionComplete = snapshot.budget.kind === 'session-complete';
 
     /*
@@ -241,7 +241,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
 
     set((s) => ({
       sessionId: snapshot.sessionId,
-      problem: problemText.length > 0 ? problemText : s.problem,
+      problem: coaching.length > 0 ? coaching : s.problem,
       /*
         A RESUMED session is not a thinking one.
 
