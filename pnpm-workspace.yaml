@@ -93,7 +93,7 @@ catalog:
   # its Dawn from here (tooling/enable-skia-graphite.mjs), so the shared owner
   # is declared directly; same source commit and patch list as binaries.json.
   react-native-webgpu-dawn: 158.1.0
-  typegpu: 0.12.11
+  typegpu: 0.12.12
   react-native-safe-area-context: ~5.11.1
   react-native-screens: ~4.30.1
   # Declared explicitly even though react-native-screens already pulls it in:

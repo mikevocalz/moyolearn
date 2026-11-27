@@ -388,8 +388,8 @@ catalogs:
       specifier: 2.11.13
       version: 2.11.13
     typegpu:
-      specifier: 0.12.11
-      version: 0.12.11
+      specifier: 0.12.12
+      version: 0.12.12
     typescript:
       specifier: ~6.0.3
       version: 6.0.3
@@ -843,7 +843,7 @@ importers:
         version: 0.186.0
       typegpu:
         specifier: 'catalog:'
-        version: 0.12.11
+        version: 0.12.12
       uniwind:
         specifier: 'catalog:'
         version: 1.14.0(@expo/metro-config@58.0.23(expo@58.0.26)(typescript@6.0.3))(metro-cache@0.87.1)(metro-transform-worker@0.87.1)(metro@0.87.1)(react-native@0.88.1(patch_hash=2dc7814d909fc0d3f8bf8e6edc803c28c2fb22ccb3c6a61f3cd94d851b33423e)(@babel/core@7.29.7)(@react-native-community/cli@20.2.0(typescript@6.0.3))(@types/react@19.3.2)(react@19.3.1))(react@19.3.1)(tailwindcss@4.3.3)
@@ -886,7 +886,7 @@ importers:
         version: 6.0.3
       unplugin-typegpu:
         specifier: 0.12.9
-        version: 0.12.9(acorn@8.17.0)(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.63.0)(typegpu@0.12.11)(vite@8.3.8(@types/node@26.1.1)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.77.4)(terser@5.46.0)(tsx@4.23.15)(yaml@2.8.2))(webpack@5.108.4(esbuild@0.28.2))
+        version: 0.12.9(acorn@8.17.0)(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.63.0)(typegpu@0.12.12)(vite@8.3.8(@types/node@26.1.1)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.77.4)(terser@5.46.0)(tsx@4.23.15)(yaml@2.8.2))(webpack@5.108.4(esbuild@0.28.2))
 
   apps/storybook:
     dependencies:
@@ -12034,8 +12034,8 @@ packages:
   typed-binary@4.3.4:
     resolution: {integrity: sha512-ivy9nisfsBhugH6OrygtdYI28c28mo7AFeB85COUzGG6MmuViFQPz4ylmDHNjAI3P12EAxWhqtjLsdYWfCj6xQ==}
 
-  typegpu@0.12.11:
-    resolution: {integrity: sha512-C2ytNE3KrJddfapKHS0uhLEtEHE7hmujHYMF8+5ZNs14X4DNXar/SoSVLCE6rru+rqRZz5HuCVZHugP8l02OPw==}
+  typegpu@0.12.12:
+    resolution: {integrity: sha512-9z8WEwChP06BvlUJFytRMfrsXkGIQO6SO9ffClbkbrUya3oe8w/Fag/DVGtV0gUbnKKI9jTlAm09UHJvJfwFdA==}
     engines: {node: '>=12.20.0'}
     hasBin: true
 
@@ -24752,7 +24752,7 @@ snapshots:
 
   typed-binary@4.3.4: {}
 
-  typegpu@0.12.11:
+  typegpu@0.12.12:
     dependencies:
       tinyest: 0.3.4
       tsover-runtime: 0.0.7
@@ -24844,7 +24844,7 @@ snapshots:
 
   unpipe@1.0.0: {}
 
-  unplugin-typegpu@0.12.9(acorn@8.17.0)(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.63.0)(typegpu@0.12.11)(vite@8.3.8(@types/node@26.1.1)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.77.4)(terser@5.46.0)(tsx@4.23.15)(yaml@2.8.2))(webpack@5.108.4(esbuild@0.28.2)):
+  unplugin-typegpu@0.12.9(acorn@8.17.0)(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.63.0)(typegpu@0.12.12)(vite@8.3.8(@types/node@26.1.1)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.77.4)(terser@5.46.0)(tsx@4.23.15)(yaml@2.8.2))(webpack@5.108.4(esbuild@0.28.2)):
     dependencies:
       '@babel/parser': 7.29.9
       '@babel/traverse': 7.29.7
@@ -24858,7 +24858,7 @@ snapshots:
       picomatch: 4.0.7
       tinyest: 0.3.4
       tinyest-for-wgsl: 0.4.4(@babel/types@7.29.8)(acorn@8.17.0)
-      typegpu: 0.12.11
+      typegpu: 0.12.12
       unplugin: 3.3.0(esbuild@0.28.2)(rolldown@1.2.19)(rollup@4.63.0)(vite@8.3.8(@types/node@26.1.1)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.77.4)(terser@5.46.0)(tsx@4.23.15)(yaml@2.8.2))(webpack@5.108.4(esbuild@0.28.2))
     transitivePeerDependencies:
       - '@farmfe/core'
