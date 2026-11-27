@@ -139,11 +139,20 @@ export type LoadHomeworkForSession = (
 ) => Promise<HomeworkSubmissionView | null>;
 
 /**
- * Every incident filed against one session (doc 31 §4), any tier. The service
- * keeps the S3-and-up ones and drops the turns they are about BEFORE the
- * evidence is extracted — see `excludeIncidentTurns`.
+ * Every incident filed against one session (doc 31 §4), any tier, ABOUT THE
+ * LEARNER IN `ctx`. The service keeps the S3-and-up ones and drops the turns
+ * they are about BEFORE the evidence is extracted — see `excludeIncidentTurns`.
+ *
+ * Scoped to the learner because `relatedSessionId` is a client-named handle
+ * (`CoachTurnInput.sessionId`): a learner who knew another child's session id
+ * could file an incident "on" it, and a session-only match would then strip
+ * that other child's turns out of their own summary. `subjectLearnerId` comes
+ * from `ctx` on every write, so it is the half that cannot be forged.
  */
-export type LoadSessionIncidents = (sessionId: string) => Promise<readonly IncidentReport[]>;
+export type LoadSessionIncidents = (
+  ctx: ProtectedCtx,
+  sessionId: string,
+) => Promise<readonly IncidentReport[]>;
 
 export interface GenerateSummaryPorts {
   readonly loadSession: LoadSessionForSummary;
@@ -200,7 +209,7 @@ export async function generateSessionSummary(
     ports.loadPriorFacts(ctx),
     ports.loadBand(ctx),
     ports.loadHomeworkForSession?.(ctx, sessionId) ?? Promise.resolve(null),
-    ports.loadSessionIncidents(sessionId),
+    ports.loadSessionIncidents(ctx, sessionId),
   ]);
 
   /*
@@ -211,7 +220,16 @@ export async function generateSessionSummary(
     questions (what was filed, versus what the rendered text looks like) and
     the security pass found the second standing in for the first.
   */
-  const messages = excludeIncidentTurns(session.messages, incidents);
+  /*
+    Filtered AGAIN on the row's learner, the double-filter rule the guardian
+    reads follow: the repository's `where` and this line fail in different
+    ways, and an incident about someone else must never edit this child's
+    record.
+  */
+  const ownIncidents = incidents.filter(
+    (incident) => incident.subjectLearnerId === ctx.learnerId && incident.relatedSessionId === sessionId,
+  );
+  const messages = excludeIncidentTurns(session.messages, ownIncidents);
 
   const chatEvidence = extractEvidence({
     sessionId,
