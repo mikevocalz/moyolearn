@@ -16,6 +16,11 @@ test('refuses anything that could leave the origin', () => {
     'https://evil.test/alerts',
     '//evil.test/alerts',
     '/\\evil.test',
+    '/.//evil.test',
+    '/..//evil.test',
+    '/a/..//evil.test',
+    '/%2e//evil.test',
+    '/%2e%2e//evil.test',
     '\\\\evil.test',
     '/alerts\\..\\..',
     'javascript:alert(1)',
@@ -33,6 +38,8 @@ test('refuses anything that could leave the origin', () => {
   }
   assert.equal(safeReturnPath('https://evil.test/alerts'), null);
   assert.equal(safeReturnPath('//evil.test/alerts'), null);
+  assert.equal(safeReturnPath('/.//evil.test'), null);
+  assert.equal(safeReturnPath('/%2e%2e//evil.test'), null);
   assert.equal(safeReturnPath('/\\evil.test'), null);
   assert.equal(safeReturnPath('javascript:alert(1)'), null);
   assert.equal(safeReturnPath('alerts'), null);
