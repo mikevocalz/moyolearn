@@ -25,7 +25,7 @@ import {
   type ResolvedTutorPresence,
 } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
-import { useCaptureStore , useWorksheetStore, currentPrompt, isCurrentWorksheetQuestion, outcomeForAdvance, questionIndexForPrompt } from '../capture';
+import { useCaptureStore , useWorksheetStore, currentPrompt, isCurrentWorksheetQuestion, isLeftoverWorksheetProblem, outcomeForAdvance, questionIndexForPrompt } from '../capture';
 import type { HomeworkSubmissionView } from '../homework/homework.types.ts';
 import { nextUndoneIndex } from '../homework/homework-prior-work.ts';
 import { buttonSizeForBand, type AgeBand } from '../capture';
@@ -965,6 +965,21 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     the server's question. Matching prompts prevent a refreshed outcome from
     restarting the current question.
   */
+  /*
+    The device's worksheet rolled over: a finished sheet gave way to a newer
+    assignment, but the capture store still holds the finished sheet's last
+    question. Present the new sheet's question, or clear the leftover so an
+    all-marked assignment shows its all-done state. Only a confirmed server
+    copy rolls the screen over, and never mid-turn.
+  */
+  useEffect(() => {
+    if (!worksheet || worksheetOwner !== learnerId || worksheetSync !== 'confirmed') return;
+    if (!isLeftoverWorksheetProblem(worksheet, problem, problemIsReading, problemEvidence)) return;
+    if (state.kind === 'thinking') return;
+    if (worksheetPrompt !== null) presentWorksheetQuestion(worksheet);
+    else setProblem(null);
+  }, [worksheet, worksheetOwner, learnerId, worksheetSync, problem, problemIsReading, problemEvidence, worksheetPrompt, state.kind, presentWorksheetQuestion, setProblem]);
+
   const wasAllPriorDone = useRef(false);
   useEffect(() => {
     const reopenedPriorWork = wasAllPriorDone.current && !allPriorDone;

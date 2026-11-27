@@ -31,7 +31,7 @@ import type {
   QuestionOutcome,
   ReviseQuestionInput,
 } from '../homework/homework.types.ts';
-import type { ProblemStorage } from './problem-storage.shared.ts';
+import type { ProblemEvidence, ProblemStorage } from './problem-storage.shared.ts';
 import { questionForTutor, type WorksheetQuestion } from './worksheet-questions.ts';
 import { clearWorksheet, readWorksheet, type WorksheetSession } from './worksheet-session.ts';
 import { nextUndoneIndex } from '../homework/homework-prior-work.ts';
@@ -255,6 +255,24 @@ export function questionIndexForPrompt(view: HomeworkSubmissionView, prompt: str
   return view.questions.findIndex((q) => questionForTutor(toWorksheetQuestion(q), view).trim() === wanted);
 }
 
+/**
+ * A worksheet question still on screen after the device's worksheet rolled over
+ * to a different assignment. The capture store keeps the last problem it was
+ * given; once the cache holds another submission, a reading problem whose
+ * question is in neither its ids nor its wording belongs to the finished sheet
+ * and must give way to the new one.
+ */
+export function isLeftoverWorksheetProblem(
+  view: HomeworkSubmissionView,
+  problem: string | null,
+  isReading: boolean,
+  evidence: ProblemEvidence | null,
+): boolean {
+  if (!problem?.trim() || !isReading || evidence === null) return false;
+  if (view.questions.some((q) => q.questionId === evidence.questionId)) return false;
+  return questionIndexForPrompt(view, problem) < 0;
+}
+
 function localDateOf(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -460,14 +478,18 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
 
         // A finished sheet is not where the next assignment lives. Without this,
         // a cached complete worksheet (finished here, or all-marked on arrival)
-        // would hide every newer guardian assignment on this device forever.
+        // would hide every later guardian assignment on this device forever.
         if (submissionId === undefined && record.confirmed.status === 'complete') {
           const discoverVersion = cacheVersion;
           try {
             const submissions = await client.listSubmissions();
             if (!isSelected(learnerAuthId, epoch)) return null;
             if (cacheVersion !== discoverVersion) return get().current;
-            const selected = discoverWorksheet(submissions.filter((s) => s.learnerAuthId === learnerAuthId));
+            // Only work assigned after the finished sheet can replace it: an older
+            // sheet left open is history, and caching it would stop rediscovery.
+            const after = record.confirmed.createdAt;
+            const selected = discoverWorksheet(submissions.filter((s) =>
+              s.learnerAuthId === learnerAuthId && s.createdAt > after));
             if (selected && selected.submissionId !== record.confirmed.submissionId) {
               const fresh = await client.getSubmission(selected.submissionId);
               if (!isSelected(learnerAuthId, epoch)) return null;

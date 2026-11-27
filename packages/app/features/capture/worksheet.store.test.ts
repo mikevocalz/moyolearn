@@ -10,7 +10,7 @@ import { ApiError } from '../../core/api-fetch.ts';
 import { StaleCursorError, type HomeworkClient } from '../homework/homework.client.ts';
 import type { AdvanceResult, HomeworkSubmissionView } from '../homework/homework.types.ts';
 import type { ProblemStorage } from './problem-storage.shared.ts';
-import { worksheetKeyFor, worksheetStateCreator, outcomeForAdvance, currentPrompt, isCurrentWorksheetQuestion, applyMove } from './worksheet-cache.ts';
+import { worksheetKeyFor, worksheetStateCreator, outcomeForAdvance, currentPrompt, isCurrentWorksheetQuestion, isLeftoverWorksheetProblem, applyMove } from './worksheet-cache.ts';
 import { writeWorksheet } from './worksheet-session.ts';
 
 function fakeStorage(): ProblemStorage & { values: Map<string, string> } {
@@ -449,8 +449,14 @@ test('a cached finished sheet gives way to a newer assignment on the next hydrat
   // Nothing newer: the finished sheet stays, and is refreshed as before.
   assert.equal((await device.getState().hydrate('learner-1'))?.submissionId, 'all-marked');
 
+  // An older sheet still open is history; it never replaces the finished one.
+  await server.client.createSubmission(input('older-open'));
+  server.rows.set('older-open', { ...server.rows.get('older-open')!, status: 'in-progress', createdAt: '2026-10-14T12:00:00.000Z' });
+  assert.equal((await device.getState().hydrate('learner-1'))?.submissionId, 'all-marked');
+
   server.net.actorId = 'guardian-1';
   await server.client.createSubmission({ ...input('next-sheet'), forLearnerAuthId: 'learner-1' });
+  server.rows.set('next-sheet', { ...server.rows.get('next-sheet')!, createdAt: '2026-10-17T12:00:00.000Z' });
   server.net.actorId = 'learner-1';
   const view = await device.getState().hydrate('learner-1');
   assert.equal(view?.submissionId, 'next-sheet');
@@ -459,6 +465,25 @@ test('a cached finished sheet gives way to a newer assignment on the next hydrat
 
   // Open work is never displaced by rediscovery.
   assert.equal((await device.getState().hydrate('learner-1'))?.submissionId, 'next-sheet');
+});
+
+test('a finished sheet’s last question is a leftover once the worksheet rolls over', async () => {
+  const { server } = setup();
+  await server.client.createSubmission(input('old-sheet'));
+  await server.client.createSubmission({ ...input('new-sheet'), questions: input().questions.map((q) => ({ ...q, text: '15 ÷ 3 =' })) });
+  const old = server.rows.get('old-sheet')!;
+  const next = server.rows.get('new-sheet')!;
+  const lastOld = old.questions[2]!;
+  const evidence = { questionId: lastOld.questionId, revision: lastOld.currentRevision };
+  const prompt = currentPrompt({ ...old, currentIndex: 2, currentQuestionId: lastOld.questionId })!;
+
+  assert.equal(isLeftoverWorksheetProblem(next, prompt, true, evidence), true);
+  // Still the shown sheet's own question: never a leftover.
+  assert.equal(isLeftoverWorksheetProblem(old, prompt, true, evidence), false);
+  // A served practice problem, or one with no worksheet evidence, is not the worksheet's to replace.
+  assert.equal(isLeftoverWorksheetProblem(next, prompt, false, evidence), false);
+  assert.equal(isLeftoverWorksheetProblem(next, prompt, true, null), false);
+  assert.equal(isLeftoverWorksheetProblem(next, null, true, evidence), false);
 });
 
 test('offline discovery waits without inventing a worksheet or losing another learner’s cache', async () => {
