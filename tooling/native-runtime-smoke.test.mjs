@@ -6,13 +6,13 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AGENT_DEVICE, IOS_STARTUP_BUDGET, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
-  retainAgentDiagnostics, retainAndroidFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
+  AGENT_DEVICE, IOS_STARTUP_BUDGET, appBundleUrl, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, keepAndroidReverse, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
+  retainAgentDiagnostics, retainAndroidFailureDiagnostics, retainIosFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
 const file = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
@@ -107,6 +107,17 @@ async function localHttpServer(t, handler) {
   t.after(async () => { server.closeAllConnections(); await new Promise((resolve) => server.close(resolve)); });
   return { url: `http://127.0.0.1:${server.address().port}`, requests: () => requests };
 }
+
+test('Metro preflight warms the graph the debug app requests, on loopback only', () => {
+  for (const platform of ['ios', 'android']) {
+    const url = new URL(appBundleUrl(platform));
+    assert.equal(url.origin, 'http://127.0.0.1:8081');
+    assert.equal(url.pathname, '/.expo/.virtual-metro-entry.bundle');
+    assert.deepEqual(Object.fromEntries(url.searchParams), {
+      platform, dev: 'true', lazy: 'true', minify: 'false', app: 'com.moyolearn.app', modulesOnly: 'false', runModule: 'true',
+    });
+  }
+});
 
 test('Metro streams and hashes actual binary chunks after delayed headers under the unchanged total budget', async (t) => {
   assert.equal(METRO_BUNDLE_TIMEOUT_MS, 360_000);
@@ -323,9 +334,16 @@ test('failed Android diagnostic collection stays bounded and still retains the o
   assert.deepEqual(readFileSync(calls, 'utf8').trim().split('\n').map(JSON.parse), [
     ['-s', 'emulator-5554', 'logcat', '-b', 'crash', '-d', '-v', 'threadtime', '-t', '400'],
     ['-s', 'emulator-5554', 'shell', 'dumpsys', 'activity', 'exit-info', 'com.moyolearn.app'],
+    ['-s', 'emulator-5554', 'logcat', '-b', 'main', '-d', '-v', 'threadtime', '-t', '1500',
+      'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'OkHttp:V', 'AndroidRuntime:V', '*:S'],
+    ['-s', 'emulator-5554', 'reverse', '--list'],
+    ['-s', 'emulator-5554', 'shell', "(printf 'GET /status HTTP/1.0\\r\\n\\r\\n'; sleep 5) | toybox nc -w 5 127.0.0.1 8081"],
+    ['-s', 'emulator-5554', 'shell', 'getprop init.svc.adbd; ps -A -o PID,STIME,ELAPSED,NAME | grep -E "adbd|PID"; '
+      + 'cat /proc/meminfo | head -6; logcat -b all -d -v threadtime | grep -iE "adbd|lmkd|lowmemorykiller|am_kill|am_low_memory" | tail -n 200'],
   ]);
-  assert.deepEqual(result.files, ['android-crash.log', 'android-app-exit-info.log']);
-  assert.equal(result.warnings.length, 1);
+  assert.deepEqual(result.files, ['android-crash.log', 'android-app-exit-info.log', 'android-react-native.log',
+    'android-port-reverse.log', 'android-metro-reachability.log', 'android-adbd.log']);
+  assert.equal(result.warnings.length, 2);
   assert.match(result.warnings[0], /android-crash-buffer failed \(17\)/);
   const crash = readFileSync(join(destination, result.files[0]));
   assert.ok(crash.length < 513 * 1024);
@@ -335,6 +353,57 @@ test('failed Android diagnostic collection stays bounded and still retains the o
   assert.match(exit, /app-exit-reason/);
   assert.match(exit, /"timeoutMs":20000/);
   assert.match(exit, /"timedOut":false/);
+});
+
+test('iOS failure diagnostics refuse an unselected simulator before invoking xcrun', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'moyo-ios-target-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const since = new Date().toISOString();
+  for (const target of [undefined, { kind: 'iPhone simulator', udid }, { kind: 'iPad simulator', udid: 'booted' }]) {
+    await assert.rejects(retainIosFailureDiagnostics(target, join(root, 'artifacts'), { since }), /already-selected CI iPad simulator/);
+  }
+  await assert.rejects(retainIosFailureDiagnostics({ kind: 'iPad simulator', udid }, join(root, 'artifacts'), { since: 'never' }), /run start time/);
+  assert.equal(existsSync(join(root, 'artifacts')), false);
+});
+
+test('iOS failure diagnostics keep this run\'s app log and only this app\'s new crash reports', async (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'moyo-ios-diagnostics-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = join(root, 'bin'); mkdirSync(bin);
+  const calls = join(root, 'calls.jsonl');
+  writeFileSync(join(bin, 'xcrun'), `#!${process.execPath}
+    require('node:fs').appendFileSync(${JSON.stringify(calls)}, JSON.stringify(process.argv.slice(2)) + '\\n');
+    console.log('Moyo: dyld: Library not loaded');
+  `);
+  chmodSync(join(bin, 'xcrun'), 0o755);
+  for (const [tool, output] of [['vm_stat', 'Pages free: 1024.'], ['ps', '4194304 98.0 node']]) {
+    writeFileSync(join(bin, tool), `#!${process.execPath}\n console.log(${JSON.stringify(output)});\n`);
+    chmodSync(join(bin, tool), 0o755);
+  }
+  const reports = join(root, 'reports'); mkdirSync(reports);
+  const since = new Date(Date.now() - 5 * 60_000);
+  writeFileSync(join(reports, 'Moyo-2026-11-25-120438.ips'), 'EXC_CRASH ' + 'x'.repeat(600 * 1024));
+  writeFileSync(join(reports, 'Moyo-2026-11-24-090000.ips'), 'older run');
+  writeFileSync(join(reports, 'SpringBoard-2026-11-25-120438.ips'), 'another process');
+  const old = new Date(since.getTime() - 60_000);
+  utimesSync(join(reports, 'Moyo-2026-11-24-090000.ips'), old, old);
+  const destination = join(root, 'artifacts');
+  const result = await retainIosFailureDiagnostics({ kind: 'iPad simulator', udid }, destination, {
+    env: { ...runtimeEnvironment(process.env), PATH: bin }, since: since.toISOString(), reportsDir: reports,
+  });
+  const [args] = readFileSync(calls, 'utf8').trim().split('\n').map(JSON.parse);
+  assert.deepEqual(args.slice(0, 9), ['simctl', 'spawn', udid, 'log', 'show', '--style', 'compact', '--info', '--last']);
+  assert.match(args[9], /^[6-7]m$/);
+  assert.deepEqual(args.slice(10), ['--predicate', 'process == "Moyo" OR eventMessage CONTAINS "com.moyolearn.app"']);
+  assert.deepEqual(result, { files: ['ios-app-log.log', 'ios-host-vm-stat.log', 'ios-host-processes.log',
+    'ios-crash-Moyo-2026-11-25-120438.ips'], warnings: [] });
+  assert.match(readFileSync(join(destination, 'ios-host-vm-stat.log'), 'utf8'), /Pages free/);
+  assert.match(readFileSync(join(destination, 'ios-host-processes.log'), 'utf8'), /node/);
+  assert.match(readFileSync(join(destination, 'ios-app-log.log'), 'utf8'), /Library not loaded/);
+  const crash = readFileSync(join(destination, 'ios-crash-Moyo-2026-11-25-120438.ips'));
+  assert.ok(crash.length < 513 * 1024);
+  assert.match(crash.toString(), /^EXC_CRASH/);
+  assert.match(crash.toString(), /truncated at 512 KiB/);
 });
 
 test('requires actual non-skipped test cases and every execution screenshot', () => {
@@ -363,7 +432,10 @@ test('flow requires triangle presentation and new positive frame output after re
   assert.match(flow, /triangle: submitted and presented at \[1-9\]/);
   assert.equal((flow.match(/visible: '\[1-9\]\[0-9\]\* fps'/g) ?? []).length, 3);
   assert.match(flow, /pressKey: Home\n- launchApp:\n    stopApp: false[\s\S]*tapOn: Stop\n- assertNotVisible: '\[0-9\]\+ fps'[\s\S]*tapOn: Cube/);
-  assert.match(flow, /stopApp\n- launchApp\n- openLink: moyo:\/\/native-3d-smoke/);
+  assert.match(flow, /stopApp\n- launchApp\n- extendedWaitUntil:\n    visible: Welcome to Moyo\n    timeout: \d+\n- openLink: moyo:\/\/native-3d-smoke/);
+  // Every deep link waits for the rendered front door; none races bundle load.
+  assert.equal((flow.match(/- openLink:/g) ?? []).length, 2);
+  assert.equal((flow.match(/visible: Welcome to Moyo\n    timeout: \d+\n- openLink:/g) ?? []).length, 2);
   assert.doesNotMatch(flow, /optional: true|retry:|mock|sign-in|sign-up/);
 });
 
@@ -386,4 +458,42 @@ test('runtime workflows preserve existing native build gates and add blocking ex
   assert.match(ios, /runner\.temp }}\/moyo-ios-runtime/);
   assert.match(emulator, /if: always\(\)/);
   assert.match(emulator, /runner\.temp }}\/moyo-android-runtime/);
+});
+
+test('the Android reverse keeper records and re-adds a dropped mapping, one tick at a time', async () => {
+  const calls = []; const lines = [];
+  let listing = 'emulator-5554 tcp:8081 tcp:8081\nemulator-5554 tcp:39001 tcp:39001';
+  let active = 0; let maxActive = 0; let failNext = false;
+  const keeper = keepAndroidReverse('emulator-5554', [8081, 39001], {
+    intervalMs: 5,
+    log: { write: (line) => lines.push(line) },
+    run: async (args) => {
+      active += 1; maxActive = Math.max(maxActive, active);
+      calls.push(args.join(' '));
+      await new Promise((done) => setTimeout(done, 12));
+      active -= 1;
+      if (failNext) { failNext = false; throw new Error('adb: device offline'); }
+      if (args[1] === '--list') return listing;
+      if (args[1] === 'tcp:8081') listing += '\nemulator-5554 tcp:8081 tcp:8081';
+      return '';
+    },
+  });
+  await new Promise((done) => setTimeout(done, 30));
+  assert.ok(!calls.some((call) => call.startsWith('reverse tcp:')), 'nothing re-added while both mappings exist');
+  listing = 'emulator-5554 tcp:39001 tcp:39001';
+  await new Promise((done) => setTimeout(done, 60));
+  failNext = true;
+  await new Promise((done) => setTimeout(done, 40));
+  const stats = await keeper.stop();
+  const count = calls.length;
+  await new Promise((done) => setTimeout(done, 30));
+  assert.equal(calls.length, count, 'no call after stop');
+  assert.equal(maxActive, 1, 'ticks never overlap');
+  assert.equal(calls.filter((call) => call === 'reverse tcp:8081 tcp:8081').length, 1);
+  assert.ok(!calls.includes('reverse tcp:39001 tcp:39001'));
+  assert.equal(stats.readded, 1);
+  assert.deepEqual(stats.missing.map((entry) => entry.port), [8081]);
+  assert.equal(stats.failures, 1);
+  assert.equal(stats.lastError, 'adb: device offline');
+  assert.ok(lines.some((line) => line.includes('"event":"missing"') && line.includes('8081')));
 });

@@ -5,6 +5,13 @@ appId: com.moyolearn.app
     clearState: true
     permissions:
       all: allow
+# launchApp returns once the process exists, before React Native has loaded
+# its bundle. A link sent then reaches a window with nothing in it, and on
+# Android an intent that arrives before the React context is dropped. Wait for
+# the anonymous front door, which renders only after the router is mounted.
+- extendedWaitUntil:
+    visible: Welcome to Moyo
+    timeout: 120000
 - openLink: moyo://native-3d-smoke
 - extendedWaitUntil:
     visible: Native 3D smoke
@@ -50,6 +57,9 @@ appId: com.moyolearn.app
 - assertNotVisible: '[0-9]+ fps'
 - stopApp
 - launchApp
+- extendedWaitUntil:
+    visible: Welcome to Moyo
+    timeout: 120000
 - openLink: moyo://native-3d-smoke
 - extendedWaitUntil:
     visible: Native 3D smoke

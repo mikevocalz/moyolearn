@@ -61,6 +61,13 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+      # The runtime checks have run this 7 GB host into swap (run 45663399211:
+      # 72 MB free, 2.5 GB swapped out). Record what holds memory going in.
+      - name: Record host memory before the runtime checks
+        run: |
+          sysctl -n hw.memsize hw.ncpu
+          vm_stat
+          ps -axo rss=,comm= | sort -rn | head -25
       - name: Execute iPad simulator rendering and lifecycle checks
         env:
           MOYO_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -68,6 +75,18 @@ jobs:
       - name: Summarize build errors
         if: failure()
         run: grep -E "error:|\*\* BUILD" "$RUNNER_TEMP/moyo-ios-build.log" | sort -u | head -80 || true
+      # The diagnostics artifact is the full record; this puts the failing phase
+      # and the tool's own words in the job log, where a reviewer looks first.
+      - name: Show native runtime failure
+        if: failure()
+        run: |
+          dir="$RUNNER_TEMP/moyo-ios-runtime"
+          [ -d "$dir" ] || exit 0
+          tail -n 120 "$dir/runtime.log" || true
+          find "$dir" -name daemon.log -exec tail -n 80 {} \; || true
+          find "$dir" -name runner.log -exec tail -n 120 {} \; || true
+          find "$dir" -name ios-app-log.log -exec tail -n 120 {} \; || true
+          grep -o '"iosFailureDiagnostics":{[^}]*' "$dir/receipt.json" | head -c 2000 || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
