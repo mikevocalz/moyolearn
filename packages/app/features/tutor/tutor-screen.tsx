@@ -294,10 +294,13 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       same retry comes back in a second and a half — earned this time.
     */
     clearStaleFailure();
-    // Worksheet identity, not the reading flag: a photo sets that flag too.
+    // Worksheet identity, not the reading flag: a photo sets that flag too. An
+    // unchanged, unambiguous current prompt also counts, so a sheet migrated to
+    // new question ids keeps coaching on the question it shows.
     const sheet = useWorksheetStore.getState();
-    const onCursor = sheet.ownerId === learnerId &&
-      isOnWorksheetCursor(sheet.current, useCaptureStore.getState().problemEvidence);
+    const evidence = useCaptureStore.getState().problemEvidence;
+    const onCursor = sheet.ownerId === learnerId && sheet.current !== null &&
+      (isOnWorksheetCursor(sheet.current, evidence) || isCurrentWorksheetQuestion(sheet.current, problem, evidence));
     void hydrate(problem ?? '', onCursor).finally(() => setResumed(true));
   }, [problem, learnerId, allPriorDone, hydrate, clearStaleFailure]);
 

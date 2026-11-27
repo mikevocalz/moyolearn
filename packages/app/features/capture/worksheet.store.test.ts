@@ -588,3 +588,14 @@ test('identical question wording still requires the server question identity', a
     questionId: questions[1]!.questionId, revision: 'superseded',
   }), false);
 });
+
+test('an unchanged prompt is still the current question after a migration changes its id', async () => {
+  // The tutor's resume check falls back on this when the saved evidence names
+  // a question id the migrated server submission no longer has.
+  const { store } = setup();
+  const view = await store.getState().begin('learner-1', input('migrated-sheet'));
+  const prompt = currentPrompt(view)!;
+  assert.equal(isCurrentWorksheetQuestion(view, prompt, null), true);
+  assert.equal(isCurrentWorksheetQuestion(view, prompt, { questionId: 'legacy-q', revision: 'legacy' }), true);
+  assert.equal(isCurrentWorksheetQuestion(view, 'a photographed page about something else', null), false);
+});
