@@ -32,6 +32,7 @@ import { buttonSizeForBand, type AgeBand } from '../capture';
 import { countImages, MAX_TUTOR_IMAGES } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
 import { useTutorStore } from './tutor.store';
+import { isOnWorksheetCursor } from './resume-problem';
 import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
 import { markTurnSent, noteKeystroke, setRecording } from './tutor-cues';
@@ -293,8 +294,15 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       same retry comes back in a second and a half — earned this time.
     */
     clearStaleFailure();
-    void hydrate(problem ?? '').finally(() => setResumed(true));
-  }, [problem, allPriorDone, hydrate, clearStaleFailure]);
+    // Worksheet identity, not the reading flag: a photo sets that flag too. An
+    // unchanged, unambiguous current prompt also counts, so a sheet migrated to
+    // new question ids keeps coaching on the question it shows.
+    const sheet = useWorksheetStore.getState();
+    const evidence = useCaptureStore.getState().problemEvidence;
+    const onCursor = sheet.ownerId === learnerId && sheet.current !== null &&
+      (isOnWorksheetCursor(sheet.current, evidence) || isCurrentWorksheetQuestion(sheet.current, problem, evidence));
+    void hydrate(problem ?? '', onCursor).finally(() => setResumed(true));
+  }, [problem, learnerId, allPriorDone, hydrate, clearStaleFailure]);
 
   /*
     Points a stored attachment at its bytes the moment the queue lands them.
