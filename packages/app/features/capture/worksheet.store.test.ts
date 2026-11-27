@@ -436,6 +436,31 @@ test('open work keeps precedence over a newer all-marked upload, and old all-mar
   assert.equal(await third.getState().hydrate('learner-1'), null);
 });
 
+test('a cached finished sheet gives way to a newer assignment on the next hydrate', async () => {
+  const { server } = setup();
+  server.net.actorId = 'guardian-1';
+  await server.client.createSubmission({ ...input('all-marked'), forLearnerAuthId: 'learner-1' });
+  markAllDone(server, 'all-marked', '2026-10-16T12:00:00.000Z');
+  server.net.actorId = 'learner-1';
+  const storage = fakeStorage();
+  const device = createStore(worksheetStateCreator({ storage, client: server.client }));
+  assert.equal((await device.getState().hydrate('learner-1'))?.submissionId, 'all-marked');
+
+  // Nothing newer: the finished sheet stays, and is refreshed as before.
+  assert.equal((await device.getState().hydrate('learner-1'))?.submissionId, 'all-marked');
+
+  server.net.actorId = 'guardian-1';
+  await server.client.createSubmission({ ...input('next-sheet'), forLearnerAuthId: 'learner-1' });
+  server.net.actorId = 'learner-1';
+  const view = await device.getState().hydrate('learner-1');
+  assert.equal(view?.submissionId, 'next-sheet');
+  assert.equal(view?.status, 'ready');
+  assert.equal(device.getState().status, 'confirmed');
+
+  // Open work is never displaced by rediscovery.
+  assert.equal((await device.getState().hydrate('learner-1'))?.submissionId, 'next-sheet');
+});
+
 test('offline discovery waits without inventing a worksheet or losing another learner’s cache', async () => {
   const { server, storage, store } = setup();
   server.net.online = false;
