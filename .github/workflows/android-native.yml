@@ -124,6 +124,16 @@ jobs:
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
           script: node tooling/native-runtime-smoke.mjs --platform android --serial emulator-5554 --app "$GITHUB_WORKSPACE/apps/mobile/android/app/build/outputs/apk/mobile/debug/app-mobile-debug.apk" --artifacts "$RUNNER_TEMP/moyo-android-runtime"
+      # The diagnostics artifact is the full record; this puts the failing phase
+      # and the tool's own words in the job log, where a reviewer looks first.
+      - name: Show native runtime failure
+        if: failure()
+        run: |
+          dir="$RUNNER_TEMP/moyo-android-runtime"
+          [ -d "$dir" ] || exit 0
+          cat "$dir/receipt.json" || true
+          tail -n 120 "$dir/runtime.log" || true
+          [ -f "$dir/junit.xml" ] && grep -A20 "<failure" "$dir/junit.xml" | head -n 80 || true
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
