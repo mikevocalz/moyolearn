@@ -32,6 +32,8 @@ export interface MediaAccessPorts {
   readonly sign: (url: string) => string;
   /** `NEXT_PUBLIC_BUNNY_CDN_BASE_URL`. Empty means no URL can be ours. */
   readonly cdnBase: string;
+  /** `BUNNY_MEDIA_PREFIX`, the namespace `signUpload` writes every key under. */
+  readonly mediaPrefix: string;
 }
 
 /**
@@ -45,7 +47,7 @@ export async function signMediaUrlFor(
 ): Promise<string> {
   const key = storageKeyFromCdnUrl(url, ports.cdnBase);
   if (key === null) throw new MediaNotFound('Not found');
-  const owner = mediaKeyOwner(key);
+  const owner = mediaKeyOwner(key, ports.mediaPrefix);
   if (owner === null) throw new MediaNotFound('Not found');
 
   if (owner !== ctx.learnerId && !(ctx.orgId !== undefined && owner === ctx.orgId)) {

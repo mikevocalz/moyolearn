@@ -173,12 +173,34 @@ export const storageKeyFromCdnUrl = (url: string, base: string): string | null =
 };
 
 /**
- * The owner segment of a storage key — `<kind>/<owner>/…`, the shape `buildKey`
- * and `buildVoiceNoteKeys` both mint and nothing else does. Null for a key of
- * any other shape, which the callers treat as "not ours" rather than "anyone's".
+ * `BUNNY_MEDIA_PREFIX` as the upload adapter applies it: no leading or trailing
+ * slash, empty when unset. One normaliser, because the write side
+ * (`bunny.repository.ts:signUpload`) and the ownership checks below must agree
+ * on the exact namespace — a second spelling is how a prefixed deployment ends
+ * up refusing every key it just minted.
  */
-export const mediaKeyOwner = (key: string): string | null => {
-  const [kind, owner, ...rest] = key.split('/');
+export const normalizeMediaPrefix = (raw: string | undefined): string =>
+  (raw ?? '').replace(/^\/+|\/+$/g, '');
+
+/**
+ * The owner segment of a storage key — `[<prefix>/]<kind>/<owner>/…`, the shape
+ * `buildKey` and `buildVoiceNoteKeys` mint, under the namespace `signUpload`
+ * prepends. Null for a key of any other shape, which the callers treat as "not
+ * ours" rather than "anyone's".
+ *
+ * `prefix` is REQUIRED and EXACT: with a namespace configured, a key outside it
+ * is not one this deployment wrote, and stripping "whatever comes first" would
+ * let `image/<victim>/…` and `<anything>/image/<victim>/…` both resolve. Only the
+ * owner is read from the stripped form; callers compare and sign the full key.
+ */
+export const mediaKeyOwner = (key: string, prefix: string): string | null => {
+  const namespace = normalizeMediaPrefix(prefix);
+  let local = key;
+  if (namespace !== '') {
+    if (!key.startsWith(`${namespace}/`)) return null;
+    local = key.slice(namespace.length + 1);
+  }
+  const [kind, owner, ...rest] = local.split('/');
   if (kind === undefined || owner === undefined || rest.length === 0) return null;
   if (!(MEDIA_KINDS as readonly string[]).includes(kind)) return null;
   return owner === '' ? null : owner;
@@ -200,8 +222,9 @@ export function assertOwnMediaKey(
   storageKey: string,
   url: string,
   cdnBase: string,
+  mediaPrefix: string,
 ): void {
-  if (mediaKeyOwner(storageKey) !== owner) {
+  if (mediaKeyOwner(storageKey, mediaPrefix) !== owner) {
     throw new MediaKeyRejected('storageKey is not under this account’s media folder');
   }
   if (storageKeyFromCdnUrl(url, cdnBase) !== storageKey) {

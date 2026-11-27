@@ -11,6 +11,7 @@ import {
   buildVoiceNoteKeys,
   mediaKeyOwner,
   MediaKeyRejected,
+  normalizeMediaPrefix,
   PresignRejected,
   safeName,
   storageKeyFromCdnUrl,
@@ -118,14 +119,14 @@ describe('media key ownership (security pass H4)', () => {
   it('reads the key off a zone URL and the owner off the key', () => {
     const key = storageKeyFromCdnUrl(`${BASE}/image/ada_1/2026-10-15/u-1/page.jpg?token=x`, BASE);
     assert.equal(key, 'image/ada_1/2026-10-15/u-1/page.jpg');
-    assert.equal(mediaKeyOwner(key ?? ''), 'ada_1');
+    assert.equal(mediaKeyOwner(key ?? '', ''), 'ada_1');
   });
 
   it('agrees with buildKey and buildVoiceNoteKeys about who owns what they mint', () => {
-    assert.equal(mediaKeyOwner(buildKey('image', 'ada_1', 'page.jpg', 'u-1', AT)), 'ada_1');
+    assert.equal(mediaKeyOwner(buildKey('image', 'ada_1', 'page.jpg', 'u-1', AT), ''), 'ada_1');
     const keys = buildVoiceNoteKeys('riverside', 'm4a', 'u-2', AT);
-    assert.equal(mediaKeyOwner(keys.audio), 'riverside');
-    assert.equal(mediaKeyOwner(keys.waveform), 'riverside');
+    assert.equal(mediaKeyOwner(keys.audio, ''), 'riverside');
+    assert.equal(mediaKeyOwner(keys.waveform, ''), 'riverside');
   });
 
   it('decodes before deciding, and refuses what does not decode to a clean key', () => {
@@ -138,20 +139,52 @@ describe('media key ownership (security pass H4)', () => {
   });
 
   it('owns nothing for a key of another shape', () => {
-    assert.equal(mediaKeyOwner('avatars/ada_1/x.png'), null);
-    assert.equal(mediaKeyOwner('image/ada_1'), null);
-    assert.equal(mediaKeyOwner('image//x/y.png'), null);
+    assert.equal(mediaKeyOwner('avatars/ada_1/x.png', ''), null);
+    assert.equal(mediaKeyOwner('image/ada_1', ''), null);
+    assert.equal(mediaKeyOwner('image//x/y.png', ''), null);
   });
 
   it('accepts an attachment report only for the caller’s own folder at its own URL', () => {
     const key = 'image/ada_1/2026-10-15/u-1/page.jpg';
-    assert.doesNotThrow(() => assertOwnMediaKey('ada_1', key, `${BASE}/${key}`, BASE));
-    assert.throws(() => assertOwnMediaKey('ben_1', key, `${BASE}/${key}`, BASE), MediaKeyRejected);
+    assert.doesNotThrow(() => assertOwnMediaKey('ada_1', key, `${BASE}/${key}`, BASE, ''));
+    assert.throws(() => assertOwnMediaKey('ben_1', key, `${BASE}/${key}`, BASE, ''), MediaKeyRejected);
     assert.throws(
-      () => assertOwnMediaKey('ada_1', key, `${BASE}/image/ben_1/2026-10-15/u-9/page.jpg`, BASE),
+      () => assertOwnMediaKey('ada_1', key, `${BASE}/image/ben_1/2026-10-15/u-9/page.jpg`, BASE, ''),
       MediaKeyRejected,
     );
-    assert.throws(() => assertOwnMediaKey('ada_1', key, `https://evil.test/${key}`, BASE), MediaKeyRejected);
-    assert.throws(() => assertOwnMediaKey('ada_1', key, `${BASE}/${key}`, ''), MediaKeyRejected);
+    assert.throws(() => assertOwnMediaKey('ada_1', key, `https://evil.test/${key}`, BASE, ''), MediaKeyRejected);
+    assert.throws(() => assertOwnMediaKey('ada_1', key, `${BASE}/${key}`, '', ''), MediaKeyRejected);
+  });
+
+  // PR #157 review: `signUpload` prepends `BUNNY_MEDIA_PREFIX`, so a prefixed
+  // deployment reports keys like `moyolearn/image/<owner>/…`. These keys are the
+  // exact shape the adapter emits (`${prefix}/${key}`, URL = cdn + encoded key).
+  it('reads the owner under the configured namespace, and only under it', () => {
+    const prefix = normalizeMediaPrefix('moyolearn/');
+    assert.equal(prefix, 'moyolearn');
+    assert.equal(normalizeMediaPrefix(undefined), '');
+    assert.equal(normalizeMediaPrefix('/a/b/'), 'a/b');
+    const local = buildKey('image', 'ada_1', 'homework.png', 'upload_1', AT);
+    const emitted = `${prefix}/${local}`;
+    assert.equal(mediaKeyOwner(emitted, prefix), 'ada_1');
+    assert.equal(mediaKeyOwner(emitted, 'moyolearn/'), 'ada_1');
+    assert.equal(mediaKeyOwner(`a/b/${local}`, 'a/b'), 'ada_1');
+    // Outside the namespace, or a lookalike of it, is not ours.
+    assert.equal(mediaKeyOwner(local, prefix), null);
+    assert.equal(mediaKeyOwner(`other/${local}`, prefix), null);
+    assert.equal(mediaKeyOwner(`moyolearnx/${local}`, prefix), null);
+    // Without a namespace a prefixed key is not a kind-first key.
+    assert.equal(mediaKeyOwner(emitted, ''), null);
+  });
+
+  it('accepts a prefixed attachment report at its own URL and nothing else', () => {
+    const prefix = 'moyolearn';
+    const key = `${prefix}/image/ada_1/2026-11-25/upload_1/homework.png`;
+    assert.doesNotThrow(() => assertOwnMediaKey('ada_1', key, `${BASE}/${key}`, BASE, prefix));
+    assert.throws(() => assertOwnMediaKey('ben_1', key, `${BASE}/${key}`, BASE, prefix), MediaKeyRejected);
+    // The URL must name the FULL key, prefix included.
+    const bare = 'image/ada_1/2026-11-25/upload_1/homework.png';
+    assert.throws(() => assertOwnMediaKey('ada_1', key, `${BASE}/${bare}`, BASE, prefix), MediaKeyRejected);
+    assert.throws(() => assertOwnMediaKey('ada_1', bare, `${BASE}/${bare}`, BASE, prefix), MediaKeyRejected);
   });
 });

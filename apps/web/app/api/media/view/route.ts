@@ -3,6 +3,7 @@ import { MediaNotFound, signOwnedMediaUrl } from '@acme/app/server';
 import { loadGuardianWards } from '@/lib/summary.repository';
 import { auth } from '@/lib/auth';
 import { signCdnUrl } from '@/lib/bunny-token';
+import { mediaPrefix } from '@/lib/bunny.repository';
 import { reportRouteError } from '@/lib/report-error';
 
 // The one door to a stored media URL, now that the pull zone refuses unsigned
@@ -40,6 +41,7 @@ export async function GET(request: NextRequest) {
       loadGuardianWards,
       sign: signCdnUrl,
       cdnBase: base,
+      mediaPrefix: mediaPrefix(),
     });
     return NextResponse.redirect(signed, { status: 302 });
   } catch (error) {
