@@ -75,6 +75,15 @@ jobs:
       - name: Summarize build errors
         if: failure()
         run: grep -E "error:|\*\* BUILD" "$RUNNER_TEMP/moyo-ios-build.log" | sort -u | head -80 || true
+      # The diagnostics artifact is the full record; this puts the failing phase
+      # and the tool's own words in the job log, where a reviewer looks first.
+      - name: Show native runtime failure
+        if: failure()
+        run: |
+          dir="$RUNNER_TEMP/moyo-ios-runtime"
+          [ -d "$dir" ] || exit 0
+          tail -n 120 "$dir/runtime.log" || true
+          find "$dir" -name daemon.log -exec tail -n 80 {} \; || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
