@@ -38,6 +38,9 @@ export function safeReturnPath(raw: string | null | undefined): string | null {
   if (resolved.origin !== SENTINEL) return null;
 
   const { pathname } = resolved;
+  // Dot segments collapse while the URL is resolved, so `/.//evil.test` comes
+  // out as `//evil.test`. Hold the gate on what is returned, not only on `raw`.
+  if (pathname.startsWith('//')) return null;
   if (pathname === '/login' || pathname.startsWith('/login/')) return null;
   if (pathname === '/api' || pathname.startsWith('/api/')) return null;
 
