@@ -140,3 +140,94 @@ export const buildVoiceNoteKeys = (
   const base = `audio/${owner}/${now.toISOString().slice(0, 10)}/${id}`;
   return { audio: `${base}/audio.${ext}`, waveform: `${base}/waveform.png` };
 };
+
+// ── Reading side: whose object is this? ──────────────────────────────────────
+
+/**
+ * The storage key a CDN URL names, or null when the URL is not under `base`.
+ *
+ * `signCdnUrl` already refuses to sign a URL outside the zone; this answers the
+ * question BEFORE that, for the ownership check, and it answers it on the
+ * DECODED path. Bunny decodes before it serves, so `image/%6Fwner/...` and
+ * `image/owner/...` are the same object to the CDN, and an ownership check on
+ * the raw string would compare the caller against a spelling of the owner the
+ * server never sees. Anything that does not decode cleanly, or decodes to a
+ * path with an empty, `.` or `..` segment, is not a key this product mints.
+ */
+export const storageKeyFromCdnUrl = (url: string, base: string): string | null => {
+  if (!base || !url.startsWith(base)) return null;
+  const raw = (url.slice(base.length).split(/[?#]/)[0] ?? '').replace(/^\/+/, '');
+  if (raw === '') return null;
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+  const segments = decoded.split('/');
+  if (segments.some((segment) => segment === '' || segment === '.' || segment === '..')) {
+    return null;
+  }
+  if (/[\\\u0000-\u001f]/.test(decoded)) return null;
+  return decoded;
+};
+
+/**
+ * `BUNNY_MEDIA_PREFIX` as the upload adapter applies it: no leading or trailing
+ * slash, empty when unset. One normaliser, because the write side
+ * (`bunny.repository.ts:signUpload`) and the ownership checks below must agree
+ * on the exact namespace — a second spelling is how a prefixed deployment ends
+ * up refusing every key it just minted.
+ */
+export const normalizeMediaPrefix = (raw: string | undefined): string =>
+  (raw ?? '').replace(/^\/+|\/+$/g, '');
+
+/**
+ * The owner segment of a storage key — `[<prefix>/]<kind>/<owner>/…`, the shape
+ * `buildKey` and `buildVoiceNoteKeys` mint, under the namespace `signUpload`
+ * prepends. Null for a key of any other shape, which the callers treat as "not
+ * ours" rather than "anyone's".
+ *
+ * `prefix` is REQUIRED and EXACT: with a namespace configured, a key outside it
+ * is not one this deployment wrote, and stripping "whatever comes first" would
+ * let `image/<victim>/…` and `<anything>/image/<victim>/…` both resolve. Only the
+ * owner is read from the stripped form; callers compare and sign the full key.
+ */
+export const mediaKeyOwner = (key: string, prefix: string): string | null => {
+  const namespace = normalizeMediaPrefix(prefix);
+  let local = key;
+  if (namespace !== '') {
+    if (!key.startsWith(`${namespace}/`)) return null;
+    local = key.slice(namespace.length + 1);
+  }
+  const [kind, owner, ...rest] = local.split('/');
+  if (kind === undefined || owner === undefined || rest.length === 0) return null;
+  if (!(MEDIA_KINDS as readonly string[]).includes(kind)) return null;
+  return owner === '' ? null : owner;
+};
+
+export class MediaKeyRejected extends Error {}
+
+/**
+ * A client-reported upload must sit in the CALLER'S folder, at the CDN URL that
+ * folder implies. The attachment route used to store whatever `url` and
+ * `storageKey` arrived, which let a learner attach any address at all — an
+ * image of somebody else's homework, or a page off the open web — and have it
+ * rendered to their guardian as their own. The key is checked against
+ * `mediaOwner(ctx)`, the same function that chose the folder at presign time,
+ * and the URL is checked against the key, so neither can name a third thing.
+ */
+export function assertOwnMediaKey(
+  owner: string,
+  storageKey: string,
+  url: string,
+  cdnBase: string,
+  mediaPrefix: string,
+): void {
+  if (mediaKeyOwner(storageKey, mediaPrefix) !== owner) {
+    throw new MediaKeyRejected('storageKey is not under this account’s media folder');
+  }
+  if (storageKeyFromCdnUrl(url, cdnBase) !== storageKey) {
+    throw new MediaKeyRejected('url does not name storageKey on this product’s CDN');
+  }
+}

@@ -9,21 +9,22 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// The 157.1.0 Graphite and shared-Dawn npm artifacts were published from the
-// same upstream commit. Dawn's own metadata records both its source and patches.
-// 157.1.0 rebuilds the same Dawn commit with one added Metal patch (labelled
-// m157a); the Dawn release tag WebGPU declares stays chrome-m157.
+// The 158.1.0 Graphite and shared-Dawn npm artifacts were published from the
+// same upstream commit (react-native-skia gitHead 3d0922732cb282f2ee80b86a2659fb06d98260f2).
+// Dawn's own metadata records both its source and patches. Since 0.24.0, WebGPU
+// no longer depends on react-native-webgpu-dawn: it downloads the same release's
+// Dawn archives itself and pins them in its binaries.json, which is what the
+// identity check below compares against the shared owner.
 export const ADMISSION = Object.freeze({
-  renderer: '2.14.0', version: '157.1.0', skia: 'm157a',
-  dawnCommit: 'ada567700e13aecf7989d78b21f7d330b522ea80',
-  dawnTag: 'chrome-m157', webgpu: '0.21.1',
-  patches: ['metal-maccatalyst.patch', 'metal-suspend-submissions-in-background.patch', 'vulkan-fifo-three-images-android.patch'],
-  // No m157 header release exists, so the three private Graphite headers come
-  // straight from Skia at the externals/skia commit of the 157.1.0 publisher
-  // (react-native-skia gitHead 00a480f354ea1029fec3b71842e3a8a67f31af3b). That
-  // submodule pin is unchanged from 157.0.0, so the header bytes are too.
-  // Dawn comes from the npm package.
-  headersBaseUrl: 'https://raw.githubusercontent.com/google/skia/b94213a11b3a2edadfae89f0c57a7f4ab72772c9/src/gpu/graphite/',
+  renderer: '2.14.0', version: '158.1.0', skia: 'm158a',
+  dawnCommit: '1716e88cc9e58398fab5d4473f7f2e858667b677',
+  dawnTag: 'chrome-m158', webgpu: '0.26.0',
+  patches: ['metal-platforms.patch', 'metal-suspend-submissions-in-background.patch', 'vulkan-fifo-three-images-android.patch'],
+  // Private Graphite headers come from the 158.1.0 publisher's exact Skia
+  // submodule; externals/skia at 3d092273 is 75584a96, the same commit the
+  // 158.0.0 publisher used. Re-hashed on 2026-11-25: all three digests unchanged.
+  // Dawn headers and binaries come from the shared npm package.
+  headersBaseUrl: 'https://raw.githubusercontent.com/google/skia/75584a96108b2bf0b1c74b0536126fa4917b64a8/src/gpu/graphite/',
   headersSha256: Object.freeze({
     'ContextOptionsPriv.h': 'f801bcda10ea519d50983d312a06bd809cb01031c9d4f852e0dcdb8db6323274',
     'ResourceTypes.h': '1822b5e90d4202026225cdf5aa1bd89bbc09d4aad57ee84357be98771ecbb10e',
@@ -48,9 +49,12 @@ export function inspectPackages(root) {
   const webgpu = packageAt(root, 'react-native-webgpu');
   const dawn = packageAt(root, 'react-native-webgpu-dawn');
   const graphite = GRAPHITE_PACKAGES.map((name) => packageAt(root, name));
+  const binaries = readJson(join(webgpu.path, 'binaries.json'));
   if (renderer.manifest.version !== ADMISSION.renderer || webgpu.manifest.version !== ADMISSION.webgpu ||
       webgpu.manifest.dawn !== ADMISSION.dawnTag ||
-      webgpu.manifest.dependencies?.['react-native-webgpu-dawn'] !== ADMISSION.version ||
+      binaries.version !== ADMISSION.version || binaries.skia !== ADMISSION.skia ||
+      binaries.dawn?.commit !== ADMISSION.dawnCommit ||
+      JSON.stringify(binaries.dawn?.patches) !== JSON.stringify(ADMISSION.patches) ||
       dawn.manifest.version !== ADMISSION.version || dawn.manifest.dawn?.skia !== ADMISSION.skia ||
       dawn.manifest.dawn?.commit !== ADMISSION.dawnCommit ||
       JSON.stringify(dawn.manifest.dawn?.patches) !== JSON.stringify(ADMISSION.patches) ||
@@ -140,6 +144,10 @@ export async function enableSkiaGraphite({ root = ROOT, fetchHeaders = fetchPriv
       rmSync(privateHeaders, { recursive: true, force: true });
       cpSync(downloaded, privateHeaders, { recursive: true });
     }
+    // Android's Gradle package prefers libs/android when it exists, regardless
+    // of its version marker. Remove that generated override so an old local
+    // build cannot shadow the admitted npm Graphite binaries and shared Dawn.
+    rmSync(join(libs, 'android'), { recursive: true, force: true });
     // Always refresh these copies, including on a warm reinstall. The app's
     // owner is react-native-webgpu-dawn; stale destination existence is no cache key.
     copyDawnHeaders(join(dawn.path, 'include'), join(skia, 'cpp/dawn/include'));

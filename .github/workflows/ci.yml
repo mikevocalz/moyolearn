@@ -8,6 +8,30 @@ permissions:
   contents: read
 
 jobs:
+  # Migration and crop-retention checks use synthetic data in a freshly created
+  # Unix-socket-only cluster. No production credentials or .env files are read.
+  homework-database:
+    name: homework migration and crop retention
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Install local PostgreSQL test binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql
+      - name: Require isolated migration and retention verification
+        env:
+          MOYO_PG_TEST_REQUIRED: '1'
+          MOYO_PG_TEST_REPOSITORY: '1'
+        run: node --test packages/payload/src/migrations/homework-prior-work.test.mjs
+
   # Whole-graph gate. This is the only job that runs typecheck/lint/test, and it
   # is deliberately NOT the only job that builds — see `web-app` below for why.
   ci:
@@ -30,7 +54,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Module exports, protected learner routes and the motion-duration gate
-        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs
+        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs tooling/check-motion-durations.test.mjs tooling/check-machine-routes.test.mjs tooling/check-store-separation.test.mjs tooling/check-dev-hatch.test.mjs
       - name: Prepare avatar assets for repository guards
         run: node apps/web/scripts/copy-avatar-assets.mjs
       - name: Repository guards and workspace lint
@@ -41,6 +65,88 @@ jobs:
       # (docs/issues/2026-09-13-turbo-lint-failures.md). The run still exits
       # non-zero, so this reports more without gating less.
       - run: pnpm exec turbo run build typecheck test --continue
+
+  # The release bundle must not carry the QA tooling. `expo export` with
+  # EXPO_PUBLIC_AUTH_MODE=live and no `--dev` is the same Metro pass an EAS
+  # production build runs, and this grep is what proves the `__DEV__`-guarded
+  # `require()`s in packages/app folded away. The markers are strings that
+  # exist only in the dev-only modules: a fixture persona's name, the copy of
+  # the persona switch, and two function names. RoleSwitcher's own label is
+  # not one: that component ships (the drawer imports it) and renders nothing
+  # in a release build because it has no personas to list.
+  # Short identifiers such as PERSONAS are not usable here: Hermes packs its
+  # string table with overlaps, and "GRASSHOPPERSONASTC" matches by accident.
+  # `grep -a` reads the .hbc as text; without it ugrep and GNU grep disagree
+  # about binary files and the check passes vacuously.
+  mobile-release-bundle:
+    name: mobile release bundle carries no mock auth
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Export the Android release bundle
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_AUTH_MODE: live
+          EXPO_PUBLIC_APP_URL: https://app.moyolearn.com
+          EXPO_PUBLIC_AUTH_URL: https://app.moyolearn.com
+          CI: '1'
+        run: npx expo export --platform android --output-dir "$RUNNER_TEMP/bundle"
+      - name: Fail if the bundle carries the persona switch, the mock session or the fixtures
+        run: |
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/bundle"
+          # A marker that must be present, so an empty or unreadable bundle fails
+          # instead of passing every absence check below.
+          if ! grep -rqaF 'LiveSessionProvider' "$bundle"; then
+            echo "::error::LiveSessionProvider not found; the grep is not reading the bundle"
+            exit 1
+          fi
+          status=0
+          for marker in 'Ms. Rivera' 'For QA and design review' 'MockSessionProvider' 'isDevPersonaSwitchAvailable'; do
+            if grep -rqaF -- "$marker" "$bundle"; then
+              echo "::error::release bundle contains '$marker'"
+              status=1
+            else
+              echo "ok  '$marker' is absent from the release bundle"
+            fi
+          done
+          exit $status
+
+  marketing-integration:
+    name: marketing (transactional PostgreSQL integration)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: moyo_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-ci-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MOYO_MARKETING_TEST_DATABASE_URL: postgresql://postgres:synthetic-ci-only@127.0.0.1:5432/moyo_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web marketing:test:db
 
   # Per-application build + artifact + runtime coverage.
   #

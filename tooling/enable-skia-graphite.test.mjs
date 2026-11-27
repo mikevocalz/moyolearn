@@ -14,7 +14,9 @@ function fixture(t) {
   const write = (path, content) => { mkdirSync(join(root, path, '..'), { recursive: true }); writeFileSync(join(root, path), content); };
   const pkg = (name, data) => write(`node_modules/${name}/package.json`, JSON.stringify({ name, ...data }));
   pkg('@shopify/react-native-skia', { version: ADMISSION.renderer });
-  pkg('react-native-webgpu', { version: ADMISSION.webgpu, dawn: ADMISSION.dawnTag, dependencies: { 'react-native-webgpu-dawn': ADMISSION.version } });
+  pkg('react-native-webgpu', { version: ADMISSION.webgpu, dawn: ADMISSION.dawnTag });
+  const binaries = (data) => write('node_modules/react-native-webgpu/binaries.json', JSON.stringify({ version: ADMISSION.version, skia: ADMISSION.skia, dawn: { commit: ADMISSION.dawnCommit, patches: ADMISSION.patches }, ...data }));
+  binaries({});
   pkg('react-native-webgpu-dawn', { version: ADMISSION.version, dawn: { skia: ADMISSION.skia, commit: ADMISSION.dawnCommit, patches: ADMISSION.patches } });
   for (const suffix of ['android', 'apple-ios', 'apple-macos']) pkg(`react-native-skia-graphite-${suffix}`, { version: ADMISSION.version, skia: { version: ADMISSION.skia, graphite: true } });
   for (const name of ['dawn/native/MetalBackend.h', 'dawn/native/VulkanBackend.h', 'dawn/dawn_version.h', 'dawn/webgpu.h', 'dawn/webgpu_cpp.h', 'webgpu/webgpu.h', 'webgpu/webgpu_cpp.h', 'webgpu/webgpu_cpp_print.h']) write(`node_modules/react-native-webgpu-dawn/include/${name}`, `fresh ${name}`);
@@ -31,7 +33,7 @@ function fixture(t) {
     for (const name of ['ContextOptionsPriv.h', 'ResourceTypes.h', 'TextureProxyView.h']) writeFileSync(join(path, name), `fresh ${name}`);
     return path;
   };
-  return { root, write, pkg, fetchHeaders, fetches: () => fetches,
+  return { root, write, pkg, binaries, fetchHeaders, fetches: () => fetches,
     skia: join(root, 'node_modules/@shopify/react-native-skia'),
     run: () => enableSkiaGraphite({ root, fetchHeaders }) };
 }
@@ -45,6 +47,12 @@ test('rejects unknown package combinations before publishing a marker', async (t
   await assert.rejects(f.run(), /unreviewed/);
   assert.equal(existsSync(join(f.skia, 'libs/.dawn-version')), false); assert.equal(f.fetches(), 0);
 });
+test('rejects a WebGPU binaries.json that names a different Dawn release', async (t) => {
+  const f = fixture(t); f.binaries({ version: '158.0.0' });
+  await assert.rejects(f.run(), /unreviewed/); assert.equal(f.fetches(), 0);
+  const g = fixture(t); g.binaries({ dawn: { commit: ADMISSION.dawnCommit, patches: ['metal-maccatalyst.patch'] } });
+  await assert.rejects(g.run(), /unreviewed/);
+});
 test('rejects differing Dawn source patches', async (t) => {
   const f = fixture(t); f.pkg('react-native-webgpu-dawn', { version: ADMISSION.version, dawn: { skia: ADMISSION.skia, commit: ADMISSION.dawnCommit, patches: [] } });
   await assert.rejects(f.run(), /unreviewed/);
@@ -54,9 +62,9 @@ test('rejects the superseded 157.0.0 shared Dawn without the background-submissi
   f.pkg('react-native-webgpu-dawn', { version: '157.0.0', dawn: { skia: 'm157', commit: ADMISSION.dawnCommit, patches: ['metal-maccatalyst.patch', 'vulkan-fifo-three-images-android.patch'] } });
   await assert.rejects(f.run(), /unreviewed/); assert.equal(f.fetches(), 0);
 });
-test('header pins equal the bytes downloaded from the 157.1.0 publisher Skia commit', () => {
-  // Re-hashed from raw.githubusercontent.com at b94213a1 on 2026-11-04; a pin change needs a new download.
-  assert.match(ADMISSION.headersBaseUrl, /google\/skia\/b94213a11b3a2edadfae89f0c57a7f4ab72772c9\//);
+test('header pins equal the bytes downloaded from the 158.1.0 publisher Skia commit', () => {
+  // Re-hashed from raw.githubusercontent.com at 75584a96 on 2026-11-25; a pin change needs a new download.
+  assert.match(ADMISSION.headersBaseUrl, /google\/skia\/75584a96108b2bf0b1c74b0536126fa4917b64a8\//);
   assert.deepEqual({ ...ADMISSION.headersSha256 }, {
     'ContextOptionsPriv.h': 'f801bcda10ea519d50983d312a06bd809cb01031c9d4f852e0dcdb8db6323274',
     'ResourceTypes.h': '1822b5e90d4202026225cdf5aa1bd89bbc09d4aad57ee84357be98771ecbb10e',
@@ -77,7 +85,7 @@ test('rejects stale Dawn headers despite current package metadata', async (t) =>
 });
 test('stages exact owner binaries and normalizes headers like upstream', async (t) => {
   const f = fixture(t); await f.run();
-  assert.equal(readFileSync(join(f.skia, 'libs/.dawn-version'), 'utf8'), 'dawn-chrome-m157');
+  assert.equal(readFileSync(join(f.skia, 'libs/.dawn-version'), 'utf8'), 'dawn-chrome-m158');
   assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/webgpu/webgpu.h'), 'utf8'), 'fresh dawn/webgpu.h');
   assert.equal(existsSync(join(f.skia, 'cpp/dawn/include/dawn/webgpu.h')), false);
   assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/dawn/dawn_proc_table.h'), 'utf8'), '#include "webgpu/webgpu.h"');
@@ -100,6 +108,19 @@ test('warm rerun refreshes stale Dawn headers and shared libraries without redow
   await f.run(); assert.equal(f.fetches(), 1);
   assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/dawn/native/MetalBackend.h'), 'utf8'), 'fresh dawn/native/MetalBackend.h');
   assert.equal(readFileSync(join(f.root, 'node_modules/react-native-skia-graphite-android/libs/arm64-v8a/libwebgpu_dawn.so'), 'utf8'), 'shared arm64-v8a');
+});
+test('stale local Android libraries cannot override the admitted npm artifacts', async (t) => {
+  const f = fixture(t);
+  const local = 'node_modules/@shopify/react-native-skia/libs/android';
+  for (const state of ['cold', 'warm']) {
+    f.write(`${local}/arm64-v8a/libskia.a`, `${state} old Graphite`);
+    f.write(`${local}/arm64-v8a/libwebgpu_dawn.so`, `${state} old Dawn`);
+    await f.run();
+    assert.equal(existsSync(join(f.root, local)), false);
+    assert.equal(readFileSync(join(f.root, 'node_modules/react-native-skia-graphite-android/libs/arm64-v8a/libskia.a'), 'utf8'), 'Graphite fixture, not a compiled library');
+    assert.equal(readFileSync(join(f.root, 'node_modules/react-native-skia-graphite-android/libs/arm64-v8a/libwebgpu_dawn.so'), 'utf8'), 'shared arm64-v8a');
+  }
+  assert.equal(f.fetches(), 1);
 });
 test('incomplete private headers invalidate an otherwise matching stamp', async (t) => {
   const f = fixture(t); await f.run(); rmSync(join(f.skia, 'cpp/skia/src/gpu/graphite/TextureProxyView.h'));

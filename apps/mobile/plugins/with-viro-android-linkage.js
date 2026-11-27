@@ -73,6 +73,10 @@
  */
 const { mergeQuestImmersiveActivity } = require('./quest-immersive-activity');
 const { updateRendererPin, rendererPath, rendererSha256 } = require('./renderer-pin');
+const { scopePicoPlatformDependencies } = require('./pico-platform-dependencies');
+const { propagatePicoNativeArchitectures } = require('./pico-native-architectures');
+const { scopeViroNativeRegistration } = require('./viro-native-registration');
+const { repairPicoMainApplication } = require('./pico-main-application');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -80,6 +84,7 @@ const {
   withAndroidManifest,
   withAppBuildGradle,
   withDangerousMod,
+  withMainApplication,
   withSettingsGradle,
   withProjectBuildGradle,
 } = require('@expo/config-plugins');
@@ -118,7 +123,7 @@ function withViroSettingsPaths(config) {
       );
     }
 
-    let contents = gradleConfig.modResults.contents;
+    let contents = propagatePicoNativeArchitectures(gradleConfig.modResults.contents);
 
     /*
       Fail loudly rather than silently doing nothing. If the fork stops writing
@@ -145,8 +150,10 @@ function withViroSettingsPaths(config) {
       Groovy reports as `No such property: viroPackageRoot`, at configuration
       time, with no hint that the declaration exists ten lines lower.
     */
-    const firstUse = contents.indexOf(`project(':${VIRO_PROJECTS[0]}').projectDir`);
-    contents = `${contents.slice(0, firstUse)}${VIRO_ROOT_SNIPPET}\n${contents.slice(firstUse)}`;
+    if (!contents.includes('def viroPackageRoot = new File(')) {
+      const firstUse = contents.indexOf(`project(':${VIRO_PROJECTS[0]}').projectDir`);
+      contents = `${contents.slice(0, firstUse)}${VIRO_ROOT_SNIPPET}\n${contents.slice(firstUse)}`;
+    }
 
     for (const name of VIRO_PROJECTS) {
       contents = contents.replace(
@@ -195,6 +202,31 @@ function withViroFlavorStrategy(config) {
 
     gradleConfig.modResults.contents = contents.replace(anchor, `$1\n        ${strategy}`);
     return gradleConfig;
+  });
+}
+
+// This mod is registered before the PICO plugin so its action runs after the
+// generated PPS dependency block, just like the existing Viro repairs above.
+function withPicoPlatformDependencyScope(config) {
+  return withAppBuildGradle(config, (gradleConfig) => {
+    if (gradleConfig.modResults.language !== 'groovy') {
+      throw new Error('PICO Platform Service dependency scope requires Groovy app/build.gradle');
+    }
+    gradleConfig.modResults.contents = scopePicoPlatformDependencies(gradleConfig.modResults.contents);
+    return gradleConfig;
+  });
+}
+
+// Viro writes MainApplication in its dangerous mod; Expo reads that output
+// before this mainApplication mod. Keep the upstream package text intact so
+// its substring-based generator also recognizes the guarded registrations.
+function withViroNativeRegistration(config) {
+  return withMainApplication(config, (modConfig) => {
+    if (modConfig.modResults.language !== 'kt') {
+      throw new Error('Viro process ABI registration requires the reviewed Kotlin MainApplication');
+    }
+    modConfig.modResults.contents = scopeViroNativeRegistration(repairPicoMainApplication(modConfig.modResults.contents));
+    return modConfig;
   });
 }
 
@@ -398,7 +430,7 @@ function withExpoDeviceFlavors(config) {
 }
 
 module.exports = function withViroAndroidLinkage(config) {
-  return withHeadtrackingOnHeadsetsOnly(
-    withExpoDeviceFlavors(withVrActivityOffTheLauncher(withViroCppRuntime(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config)))))),
-  );
+  return withViroNativeRegistration(withHeadtrackingOnHeadsetsOnly(
+    withExpoDeviceFlavors(withVrActivityOffTheLauncher(withViroCppRuntime(withViroDebugVariants(withPicoPlatformDependencyScope(withViroFlavorStrategy(withViroSettingsPaths(config))))))),
+  ));
 };

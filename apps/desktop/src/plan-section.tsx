@@ -25,6 +25,7 @@ import { color, space, textStyle, type Scheme } from "./theme";
 
 const PLAN_LABELS = {
   "family-early-bird": "Family (Early Bird)",
+  plus: "Plus",
   family: "Family",
   "ops-solo": "Solo",
   "ops-studio": "Studio",

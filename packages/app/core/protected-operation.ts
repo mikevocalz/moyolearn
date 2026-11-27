@@ -20,11 +20,20 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §7 · docs/pack/07-security-child-ai-safety-spec.md §2 · docs/pack/11-architectural-guardrails.md §3 · docs/pack/12-systems-design-prompt.md §7 · docs/deploy/moyo-district-tenancy.md §5
 // SOT-KEYWORDS: protected operation auth boundary server-only learner context mock capability plan entitlement telemetry record latency outcome host tenant district scoping
 import 'server-only';
-import { readMembershipRole, readSubscriptions, type Auth } from '@acme/auth/server';
+import type { Auth } from '@acme/auth/server';
 import type { Capability, SubscriptionState } from '@acme/auth/entitlements';
 import type { MembershipRole } from '@acme/auth/membership';
-import { HostTenantDenied, resolveHostTenant, type LoadTenantOrgId } from './host-tenant.ts';
-import { billingReferenceFor, withCapability, CapabilityDenied, type LoadSubscriptions } from './capability-gate.ts';
+import {
+  HostTenantDenied,
+  resolveHostTenant,
+  type LoadTenantOrgId,
+} from './host-tenant.ts';
+import {
+  billingReferenceFor,
+  withCapability,
+  CapabilityDenied,
+  type LoadSubscriptions,
+} from './capability-gate.ts';
 import {
   withMembership,
   MembershipDenied,
@@ -35,8 +44,15 @@ import {
   InstitutionPermissionDenied,
   requirePermission,
 } from '../features/institution/institution.policy.ts';
-import type { InstitutionAction, InstitutionResource, InstitutionScope } from '../features/institution/institution.types.ts';
-import { roleForOrganizationRoleAndKind, type OrganizationKind } from '../providers/session/role-mapping.ts';
+import type {
+  InstitutionAction,
+  InstitutionResource,
+  InstitutionScope,
+} from '../features/institution/institution.types.ts';
+import {
+  roleForOrganizationRoleAndKind,
+  type OrganizationKind,
+} from '../providers/session/role-mapping.ts';
 import {
   ctxKindOf,
   operationRecord,
@@ -44,7 +60,17 @@ import {
   type OperationCtxKind,
   type OperationDescriptor,
   type OperationOutcome,
+  type OperationAuthMode,
+  type OperationCapability,
 } from './telemetry.ts';
+import {
+  marketingInternalContext,
+  marketingPublicContext,
+  marketingCronContext,
+  marketingBillingContext,
+  type MarketingOperation,
+} from '../marketing/permissions/marketing.permissions.ts';
+import { MarketingError } from '../marketing/schemas/marketing.schema.ts';
 
 export interface ProtectedCtx {
   /** The acting learner's Better Auth user id. */
@@ -55,7 +81,9 @@ export interface ProtectedCtx {
   orgId?: string;
 }
 
-export type LoadOrgKind = (ctx: ProtectedCtx) => Promise<OrganizationKind | null>;
+export type LoadOrgKind = (
+  ctx: ProtectedCtx,
+) => Promise<OrganizationKind | null>;
 
 let orgKindReader: LoadOrgKind | null = null;
 
@@ -120,7 +148,11 @@ export interface ProtectedOperationOptions {
    * and membership have been resolved. Fail-closed: missing `loadOrgKind` or
    * a role that cannot be resolved is a refusal.
    */
-  requiresInstitution?: { scope: InstitutionScope; resource: InstitutionResource; action: InstitutionAction };
+  requiresInstitution?: {
+    scope: InstitutionScope;
+    resource: InstitutionResource;
+    action: InstitutionAction;
+  };
   /**
    * Overrides where the caller's plan is read from. Production never passes
    * this — the default reads Better Auth's own subscription rows through the
@@ -164,8 +196,24 @@ const MOCK_CTX: ProtectedCtx = {
   mode it is developed in.
 */
 const MOCK_SUBSCRIPTIONS: SubscriptionState[] = [
-  { plan: 'family', status: 'active', referenceId: MOCK_CTX.learnerId, periodEnd: null, seats: null },
-  { plan: 'ops-studio', status: 'active', referenceId: MOCK_CTX.orgId ?? null, periodEnd: null, seats: null },
+  {
+    plan: 'family',
+    status: 'active',
+    referenceId: MOCK_CTX.learnerId,
+    periodEnd: null,
+    trialEnd: null,
+    cancelAtPeriodEnd: false,
+    seats: null,
+  },
+  {
+    plan: 'ops-studio',
+    status: 'active',
+    referenceId: MOCK_CTX.orgId ?? null,
+    periodEnd: null,
+    trialEnd: null,
+    cancelAtPeriodEnd: false,
+    seats: null,
+  },
 ];
 
 /*
@@ -209,174 +257,272 @@ const MOCK_MEMBERSHIP_ROLE = null;
  * Half-mocked is the bug. If identity is a fixture, its attributes are too.
  */
 export function isMockAuth(): boolean {
-  return process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' && process.env.NODE_ENV === 'development';
+  return (
+    process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' &&
+    process.env.NODE_ENV === 'development'
+  );
 }
 
-export async function protectedOperation<R>(
+function platformAuthMode(
+  source: MarketingOperation<never>['source'],
+): OperationAuthMode {
+  switch (source) {
+    case 'payload-internal':
+    case 'public-inquiry':
+    case 'marketing-cron':
+    case 'billing-callback':
+      return source;
+    default:
+      return 'invalid-source';
+  }
+}
+
+/** Existing customer sessions and explicit platform entry points share one telemetry boundary. */
+export function protectedOperation<R>(
+  source: MarketingOperation<R>,
+): Promise<R>;
+export function protectedOperation<R>(
   auth: Auth,
   headers: Headers,
   operation: (ctx: ProtectedCtx) => Promise<R>,
+  options?: ProtectedOperationOptions,
+): Promise<R>;
+export async function protectedOperation<R>(
+  source: Auth | MarketingOperation<R>,
+  headers?: Headers,
+  operation?: (ctx: ProtectedCtx) => Promise<R>,
   options: ProtectedOperationOptions = {},
 ): Promise<R> {
-  const capability = options.requires ?? 'practise';
-  const isMock = isMockAuth();
-
-  /*
-    Captured before the session read, so the recorded latency is the whole block
-    — session, capability gate and handler. That is the quantity slo.md §1.1
-    budgets at 150 ms for context assembly and LAT-1 measures at p95; timing
-    only the handler would hide a slow `getSession` behind a fast operation.
-  */
+  const platform = 'source' in source;
+  const capability: OperationCapability = platform
+    ? 'platform-sales'
+    : (options.requires ?? 'practise');
+  const authMode: OperationAuthMode = platform
+    ? platformAuthMode(source.source)
+    : isMockAuth()
+      ? 'mock'
+      : 'session';
+  const descriptor =
+    authMode === 'invalid-source'
+      ? undefined
+      : platform
+        ? source.telemetry
+        : options.telemetry;
   const startedAt = performance.now();
   let ctxKind: OperationCtxKind = 'anonymous';
   let outcome: OperationOutcome = 'error';
-
-  /*
-    Doc 11 §3's ordering, held in one place for both branches: membership/role
-    wraps the plan gate, so a caller who is not staff is refused before a
-    subscription is ever read — and a role refusal can never arrive dressed as
-    a 402.
-  */
-  const membership = options.requiresMembership;
-  const gated = (
-    c: ProtectedCtx,
-    loadRole: LoadMembershipRole,
-    loadSubs: LoadSubscriptions,
-  ): Promise<R> => {
-    const planGated = (cc: ProtectedCtx) => withCapability(cc, capability, loadSubs, operation);
-    return membership ? withMembership(c, membership, loadRole, planGated) : planGated(c);
-  };
-
   try {
-    if (isMock) {
-      /*
-        The mock branch takes NO host step, and that is the same rule
-        `MOCK_MEMBERSHIP_ROLE` follows: if identity is a fixture, its attributes
-        are too. Host scoping is a statement about a real account's real rows in
-        the `member` table, and the mock has none to intersect with — a mock that
-        adopted the host org would be granting itself a district on the strength
-        of a URL, which is the exact move this step exists to refuse. Dev on
-        `localhost` names no district anyway, so this changes nothing there.
-      */
-      ctxKind = ctxKindOf(MOCK_CTX);
-      const loadMock: LoadSubscriptions = options.loadSubscriptions ?? (async () => MOCK_SUBSCRIPTIONS);
-      const loadMockRole: LoadMembershipRole =
-        options.loadMembershipRole ?? (async () => MOCK_MEMBERSHIP_ROLE);
-      const result = await gated(MOCK_CTX, loadMockRole, loadMock);
-      outcome = 'ok';
-      return result;
-    }
-
-    const session = await auth.api.getSession({ headers });
-    if (!session) throw new Error('Unauthenticated');
-
-    const user = session.user as { id: string; guardianManaged?: boolean; orgId?: string };
-    /*
-      The session's own scope. It is a STARTING POINT, not the answer: `orgId`
-      here is what the account defaults to, which is a value the caller carries
-      and can be stale, multi-valued or — in the case this step was written for —
-      simply not the district whose address they are standing at.
-    */
-    const sessionCtx: ProtectedCtx = {
-      learnerId: user.id,
-      isLearner: !!user.guardianManaged,
-      orgId: user.orgId,
-    };
-    // Recorded before the host step so a host refusal is still attributed to the
-    // kind of caller it refused; re-derived below once the org is settled.
-    ctxKind = ctxKindOf(sessionCtx);
-
-    /*
-      The host step: the address the request arrived at wins over the session's
-      own org claim. A district-shaped host narrows the context to that district
-      and refuses the operation if the caller has no role there; an `app.`,
-      `admin.` or preview host carries no tenant and leaves the session scope as
-      the starting point. The reader is a port so tests can inject a fixture.
-    */
-    const host = options.loadTenantOrgId
-      ? await resolveHostTenant(headers, options.loadTenantOrgId)
-      : await resolveHostTenant(headers);
-    if (host.kind === 'unresolved') throw new HostTenantDenied(host.slug);
-    const hostCtx: ProtectedCtx = {
-      ...sessionCtx,
-      orgId: host.kind === 'org' ? host.orgId : sessionCtx.orgId,
-    };
-
-    const load: LoadSubscriptions =
-      options.loadSubscriptions ??
-      /*
-        Read once per operation and never cached across requests: a subscription
-        that lapsed, or a card that just cleared, has to take effect on the next
-        call rather than whenever a process happens to recycle.
-      */
-      ((c) => readSubscriptions(auth, billingReferenceFor(c)));
-
-    /*
-      Both ids off `ctx`, never off input — the role is the acting user's role
-      in the org their SESSION is scoped to, which is what makes a posted org
-      id worthless here.
-    */
-    const loadRole: LoadMembershipRole =
-      options.loadMembershipRole ??
-      ((c) => (c.orgId ? readMembershipRole(auth, c.orgId, c.learnerId) : Promise.resolve(null)));
-
-    let membershipRole: MembershipRole | undefined;
-    if (host.kind === 'org') {
-      const held = await loadRole(hostCtx);
-      if (held === null) throw new HostTenantDenied(host.orgId);
-      membershipRole = held;
-    }
-
-    const opLoadRole: LoadMembershipRole = async (c) => {
-      if (c === hostCtx && membershipRole !== undefined) return membershipRole;
-      return loadRole(c);
-    };
-
-    const heldRole = await opLoadRole(hostCtx);
-
-    if (options.requiresInstitution) {
-      const reader = options.loadOrgKind ?? orgKindReader;
-      const orgKind = reader ? await reader(hostCtx) : null;
-      const roleKind = roleForOrganizationRoleAndKind(heldRole, orgKind ?? undefined);
-      requirePermission(
-        roleKind,
-        options.requiresInstitution.scope,
-        options.requiresInstitution.resource,
-        options.requiresInstitution.action,
-        () => undefined,
+    let result: R;
+    if (!platform) {
+      if (!headers || !operation) throw new Error('Missing session operation');
+      result = await sessionOperation(
+        source,
+        headers,
+        operation,
+        options,
+        (kind) => {
+          ctxKind = kind;
+        },
       );
+    } else {
+      // A closed source union owns each guard. No caller can provide a context,
+      // actor, scope, generic authorization callback or test bypass here.
+      switch (source.source) {
+        case 'payload-internal': {
+          if (source.action !== 'read' && source.action !== 'write')
+            throw new MarketingError('Unsupported internal operation.', 403);
+          const ctx = marketingInternalContext(
+            source.request,
+            source.action === 'write',
+          );
+          ctxKind = ctx.kind;
+          result = await source.operation(ctx);
+          break;
+        }
+        case 'public-inquiry': {
+          const ctx = marketingPublicContext(source.request);
+          ctxKind = ctx.kind;
+          result = await source.operation(ctx);
+          break;
+        }
+        case 'marketing-cron': {
+          const ctx = marketingCronContext(source.request);
+          ctxKind = ctx.kind;
+          result = await source.operation(ctx);
+          break;
+        }
+        case 'billing-callback': {
+          const ctx = marketingBillingContext(source.payment);
+          ctxKind = ctx.kind;
+          result = await source.operation(ctx);
+          break;
+        }
+        default:
+          throw new Error('Unrecognized operation source');
+      }
     }
-
-    const result = await gated(hostCtx, opLoadRole, load);
     outcome = 'ok';
     return result;
   } catch (error) {
-    /*
-      A refusal is not a failure. `denied` and `unauthenticated` are the block
-      doing its job, and folding them into `error` would burn SLO-3's budget
-      every time a lapsed card is correctly turned away (slo.md §4.4) — or, for
-      the role gate, every time a family session is correctly turned away from
-      a staff surface.
-    */
     outcome =
       error instanceof CapabilityDenied ||
       error instanceof MembershipDenied ||
-      error instanceof InstitutionPermissionDenied
+      error instanceof InstitutionPermissionDenied ||
+      (error instanceof MarketingError && error.status === 403)
         ? 'denied'
-        : error instanceof Error && error.message === 'Unauthenticated'
+        : (error instanceof Error && error.message === 'Unauthenticated') ||
+            (error instanceof MarketingError && error.status === 401)
           ? 'unauthenticated'
           : 'error';
     throw error;
   } finally {
     recordOperation(
       operationRecord({
-        descriptor: options.telemetry,
+        descriptor,
         capability,
         ctxKind,
         outcome,
         latencyMs: performance.now() - startedAt,
-        authMode: isMock ? 'mock' : 'session',
+        authMode,
       }),
     );
   }
+}
+
+async function sessionOperation<R>(
+  auth: Auth,
+  headers: Headers,
+  operation: (ctx: ProtectedCtx) => Promise<R>,
+  options: ProtectedOperationOptions,
+  reportContext: (kind: OperationCtxKind) => void,
+): Promise<R> {
+  const capability = options.requires ?? 'practise';
+  const isMock = isMockAuth();
+  const membership = options.requiresMembership;
+  const gated = (
+    c: ProtectedCtx,
+    loadRole: LoadMembershipRole,
+    loadSubs: LoadSubscriptions,
+  ): Promise<R> => {
+    const planGated = (cc: ProtectedCtx) =>
+      withCapability(cc, capability, loadSubs, operation);
+    return membership
+      ? withMembership(c, membership, loadRole, planGated)
+      : planGated(c);
+  };
+
+  if (isMock) {
+    /*
+      The mock branch takes NO host step, and that is the same rule
+      `MOCK_MEMBERSHIP_ROLE` follows: if identity is a fixture, its attributes
+      are too. Host scoping is a statement about a real account's real rows in
+      the `member` table, and the mock has none to intersect with — a mock that
+      adopted the host org would be granting itself a district on the strength
+      of a URL, which is the exact move this step exists to refuse. Dev on
+      `localhost` names no district anyway, so this changes nothing there.
+    */
+    reportContext(ctxKindOf(MOCK_CTX));
+    const loadMock: LoadSubscriptions =
+      options.loadSubscriptions ?? (async () => MOCK_SUBSCRIPTIONS);
+    const loadMockRole: LoadMembershipRole =
+      options.loadMembershipRole ?? (async () => MOCK_MEMBERSHIP_ROLE);
+    const result = await gated(MOCK_CTX, loadMockRole, loadMock);
+    return result;
+  }
+
+  const session = await auth.api.getSession({ headers });
+  if (!session) throw new Error('Unauthenticated');
+
+  const user = session.user as {
+    id: string;
+    guardianManaged?: boolean;
+    orgId?: string;
+  };
+  /*
+    The session's own scope. It is a STARTING POINT, not the answer: `orgId`
+    here is what the account defaults to, which is a value the caller carries
+    and can be stale, multi-valued or — in the case this step was written for —
+    simply not the district whose address they are standing at.
+  */
+  const sessionCtx: ProtectedCtx = {
+    learnerId: user.id,
+    isLearner: !!user.guardianManaged,
+    orgId: user.orgId,
+  };
+  // Recorded before the host step so a host refusal is still attributed to the
+  // kind of caller it refused; re-derived below once the org is settled.
+  reportContext(ctxKindOf(sessionCtx));
+
+  /*
+    The host step: the address the request arrived at wins over the session's
+    own org claim. A district-shaped host narrows the context to that district
+    and refuses the operation if the caller has no role there; an `app.`,
+    `admin.` or preview host carries no tenant and leaves the session scope as
+    the starting point. The reader is a port so tests can inject a fixture.
+  */
+  const host = options.loadTenantOrgId
+    ? await resolveHostTenant(headers, options.loadTenantOrgId)
+    : await resolveHostTenant(headers);
+  if (host.kind === 'unresolved') throw new HostTenantDenied(host.slug);
+  const hostCtx: ProtectedCtx = {
+    ...sessionCtx,
+    orgId: host.kind === 'org' ? host.orgId : sessionCtx.orgId,
+  };
+
+  // Internal Payload/public/machine operations never initialize the customer auth module.
+  const { readSubscriptions, readMembershipRole } =
+    await import('@acme/auth/server');
+  const load: LoadSubscriptions =
+    options.loadSubscriptions ??
+    /*
+      Read once per operation and never cached across requests: a subscription
+      that lapsed, or a card that just cleared, has to take effect on the next
+      call rather than whenever a process happens to recycle.
+    */
+    ((c) => readSubscriptions(auth, billingReferenceFor(c)));
+
+  /*
+    Both ids off `ctx`, never off input — the role is the acting user's role
+    in the org their SESSION is scoped to, which is what makes a posted org
+    id worthless here.
+  */
+  const loadRole: LoadMembershipRole =
+    options.loadMembershipRole ??
+    ((c) =>
+      c.orgId
+        ? readMembershipRole(auth, c.orgId, c.learnerId)
+        : Promise.resolve(null));
+
+  let membershipRole: MembershipRole | undefined;
+  if (host.kind === 'org') {
+    const held = await loadRole(hostCtx);
+    if (held === null) throw new HostTenantDenied(host.orgId);
+    membershipRole = held;
+  }
+
+  const opLoadRole: LoadMembershipRole = async (c) => {
+    if (c === hostCtx && membershipRole !== undefined) return membershipRole;
+    return loadRole(c);
+  };
+
+  const heldRole = await opLoadRole(hostCtx);
+
+  if (options.requiresInstitution) {
+    const reader = options.loadOrgKind ?? orgKindReader;
+    const orgKind = reader ? await reader(hostCtx) : null;
+    const roleKind = roleForOrganizationRoleAndKind(
+      heldRole,
+      orgKind ?? undefined,
+    );
+    requirePermission(
+      roleKind,
+      options.requiresInstitution.scope,
+      options.requiresInstitution.resource,
+      options.requiresInstitution.action,
+      () => undefined,
+    );
+  }
+
+  const result = await gated(hostCtx, opLoadRole, load);
+  return result;
 }

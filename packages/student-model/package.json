@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@acme/safety": "workspace:*",
-    "@cortex-js/compute-engine": "0.128.12"
+    "@cortex-js/compute-engine": "0.201.3"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

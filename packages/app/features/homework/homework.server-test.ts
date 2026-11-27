@@ -24,6 +24,7 @@ import {
   listSubmissionsFor,
   loadSubmissionFor,
   reviseQuestionFor,
+  startSubmissionFor,
   type AdvanceOutcome,
   type HomeworkEvidence,
   type HomeworkPorts,
@@ -59,6 +60,10 @@ function viewFrom(row: NewSubmissionRow): HomeworkSubmissionView {
     text: q.text,
     revisions: q.revisions,
     crop: q.crop,
+    priorWork: q.priorWork,
+    priorWorkConfidence: null,
+    priorWorkSource: q.priorWorkRevisions.length ? 'guardian' : null,
+    priorWorkRevisions: q.priorWorkRevisions,
     outcome: 'unattempted',
     attempts: 0,
     hintsUsed: 0,
@@ -140,6 +145,17 @@ function fakePorts(wards: Map<string, string[]>) {
       if (!question) return null;
       writes.push(`revise:${questionId}`);
       return { ...question, currentRevision: revision.revision, text: revision.text, revisions: [...question.revisions, revision] };
+    },
+    revisePriorWork: async (learner, id, questionId, revision) => {
+      const row = rows.get(id);
+      const question = row?.learnerAuthId === learner ? row.questions.find((q) => q.questionId === questionId) : undefined;
+      if (!row || !question) return { kind: 'not-found' };
+      if (row.tutorSessionId || row.status === 'in-progress') return { kind: 'locked' };
+      const updated = { ...question, priorWork: revision.priorWork, priorWorkSource: 'guardian' as const,
+        priorWorkConfidence: null, priorWorkRevisions: [...(question.priorWorkRevisions ?? []), revision] };
+      rows.set(id, { ...row, questions: row.questions.map((q) => q.questionId === questionId ? updated : q) });
+      writes.push(`prior-work:${questionId}`);
+      return { kind: 'revised', question: updated };
     },
     startSubmission: async () => null,
     advanceSubmission: async () => {
@@ -263,5 +279,90 @@ describe('homework evidence', () => {
     assert.equal(last.evidence.revision, revised.currentRevision);
     assert.equal(last.evidence.evaluationReady, false);
     assert.notEqual(revised.currentRevision, created.submission.questions[0]!.currentRevision);
+  });
+});
+
+describe('guardian prior-work marks', () => {
+  it('records a guardian mark separately from transcription and issued evidence', async () => {
+    const fake = fakePorts(new Map([['guardian_1', ['ada_1']]]));
+    const created = await createSubmissionFor(ada, body('sub-marks-001'), fake.ports, NOW);
+    const original = created.submission.questions[0]!;
+    const revised = await reviseQuestionFor(guardian, 'sub-marks-001', original.questionId,
+      { priorWork: 'complete', author: 'guardian' }, fake.ports, NOW);
+    assert.equal(revised.priorWork, 'complete');
+    assert.equal(revised.currentRevision, original.currentRevision);
+    assert.deepEqual(revised.revisions, original.revisions);
+    assert.equal(revised.outcome, 'unattempted');
+    assert.equal(revised.priorWorkConfidence, null);
+    assert.deepEqual(revised.priorWorkRevisions, [{ priorWork: 'complete', source: 'guardian', createdAt: NOW.toISOString() }]);
+    assert.equal(fake.issued.length, 2, 'marking must not issue transcription evidence');
+  });
+
+  it('refuses a learner claiming guardian authorship and another family', async () => {
+    const fake = fakePorts(new Map());
+    const created = await createSubmissionFor(ada, body('sub-marks-002'), fake.ports, NOW);
+    const question = created.submission.questions[0]!;
+    const mark = { priorWork: 'complete', author: 'guardian' };
+    await assert.rejects(reviseQuestionFor(ada, 'sub-marks-002', question.questionId, mark, fake.ports, NOW), /Forbidden/);
+    await assert.rejects(reviseQuestionFor(guardian, 'sub-marks-002', question.questionId, mark, fake.ports, NOW), /Forbidden/);
+    await assert.rejects(createSubmissionFor(ada, {
+      ...body('sub-marks-003'), questions: [{ ...body('unused').questions[0], priorWork: 'complete' }],
+    }, fake.ports, NOW), /Forbidden/);
+    assert.deepEqual(fake.writes, []);
+  });
+
+  it('accepts a guardian initial mark with server-owned source and attribution', async () => {
+    const fake = fakePorts(new Map([['guardian_1', ['ada_1']]]));
+    const created = await createSubmissionFor(guardian, {
+      ...body('sub-marks-004', 'ada_1'), questions: [{ ...body('unused').questions[0], priorWork: 'complete', priorWorkSource: 'detected' }],
+    }, fake.ports, NOW);
+    const question = created.submission.questions[0]!;
+    assert.equal(question.priorWork, 'complete');
+    assert.equal(question.priorWorkSource, 'guardian');
+    assert.equal(question.priorWorkRevisions?.[0]?.source, 'guardian');
+  });
+
+  it('returns the repository refusal when start won the revision race', async () => {
+    const fake = fakePorts(new Map([['guardian_1', ['ada_1']]]));
+    const created = await createSubmissionFor(ada, body('sub-marks-005'), fake.ports, NOW);
+    fake.rows.set('sub-marks-005', { ...created.submission, status: 'in-progress', tutorSessionId: 'running-session' });
+    await assert.rejects(reviseQuestionFor(guardian, 'sub-marks-005', created.submission.questions[0]!.questionId,
+      { priorWork: 'complete', author: 'guardian' }, fake.ports, NOW), /before tutoring starts/);
+    assert.deepEqual(fake.writes, []);
+  });
+
+  it('rejects invalid marks and combined transcription/mark edits', async () => {
+    const fake = fakePorts(new Map([['guardian_1', ['ada_1']]]));
+    const created = await createSubmissionFor(ada, body('sub-marks-006'), fake.ports, NOW);
+    const questionId = created.submission.questions[0]!.questionId;
+    await assert.rejects(reviseQuestionFor(guardian, 'sub-marks-006', questionId,
+      { priorWork: 'correct', author: 'guardian' }, fake.ports, NOW), /priorWork/);
+    await assert.rejects(reviseQuestionFor(guardian, 'sub-marks-006', questionId,
+      { text: 'changed', priorWork: 'complete', author: 'guardian' }, fake.ports, NOW), /separately/);
+    assert.deepEqual(fake.writes, []);
+  });
+});
+
+
+describe('homework tutor-session resume', () => {
+  it('passes the new session to the scoped writer and preserves its existing cursor', async () => {
+    const fake = fakePorts(new Map());
+    const created = await createSubmissionFor(ada, body('sub-resume-001'), fake.ports, NOW);
+    const resumed: HomeworkSubmissionView = {
+      ...created.submission, status: 'in-progress', currentIndex: 1,
+      currentQuestionId: created.submission.questions[1]!.questionId, tutorSessionId: 'new-session',
+    };
+    const calls: string[][] = [];
+    const ports: HomeworkPorts = { ...fake.ports, startSubmission: async (learner, submissionId, sessionId) => {
+      calls.push([learner, submissionId, sessionId]);
+      return resumed;
+    } };
+    const result = await startSubmissionFor(ada, 'sub-resume-001', { tutorSessionId: 'new-session' }, ports);
+    assert.deepEqual(calls, [['ada_1', 'sub-resume-001', 'new-session']]);
+    assert.equal(result.currentIndex, 1);
+    assert.equal(result.currentQuestionId, created.submission.questions[1]!.questionId);
+    assert.equal(result.tutorSessionId, 'new-session');
+    await assert.rejects(startSubmissionFor(ben, 'sub-resume-001', { tutorSessionId: 'foreign' }, ports), /Forbidden/);
+    assert.equal(calls.length, 1, 'a foreign learner must never reach the writer');
   });
 });

@@ -41,15 +41,17 @@ import type {
   LoadWardProfile,
   PracticeItem,
   PracticeSetView,
+  PriorWorkRevision,
+  ReviseHomeworkPriorWork,
   ProtectedCtx,
   QuestionCrop,
-  QuestionOutcome,
   QuestionRevision,
   ReviseHomeworkQuestion,
   StartHomeworkSubmission,
   SubmissionStatus,
 } from '@acme/app/server';
 import { auth } from './auth';
+import { canRevisePriorWork, homeworkQuestionCounts, nextUndoneIndex } from '@acme/app/server';
 import { issueEduQuestion } from './edu.repository';
 import { loadGradeBand } from './student-model.repository';
 import { loadGuardianWards } from './summary.repository';
@@ -96,6 +98,14 @@ const asItems = (value: unknown): PracticeItem[] =>
       typeof item === 'object' && item !== null && typeof (item as PracticeItem).id === 'string',
   );
 
+const asPriorWorkRevisions = (value: unknown): PriorWorkRevision[] =>
+  asArray(value).filter((item): item is PriorWorkRevision =>
+    typeof item === 'object' && item !== null &&
+    (item as PriorWorkRevision).source === 'guardian' &&
+    typeof (item as PriorWorkRevision).createdAt === 'string' &&
+    ['none', 'partial', 'complete'].includes((item as PriorWorkRevision).priorWork),
+  );
+
 function questionView(row: HomeworkQuestion): HomeworkQuestionView {
   return {
     questionId: row.questionId,
@@ -106,6 +116,10 @@ function questionView(row: HomeworkQuestion): HomeworkQuestionView {
     text: row.text,
     revisions: asRevisions(row.revisions),
     crop: asCrop(row.crop, row.cropExpiresAt),
+    priorWork: row.priorWork ?? 'none',
+    priorWorkConfidence: row.priorWorkConfidence ?? null,
+    priorWorkSource: row.priorWorkSource ?? null,
+    priorWorkRevisions: asPriorWorkRevisions(row.priorWorkRevisions),
     outcome: row.outcome,
     attempts: Number(row.attempts),
     hintsUsed: Number(row.hintsUsed),
@@ -252,15 +266,6 @@ export async function loadSubmissionByTutorSession(
   });
 }
 
-const EMPTY_OUTCOMES = (): Record<QuestionOutcome, number> => ({
-  unattempted: 0,
-  skipped: 0,
-  attempted: 0,
-  'supported-with-hints': 0,
-  'solved-independently': 0,
-  unresolved: 0,
-});
-
 export const listSubmissions: ListHomeworkSubmissions = async (learnerAuthId) =>
   withPayload(async (payload) => {
     const { docs } = await payload.find({
@@ -279,19 +284,19 @@ export const listSubmissions: ListHomeworkSubmissions = async (learnerAuthId) =>
         learnerAuthId: { equals: learnerAuthId },
         submissionId: { in: docs.map((doc) => doc.submissionId) },
       },
-      select: { submissionId: true, outcome: true },
+      select: { submissionId: true, outcome: true, priorWork: true },
       pagination: false,
       depth: 0,
     });
-    const tallies = new Map<string, Record<QuestionOutcome, number>>();
+    const grouped = new Map<string, typeof questions.docs>();
     for (const question of questions.docs) {
-      const tally = tallies.get(question.submissionId) ?? EMPTY_OUTCOMES();
-      tally[question.outcome] += 1;
-      tallies.set(question.submissionId, tally);
+      const group = grouped.get(question.submissionId) ?? [];
+      group.push(question);
+      grouped.set(question.submissionId, group);
     }
 
     return docs.map((row): HomeworkSubmissionSummary => {
-      const outcomes = tallies.get(row.submissionId) ?? EMPTY_OUTCOMES();
+      const counts = homeworkQuestionCounts(grouped.get(row.submissionId) ?? []);
       return {
         submissionId: row.submissionId,
         learnerAuthId: row.learnerAuthId,
@@ -299,9 +304,10 @@ export const listSubmissions: ListHomeworkSubmissions = async (learnerAuthId) =>
         title: row.title,
         localDate: row.localDate,
         status: row.status,
-        questionCount: Object.values(outcomes).reduce((sum, n) => sum + n, 0),
+        questionCount: counts.questionCount,
         currentIndex: Number(row.currentIndex),
-        outcomes,
+        alreadyDoneCount: counts.alreadyDoneCount,
+        outcomes: counts.outcomes,
         tutorSessionId: row.tutorSessionId ?? null,
         createdAt: row.createdAt,
       };
@@ -328,7 +334,8 @@ export const createSubmission: CreateHomeworkSubmission = async (_ctx, row) =>
     const transactionID = (await payload.db.beginTransaction()) ?? undefined;
     const req = transactionID === undefined ? {} : { req: { transactionID } };
     try {
-      const first = row.questions[0];
+      const firstIndex = nextUndoneIndex(row.questions);
+      const first = row.questions[firstIndex < 0 ? 0 : firstIndex];
       if (!first) throw new Error('A submission needs at least one question');
       const submission = await payload.create({
         collection: 'homeworkSubmissions',
@@ -341,10 +348,10 @@ export const createSubmission: CreateHomeworkSubmission = async (_ctx, row) =>
           instructions: row.instructions,
           localDate: row.localDate,
           // The questions arrive confirmed, so extraction is over and Natalie
-          // may open on the first one.
-          status: 'ready',
+          // may open on the first question still needing work.
+          status: firstIndex < 0 ? 'complete' : 'ready',
           pipelineStatus: 'extracted',
-          currentIndex: 0,
+          currentIndex: firstIndex < 0 ? 0 : firstIndex,
           currentQuestionId: first.questionId,
         },
         depth: 0,
@@ -375,6 +382,10 @@ export const createSubmission: CreateHomeworkSubmission = async (_ctx, row) =>
                       expiresAt: question.crop.expiresAt,
                     },
               cropExpiresAt: question.crop?.expiresAt ?? null,
+              priorWork: question.priorWork,
+              priorWorkConfidence: null,
+              priorWorkSource: question.priorWorkRevisions.length > 0 ? 'guardian' : null,
+              priorWorkRevisions: question.priorWorkRevisions.map((revision) => ({ ...revision })),
               outcome: 'unattempted',
               attempts: 0,
               hintsUsed: 0,
@@ -433,20 +444,122 @@ export const reviseQuestion: ReviseHomeworkQuestion = async (learnerAuthId, subm
 
 export const startSubmission: StartHomeworkSubmission = async (learnerAuthId, submissionId, tutorSessionId) =>
   withPayload(async (payload) => {
-    const row = await findSubmission(payload, learnerAuthId, submissionId);
-    if (!row) return null;
-    const status: SubmissionStatus = row.status === 'ready' || row.status === 'reviewing' ? 'in-progress' : row.status;
-    const updated = await payload.update({
-      collection: 'homeworkSubmissions',
-      id: row.id,
-      data: { tutorSessionId, status },
-      depth: 0,
-    });
-    return submissionView(updated, await findQuestions(payload, learnerAuthId, submissionId));
+    const transactionID = await payload.db.beginTransaction();
+    if (transactionID === null) throw new Error('start requires a database transaction');
+    const req = { req: { transactionID } };
+    try {
+      await lockSubmission(payload, transactionID, learnerAuthId, submissionId);
+      const row = await findSubmission(payload, learnerAuthId, submissionId, transactionID);
+      if (!row) {
+        await payload.db.rollbackTransaction(transactionID);
+        return null;
+      }
+      const questions = await findQuestions(payload, learnerAuthId, submissionId, transactionID);
+      // Resume may bind a new tutor session, but never resets a running cursor.
+      if (row.status === 'in-progress') {
+        const updated = row.tutorSessionId === tutorSessionId ? row : await payload.update({
+          collection: 'homeworkSubmissions',
+          id: row.id,
+          data: { tutorSessionId },
+          depth: 0,
+          ...req,
+        });
+        await payload.db.commitTransaction(transactionID);
+        return submissionView(updated, questions);
+      }
+      if (row.status === 'abandoned' || (row.status === 'complete' && row.tutorSessionId)) {
+        await payload.db.commitTransaction(transactionID);
+        return submissionView(row, questions);
+      }
+      const firstIndex = nextUndoneIndex(questions);
+      const first = questions[firstIndex];
+      const updated = await payload.update({
+        collection: 'homeworkSubmissions',
+        id: row.id,
+        data: first
+          ? { tutorSessionId, status: 'in-progress', currentIndex: firstIndex, currentQuestionId: first.questionId }
+          : { status: 'complete' },
+        depth: 0,
+        ...req,
+      });
+      await payload.db.commitTransaction(transactionID);
+      return submissionView(updated, questions);
+    } catch (error) {
+      await payload.db.rollbackTransaction(transactionID);
+      throw error;
+    }
+  });
+
+/** Guardian marks serialize with start/advance; this fallback allows prestart edits only. */
+export const revisePriorWork: ReviseHomeworkPriorWork = async (learnerAuthId, submissionId, questionId, revision) =>
+  withPayload(async (payload) => {
+    const transactionID = await payload.db.beginTransaction();
+    if (transactionID === null) throw new Error('prior-work revision requires a database transaction');
+    const req = { req: { transactionID } };
+    try {
+      await lockSubmission(payload, transactionID, learnerAuthId, submissionId);
+      const row = await findSubmission(payload, learnerAuthId, submissionId, transactionID);
+      if (!row) {
+        await payload.db.rollbackTransaction(transactionID);
+        return { kind: 'not-found' };
+      }
+      const questions = await findQuestions(payload, learnerAuthId, submissionId, transactionID);
+      const question = questions.find((candidate) => candidate.questionId === questionId);
+      if (!question) {
+        await payload.db.rollbackTransaction(transactionID);
+        return { kind: 'not-found' };
+      }
+      if (!canRevisePriorWork(row, questions)) {
+        await payload.db.rollbackTransaction(transactionID);
+        return { kind: 'locked' };
+      }
+      const updated = await payload.update({
+        collection: 'homeworkQuestions',
+        id: question.id,
+        data: {
+          priorWork: revision.priorWork,
+          priorWorkSource: 'guardian',
+          priorWorkConfidence: null,
+          priorWorkRevisions: [...asPriorWorkRevisions(question.priorWorkRevisions), revision],
+        },
+        depth: 0,
+        ...req,
+      });
+      const revisedQuestions = questions.map((candidate) => candidate.id === question.id ? updated : candidate);
+      const firstIndex = nextUndoneIndex(revisedQuestions);
+      const first = revisedQuestions[firstIndex];
+      await payload.update({
+        collection: 'homeworkSubmissions',
+        id: row.id,
+        data: first
+          ? { status: 'ready', currentIndex: firstIndex, currentQuestionId: first.questionId }
+          : { status: 'complete' },
+        depth: 0,
+        ...req,
+      });
+      await payload.db.commitTransaction(transactionID);
+      return { kind: 'revised', question: questionView(updated) };
+    } catch (error) {
+      await payload.db.rollbackTransaction(transactionID);
+      throw error;
+    }
   });
 
 interface DrizzleSessions {
   sessions: Record<string, { db: { execute: (query: ReturnType<typeof sql>) => Promise<unknown> } }>;
+}
+
+async function lockSubmission(
+  payload: Payload,
+  transactionID: string | number,
+  learnerAuthId: string,
+  submissionId: string,
+): Promise<void> {
+  const session = (payload.db as unknown as DrizzleSessions).sessions[String(transactionID)];
+  if (!session) throw new Error('transaction session missing');
+  await session.db.execute(
+    sql`select 1 from "payload"."homework_submissions" where "submission_id" = ${submissionId} and "learner_auth_id" = ${learnerAuthId} for update`,
+  );
 }
 
 export const advanceSubmission: AdvanceHomeworkSubmission = async (learnerAuthId, submissionId, input, at) =>
@@ -456,11 +569,7 @@ export const advanceSubmission: AdvanceHomeworkSubmission = async (learnerAuthId
     const req = { req: { transactionID } };
     try {
       // Serialises concurrent advances on this one row (see header).
-      const session = (payload.db as unknown as DrizzleSessions).sessions[String(transactionID)];
-      if (!session) throw new Error('transaction session missing');
-      await session.db.execute(
-        sql`select 1 from "payload"."homework_submissions" where "submission_id" = ${submissionId} and "learner_auth_id" = ${learnerAuthId} for update`,
-      );
+      await lockSubmission(payload, transactionID, learnerAuthId, submissionId);
 
       const row = await findSubmission(payload, learnerAuthId, submissionId, transactionID);
       if (!row) {
@@ -497,7 +606,7 @@ export const advanceSubmission: AdvanceHomeworkSubmission = async (learnerAuthId
         ...req,
       });
 
-      const nextIndex = input.expectedIndex + 1;
+      const nextIndex = nextUndoneIndex(questions, input.expectedIndex);
       const next = questions[nextIndex];
       const updated = await payload.update({
         collection: 'homeworkSubmissions',

@@ -1,0 +1,28 @@
+{
+  "workspace": "/Users/mikevocalz/MoyoLearn",
+  "baseline": "599456a794ec54aee8444488043c6683a67f7d4a",
+  "branch": "main",
+  "inspection": "argent-environment-inspector subagent ran gather-workspace-data on apps/mobile",
+  "is_react_native": true,
+  "is_expo": true,
+  "is_native_ios": false,
+  "is_native_android": false,
+  "package_manager": "pnpm@10.32.1",
+  "node": "26.13.0",
+  "root_node_engine": "^24.15.0 || ^26.0.0",
+  "memory_note": ".codex/MEMORY.md contains older Node restrictions; current package.json permits Node 26. This snapshot is stored here because .codex is read-only in this session.",
+  "commands": {
+    "metro": "pnpm --filter mobile dev",
+    "quest": "pnpm --filter mobile android:xr",
+    "typecheck": "pnpm typecheck",
+    "lint": "pnpm lint",
+    "tests": "pnpm test",
+    "web_build": "pnpm --filter web build"
+  },
+  "dependencies_installed": false,
+  "reachable_devices": [],
+  "device_inventory": "Argent listed a paired, disconnected physical iPhone and an unbooted ForgeCompletion_API36 AVD; no Quest.",
+  "siblings": ["/Users/mikevocalz/virocore", "/Users/mikevocalz/viro", "/Users/mikevocalz/viro-external"],
+  "preserved_untracked_artifacts": ["vendors/viro-renderer-5a7957d.aar", "vendors/viro-renderer-9d6ab4e.aar", "vendors/viro-renderer-aae4546.aar"],
+  "validation": "Source and environment inspection only; no build, deployed-schema check or physical acceptance run."
+}

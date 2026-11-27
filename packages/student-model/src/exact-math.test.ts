@@ -2,10 +2,30 @@
 // SOT-KEYWORDS: math fractions precision parser injection bounded regression
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { MathJsonExpression } from '@cortex-js/compute-engine/math-json';
 import { evaluateArithmetic } from './evaluate.ts';
 import { checkExactMath, checkMathJson, exactMathTool } from './exact-math.ts';
 import { EXACT_MATH_LIMITS, parseMathExpression, validateMathExpression } from './math-expression.ts';
+
+/** The installed Cortex's own manifest; its `exports` hide `./package.json`, so walk up from the entry. */
+function installedVersion(specifier: string): string {
+  let dir = dirname(fileURLToPath(import.meta.resolve(specifier)));
+  for (;;) {
+    try {
+      const manifest = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { name?: string; version?: string };
+      if (manifest.name === specifier && manifest.version) return manifest.version;
+    } catch {
+      // No manifest at this level; keep walking.
+    }
+    const parent = dirname(dir);
+    if (parent === dir) throw new Error(`no package.json found for ${specifier}`);
+    dir = parent;
+  }
+}
+const INSTALLED_CORTEX_VERSION = installedVersion('@cortex-js/compute-engine');
 
 describe('bounded exact-rational arithmetic', () => {
   for (const [problem, answer] of [
@@ -95,7 +115,10 @@ describe('MathJSON source and executor contract', () => {
     const result = exactMathTool.execute(['Divide', 1, 2], ['Rational', 2, 4], 'revision-7');
     assert.equal(result.status, 'equivalent');
     assert.equal(result.evidenceRevision, 'revision-7');
-    assert.equal(result.engineVersion, '0.128.12');
+    // Held to the INSTALLED package, not a second hardcoded string, so the
+    // recorded provenance cannot drift from the engine that ran.
+    assert.equal(result.engineVersion, INSTALLED_CORTEX_VERSION);
+    assert.equal(exactMathTool.engineVersion, INSTALLED_CORTEX_VERSION);
     assert.equal('expectedAnswer' in result, false);
   });
 

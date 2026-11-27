@@ -24,12 +24,18 @@ jobs:
           xcodebuild -version
           swift --version
       - run: pnpm install --frozen-lockfile
+      - name: Verify runtime acceptance contracts
+        run: node --test tooling/native-runtime-smoke.test.mjs
       - name: Expo XCFramework cache key
         id: expo-key
         run: |
           rn=$(node -p "require('./node_modules/react-native/package.json').version")
+          # The plugin refuses frameworks built from another expo-modules-jsi, so
+          # an Expo patch release must miss the cache rather than restore stale headers.
+          expo=$(node -p "require('./node_modules/expo/package.json').version")
+          jsi=$(node -p "require('./node_modules/expo-modules-jsi/package.json').version")
           xcode=$(xcodebuild -version | head -1 | tr ' ' '-')
-          echo "key=expo-xcframeworks-$rn-$xcode-${{ hashFiles('tooling/expo-prebuilds/**', 'patches/expo-task-manager@*.patch') }}" >> "$GITHUB_OUTPUT"
+          echo "key=expo-xcframeworks-$rn-expo$expo-jsi$jsi-$xcode-${{ hashFiles('tooling/expo-prebuilds/**', 'patches/expo-task-manager@*.patch') }}" >> "$GITHUB_OUTPUT"
       - uses: actions/cache/restore@v4
         id: expo-cache
         with:
@@ -54,10 +60,33 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+      # The runtime checks have run this 7 GB host into swap (run 45663399211:
+      # 72 MB free, 2.5 GB swapped out). Record what holds memory going in.
+      - name: Record host memory before the runtime checks
+        run: |
+          sysctl -n hw.memsize hw.ncpu
+          vm_stat
+          ps -axo rss=,comm= | sort -rn | head -25
+      - name: Execute iPad simulator rendering and lifecycle checks
+        env:
+          MOYO_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node tooling/native-runtime-smoke.mjs --platform ios --app "$RUNNER_TEMP/moyo-derived/Build/Products/Debug-iphonesimulator/Moyo.app" --artifacts "$RUNNER_TEMP/moyo-ios-runtime"
       - name: Summarize build errors
         if: failure()
         run: grep -E "error:|\*\* BUILD" "$RUNNER_TEMP/moyo-ios-build.log" | sort -u | head -80 || true
+      # The diagnostics artifact is the full record; this puts the failing phase
+      # and the tool's own words in the job log, where a reviewer looks first.
+      - name: Show native runtime failure
+        if: failure()
+        run: |
+          dir="$RUNNER_TEMP/moyo-ios-runtime"
+          [ -d "$dir" ] || exit 0
+          tail -n 120 "$dir/runtime.log" || true
+          find "$dir" -name daemon.log -exec tail -n 80 {} \; || true
+          find "$dir" -name runner.log -exec tail -n 120 {} \; || true
+          find "$dir" -name ios-app-log.log -exec tail -n 120 {} \; || true
+          grep -o '"iosFailureDiagnostics":{[^}]*' "$dir/receipt.json" | head -c 2000 || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -67,6 +96,7 @@ jobs:
             ${{ runner.temp }}/expo-work/expo/packages/prebuild-errors-*.log
             ${{ runner.temp }}/moyo-spm.log
             ${{ runner.temp }}/moyo-ios-build.log
+            ${{ runner.temp }}/moyo-ios-runtime
             apps/mobile/ios/build/generated/autolinking/Package.swift
             apps/mobile/ios/build/generated/autolinking/autolinking.json
           if-no-files-found: ignore

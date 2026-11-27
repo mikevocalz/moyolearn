@@ -19,6 +19,9 @@
 // header against a `process.env.*SECRET*`. Not by a name, not by a path
 // allowlist, so `/api/reindex/cron` written next month is seen on the day it is
 // written rather than on the day someone remembers this file.
+// A delegated bearer is also recognized, but only after tracing the original
+// request through the public domain entry, protected-operation dispatch and
+// actual rejecting secret guard. A function name alone is never evidence.
 //
 // Not every machine route needs a public path, and the difference is WHO CALLS
 // IT. `POST /api/media/sweep` and `POST /api/retention/sweep` are bearer routes
@@ -66,6 +69,7 @@
 // SOT-KEYWORDS: machine route bearer secret cron proxy public paths session gate 401 drain sweep health dead man switch
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
+import { sharedMachineSecrets } from './machine-operation-boundary.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
 const WEB = join(ROOT, 'apps/web');
@@ -341,7 +345,11 @@ function bearerSecrets(code) {
 const routes = routeFiles.map((file) => {
   const source = readFileSync(file, 'utf8');
   const code = stripComments(source);
-  const secrets = bearerSecrets(code);
+  const direct = bearerSecrets(code);
+  const shared = direct?.length === 0
+    ? sharedMachineSecrets(source, (path) => readFileSync(join(ROOT, path), 'utf8'))
+    : undefined;
+  const secrets = shared === undefined ? direct : shared;
   return {
     file,
     rel: relative(ROOT, file),
@@ -355,9 +363,9 @@ const routes = routeFiles.map((file) => {
 for (const route of routes) {
   if (route.secrets !== null) continue;
   fail(
-    `${route.rel} — compares the Authorization header against something this gate cannot trace\n` +
-      '    to process.env. Bind the secret first (`const secret = process.env.X_SECRET;`) so the\n' +
-      '    check can tell a machine door from a learner route, because it will not guess.',
+    `${route.rel} — its direct or shared Authorization guard cannot be traced to process.env.\n` +
+      '    Keep a direct bearer binding, or preserve the shared operation import, original request,\n' +
+      '    protected source dispatch and rejecting secret guard. This check will not guess.',
   );
 }
 
@@ -499,7 +507,9 @@ for (const route of machineRoutes) {
 const machineDoors = PUBLIC_PATHS.filter(
   (prefix) =>
     prefix.startsWith('/api/') &&
-    routes.some((route) => coveredBy(prefix, route.path) && defends(route)),
+    // A scheduled door stays in scope even if somebody deletes its guard.
+    (routes.some((route) => coveredBy(prefix, route.path) && defends(route)) ||
+      [...http.paths].some((path) => coveredBy(prefix, path))),
 );
 
 let guarded = 0;

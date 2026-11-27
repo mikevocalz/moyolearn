@@ -16,6 +16,19 @@
 /** Who authored a transcription revision. */
 export type RevisionAuthor = 'ocr' | 'learner' | 'guardian';
 
+/** Work present before tutoring; never a learning outcome or a correctness claim. */
+export type PriorWork = 'none' | 'partial' | 'complete';
+
+/** A guardian-confirmed mark in {@linkcode HomeworkQuestionView.priorWorkRevisions}. */
+export interface PriorWorkRevision {
+  /** Work the guardian saw before tutoring. */
+  readonly priorWork: PriorWork;
+  /** Set by the server after checking guardian access. */
+  readonly source: 'guardian';
+  /** Server timestamp in ISO 8601 format. */
+  readonly createdAt: string;
+}
+
 /** One transcription of one question. Append-only; the newest is current. */
 export interface QuestionRevision {
   readonly revision: string;
@@ -56,6 +69,14 @@ export interface HomeworkQuestionView {
   readonly revisions: readonly QuestionRevision[];
   /** null once the crop expired or when the question was typed. */
   readonly crop: QuestionCrop | null;
+  /** Optional only for caches saved before prior-work marks existed; absent means none. */
+  readonly priorWork?: PriorWork;
+  /** null for guardian marks; no detection confidence is invented. */
+  readonly priorWorkConfidence?: number | null;
+  /** Origin of the current mark, separate from transcription authorship. */
+  readonly priorWorkSource?: 'guardian' | 'detected' | null;
+  /** Append-only mark history; contains no images or guardian identity. */
+  readonly priorWorkRevisions?: readonly PriorWorkRevision[];
   readonly outcome: QuestionOutcome;
   readonly attempts: number;
   readonly hintsUsed: number;
@@ -99,6 +120,8 @@ export interface HomeworkSubmissionSummary {
   readonly localDate: string;
   readonly status: SubmissionStatus;
   readonly questionCount: number;
+  /** Problems marked complete before tutoring; absent in older cached timelines. */
+  readonly alreadyDoneCount?: number;
   readonly currentIndex: number;
   readonly outcomes: Readonly<Record<QuestionOutcome, number>>;
   readonly tutorSessionId: string | null;
@@ -113,6 +136,8 @@ export interface QuestionToCreate {
   readonly text: string;
   readonly confidence: number | null;
   readonly crop: Omit<QuestionCrop, 'expiresAt'> | null;
+  /** Accepted only from an authenticated guardian acting for an active ward. */
+  readonly priorWork?: PriorWork;
 }
 
 export interface CreateSubmissionInput {
@@ -127,10 +152,10 @@ export interface CreateSubmissionInput {
   readonly forLearnerAuthId?: string;
 }
 
-export interface ReviseQuestionInput {
-  readonly text: string;
-  readonly author: Exclude<RevisionAuthor, 'ocr'>;
-}
+/** Revise a transcription or a guardian mark separately; marks are prestart-only. */
+export type ReviseQuestionInput =
+  | { readonly text: string; readonly author: Exclude<RevisionAuthor, 'ocr'> }
+  | { readonly priorWork: PriorWork; readonly author: 'guardian' };
 
 /**
  * Atomic cursor move. The server records `fromQuestionId`'s outcome and

@@ -28,6 +28,7 @@ export const Route = createFileRoute('/contact')({
 function ContactPage() {
   return (
     <SitePage heading={contact.heading} lead={contact.lead}>
+      <PageSection title="Ask about Moyo"><Paragraph className="text-site-body text-moyo-ink"><Link href="/for-schools#request-demo" className="text-moyo-primary underline">Send a school, business, or family inquiry</Link>. Your request is saved so our team can follow up.</Paragraph></PageSection>
       {contact.sections.map((section) => (
         <PageSection key={section.title} title={section.title}>
           {section.title === 'Email' ? (

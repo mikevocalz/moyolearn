@@ -20,6 +20,7 @@ import {
 import { View } from '@acme/ui/primitives';
 import type { OrgBranding } from '@acme/app/server';
 import { authClient } from '@/lib/auth-client';
+import { safeReturnPath } from '@/lib/return-path';
 
 export interface LoginContentProps {
   /** Absent on Moyo's own sign-in; present on a district's branded URL. */
@@ -30,6 +31,12 @@ export interface LoginContentProps {
    * sign-in form with the real action hidden behind a ghost button.
    */
   initialMode?: 'signin' | 'signup';
+  /**
+   * Where a successful SIGN-IN goes instead of `/tutor` — the page the proxy
+   * interrupted, already gated by the route. Re-gated here because a prop is
+   * one refactor away from being a raw query string.
+   */
+  returnTo?: string;
 }
 
 /**
@@ -63,8 +70,9 @@ const confirmNotice = (address: string) =>
 
 const resendFailed = 'We could not send a new link just now. Try again in a moment.';
 
-export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps) {
+export function LoginContent({ org, initialMode = 'signin', returnTo }: LoginContentProps) {
   const router = useRouter();
+  const signInDestination = safeReturnPath(returnTo) ?? '/tutor';
 
   /*
     One store, not six `useState` calls — this codebase's state rule is zustand
@@ -122,7 +130,7 @@ export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps)
         const res = await authClient.signIn.email({
           email: address,
           password,
-          callbackURL: '/tutor',
+          callbackURL: signInDestination,
         });
 
         /*
@@ -141,7 +149,7 @@ export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps)
           patch({ error: res.error.message ?? 'We could not sign you in.' });
           return;
         }
-        router.push('/tutor');
+        router.push(signInDestination);
       } else {
         const res = await authClient.signUp.email({
           email: address,
@@ -192,7 +200,7 @@ export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps)
     try {
       const res = await authClient.sendVerificationEmail({
         email: address,
-        callbackURL: mode === 'signin' ? '/tutor' : '/onboarding/learner',
+        callbackURL: mode === 'signin' ? signInDestination : '/onboarding/learner',
       });
       patch({
         notice: res.error

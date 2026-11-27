@@ -50,9 +50,12 @@ test('classification is written only into the Quest flavor and PICO shared strip
 
 const overlayPath = path.join(__dirname, '../../android/app/src/quest/AndroidManifest.xml');
 const mergedPath = path.join(__dirname, '../../android/app/build/intermediates/merged_manifests/questDebug/processQuestDebugManifest/AndroidManifest.xml');
+const requireMergedManifest = process.env.MOYO_REQUIRE_MERGED_QUEST_MANIFEST === '1';
 test('locally generated Quest overlay and merged APK manifest retain the immersive identifier', {
-  skip: !fs.existsSync(overlayPath) || !fs.existsSync(mergedPath),
+  skip: !requireMergedManifest && (!fs.existsSync(overlayPath) || !fs.existsSync(mergedPath)),
 }, async () => {
+  assert.ok(fs.existsSync(overlayPath), 'Quest overlay must exist after assembly');
+  assert.ok(fs.existsSync(mergedPath), 'Merged Quest manifest must exist after assembly');
   const { AndroidConfig } = require('@expo/config-plugins');
   const overlay = await AndroidConfig.Manifest.readAndroidManifestAsync(overlayPath);
   const merged = await AndroidConfig.Manifest.readAndroidManifestAsync(mergedPath);

@@ -2,7 +2,9 @@
 // The server must resolve readiness and current evidence revision before assessment.
 // SOT: docs/decisions/adr-homework-exact-math.md
 // SOT-KEYWORDS: subject tool fractions arithmetic exact Cortex MathJSON revision
-import { ComputeEngine, isNumber } from '@cortex-js/compute-engine';
+// `version` is the engine's own build constant, so provenance names the Cortex
+// that actually ran rather than a copy that drifts on the next dependency bump.
+import { ComputeEngine, isNumber, version as CORTEX_VERSION } from '@cortex-js/compute-engine';
 import type { MathJsonExpression } from '@cortex-js/compute-engine/math-json';
 import { EXACT_MATH_LIMITS, parseMathExpression, validateMathExpression } from './math-expression.ts';
 
@@ -61,7 +63,7 @@ export const exactMathTool = {
   id: 'fractions',
   version: '1',
   engine: '@cortex-js/compute-engine',
-  engineVersion: '0.128.12',
+  engineVersion: CORTEX_VERSION,
   domain: 'finite-exact-rationals',
   limits: EXACT_MATH_LIMITS,
   execute(problem: MathJsonExpression, answer: MathJsonExpression, evidenceRevision: string) {
@@ -69,7 +71,7 @@ export const exactMathTool = {
       evidenceRevision,
       tool: 'fractions',
       toolVersion: '1',
-      engineVersion: '0.128.12',
+      engineVersion: CORTEX_VERSION,
       domain: 'finite-exact-rationals',
     } as const;
     if (!evidenceRevision.trim()) {

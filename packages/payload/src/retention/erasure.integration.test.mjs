@@ -1700,20 +1700,22 @@ test(
     try {
       await c.query(
         `insert into payload.homework_questions
-           (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text, crop, crop_expires_at)
-         values ($1, $3, $4, 0, 1, 'r1', '1/2 + 1/4', $5::jsonb, now() - interval '1 hour'),
-                ($2, $3, $4, 1, 1, 'r1', '3/4 - 1/8', $5::jsonb, now() + interval '6 days')`,
-        [`${stamp}-old`, `${stamp}-new`, `${stamp}-sub`, learner, crop],
+           (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text, crop, crop_expires_at, prior_work, prior_work_source, prior_work_revisions)
+         values ($1, $3, $4, 0, 1, 'r1', '1/2 + 1/4', $5::jsonb, now() - interval '1 hour', 'complete', 'guardian', $6::jsonb),
+                ($2, $3, $4, 1, 1, 'r1', '3/4 - 1/8', $5::jsonb, now() + interval '6 days', 'none', null, '[]'::jsonb)`,
+        [`${stamp}-old`, `${stamp}-new`, `${stamp}-sub`, learner, crop, JSON.stringify([{ priorWork: 'complete', source: 'guardian', createdAt: new Date().toISOString() }])],
       );
 
       await applySweepSql(c);
 
       const { rows } = await c.query(
-        'select question_id, crop is null as gone from payload.homework_questions where learner_auth_id = $1 order by order_index',
+        'select question_id, crop is null as gone, prior_work, prior_work_revisions from payload.homework_questions where learner_auth_id = $1 order by order_index',
         [learner],
       );
       assert.equal(rows.length, 2, 'the sweep deleted a homework question; it may only null the crop');
       assert.equal(rows[0].gone, true, 'an expired crop survived the sweep');
+      assert.equal(rows[0].prior_work, 'complete', 'crop expiry must preserve the separate mark');
+      assert.equal(rows[0].prior_work_revisions[0].source, 'guardian');
       assert.equal(rows[1].gone, false, 'control failed: a crop inside its seven days was nulled');
     } finally {
       await c.query('delete from payload.homework_questions where learner_auth_id = $1', [learner]);
@@ -1747,9 +1749,9 @@ test(
         );
         await c.query(
           `insert into payload.homework_questions
-             (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text)
-           values ($1::text || '-q', $1::text, $2, 0, 1, 'r1', '1/2 + 1/4')`,
-          [sub, learnerId],
+             (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text, prior_work, prior_work_source, prior_work_revisions)
+           values ($1::text || '-q', $1::text, $2, 0, 1, 'r1', '1/2 + 1/4', 'complete', 'guardian', $3::jsonb)`,
+          [sub, learnerId, JSON.stringify([{ priorWork: 'complete', source: 'guardian', createdAt: new Date().toISOString() }])],
         );
       }
       await c.query(
@@ -1791,6 +1793,68 @@ test(
       await c.query('delete from payload.homework_practice_sets where learner_auth_id = any($1)', [learners]);
       await c.query('delete from payload.homework_questions where learner_auth_id = any($1)', [learners]);
       await c.query('delete from payload.homework_submissions where learner_auth_id = any($1)', [learners]);
+      await c.end();
+    }
+  },
+);
+
+/*
+  CONSENT VERIFICATIONS — the H3 rows `startConsentChallenge` writes before the
+  first email goes out. Each holds the guardian's full address in `sent_to` and
+  names them by a TEXT auth id, so the Better Auth user's deletion cascades to
+  nothing; the `SUBJECT_COLLECTIONS` entry is their only deleter.
+
+  Two halves, like the homework pair above. The first needs no database: it
+  holds the entry itself in `account-deletion.repository.ts`, which is
+  `server-only` and cannot be imported here, so it is read as text. The second
+  runs the entry's statement against real rows — a pending challenge and a
+  recorded consent for the erased guardian, and another guardian's row that
+  must survive.
+*/
+const DELETION_REPOSITORY = resolve(repoRoot, 'apps/web/lib/account-deletion.repository.ts');
+
+test('the account cascade names consent verifications by their guardian', () => {
+  const source = readFileSync(DELETION_REPOSITORY, 'utf8');
+  assert.match(
+    source,
+    /\{\s*collection:\s*'consent-verifications',\s*fields:\s*\['guardianAuthId'\]\s*\}/,
+    'consent-verifications is missing from SUBJECT_COLLECTIONS — a deleted guardian keeps their email on every challenge',
+  );
+});
+
+test(
+  'a guardian erasure takes their pending and recorded consent verifications, and nothing else',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+    const stamp = `consent-erasure-${randomUUID()}`;
+    const guardian = `${stamp}-guardian`;
+    const bystander = `${stamp}-bystander`;
+    const address = `${stamp}@example.com`;
+    try {
+      await c.query(
+        `insert into payload.consent_verifications
+           (guardian_auth_id, method, sent_to, code_hash, sent_at, attempts, code_verified_at, confirmation_sent_at, recorded_at, scope, policy_version, evidence_ref)
+         values ($1, 'email-plus', $3, 'h1', now(), 0, null, null, null, null, null, null),
+                ($1, 'email-plus', $3, 'h2', now(), 1, now(), now(), now(), 'tutoring', '2026-08-01', 'email-plus:ad***@example.com:20261127000000'),
+                ($2, 'email-plus', 'grace@example.com', 'h3', now(), 0, null, null, null, null, null, null)`,
+        [guardian, bystander, address],
+      );
+
+      // The SUBJECT_COLLECTIONS entry for the guardian, as eraseSubjectPayload runs it.
+      await c.query('delete from payload.consent_verifications where guardian_auth_id = $1', [guardian]);
+
+      const left = await c.query(
+        'select count(*)::int n from payload.consent_verifications where guardian_auth_id = $1 or sent_to = $2',
+        [guardian, address],
+      );
+      assert.equal(left.rows[0].n, 0, 'a consent verification outlived the guardian erasure, email address and all');
+      const kept = await c.query('select count(*)::int n from payload.consent_verifications where guardian_auth_id = $1', [bystander]);
+      assert.equal(kept.rows[0].n, 1, 'the guardian erasure reached another guardian’s verification');
+    } finally {
+      await c.query('delete from payload.consent_verifications where guardian_auth_id = any($1)', [[guardian, bystander]]);
       await c.end();
     }
   },

@@ -1,3 +1,5 @@
+// UNAUTHENTICATED BY DESIGN: these pre-baked public marketing clips contain no
+// customer records. The existing fixed-piece allowlist and CORS policy apply.
 // GET /api/marketing/voice/baked/[piece] — anonymous marketing demo set pieces.
 //
 // Returns a signed, TTL'd CDN read for the approved public marketing clips.

@@ -11,7 +11,11 @@
     "./telemetry": "./core/telemetry.ts",
     "./telemetry/mask": "./core/telemetry-mask.ts",
     "./fixtures/*": "./fixtures/*",
-    "./core/*": "./core/*.ts"
+    "./core/*": "./core/*.ts",
+    "./marketing": "./marketing/index.ts",
+    "./marketing-contract": "./marketing/contract.ts",
+    "./marketing-delivery": "./marketing/delivery.ts",
+    "./marketing-access": "./marketing/permissions/marketing.permissions.ts"
   },
   "scripts": {
     "lint": "eslint",
@@ -32,7 +36,7 @@
     "@acme/voice": "workspace:*",
     "@anthropic-ai/sdk": "catalog:",
     "@gsap/react": "catalog:",
-    "@huggingface/transformers": "4.2.0",
+    "@huggingface/transformers": "4.3.2",
     "@reactvision/react-viro": "3.0.0-moyo.4",
     "@shopify/react-native-skia": "catalog:",
     "@tanstack/react-pacer": "catalog:",
@@ -47,18 +51,18 @@
     "@xmldom/xmldom": "0.9.12",
     "date-fns": "catalog:",
     "expo-document-picker": "catalog:",
-    "expo-file-system": "58.0.11",
+    "expo-file-system": "58.0.14",
     "expo-image-manipulator": "catalog:",
     "expo-image-picker": "catalog:",
     "expo-print": "catalog:",
     "expo-sharing": "catalog:",
-    "fflate": "0.8.2",
+    "fflate": "0.8.3",
     "gsap": "catalog:",
     "lenis": "catalog:",
     "lucide-react": "catalog:",
     "lucide-react-native": "catalog:",
     "nitro-core": "catalog:",
-    "pdfjs-dist": "6.3.289",
+    "pdfjs-dist": "6.5.438",
     "qrcode": "catalog:",
     "react-native-audio-api": "catalog:",
     "react-native-enriched-html": "catalog:",
@@ -85,7 +89,9 @@
     "zustand": "catalog:",
     "@nitro-forge/board": "0.1.0-moyo.1",
     "@nitro-forge/bluetooth-v1": "file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz",
-    "@nitro-forge/pen-connect": "file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.10.tgz"
+    "@nitro-forge/pen-connect": "file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.10.tgz",
+    "pg": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
@@ -94,7 +100,8 @@
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
     "typescript": "catalog:",
-    "tsx": "4.22.4"
+    "tsx": "4.23.15",
+    "@types/pg": "catalog:"
   },
   "peerDependencies": {
     "react": "*",

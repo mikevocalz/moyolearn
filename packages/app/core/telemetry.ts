@@ -21,7 +21,7 @@
 //
 // WHAT IT MAY NEVER CARRY. No `learnerId`, no `orgId`, no `userId`, no email,
 // no message or transcript text (CONTRIBUTING.md · The block; slo.md §3.1). `ctxKind`
-// is a four-value enumeration DERIVED from the context; it is the closest this
+// is a closed enumeration DERIVED from the context; it is the closest this
 // record comes to identity and it is deliberately not identifying.
 // SOT: docs/pack/12-systems-design-prompt.md §7 · docs/design/slo.md §2.1 · §7 W-1 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: block telemetry operation record op resource action ctx kind latency outcome structured sink attributed auth mode
@@ -88,10 +88,11 @@ export interface OperationDescriptor {
 export type OperationOutcome = 'ok' | 'denied' | 'unauthenticated' | 'error';
 
 /**
- * `ctx.kind` from doc 12 §7, derived rather than stored. Three real kinds plus
- * `anonymous`, which is the only kind an unauthenticated attempt has.
+ * `ctx.kind` from doc 12 §7, derived rather than stored. Customer, internal and
+ * machine contexts stay distinct; an unauthenticated attempt is `anonymous`.
  */
-export type OperationCtxKind = 'learner' | 'guardian' | 'org' | 'anonymous';
+export type OperationCtxKind =
+  'learner' | 'guardian' | 'org' | 'anonymous' | 'internal-admin' | 'machine';
 
 /**
  * Which branch of `protectedOperation` ran. slo.md §2.1 requires this: the mock
@@ -99,7 +100,17 @@ export type OperationCtxKind = 'learner' | 'guardian' | 'org' | 'anonymous';
  * that mode measures nothing and has to be excludable at query time rather than
  * silently averaged into a production p95.
  */
-export type OperationAuthMode = 'mock' | 'session';
+export type OperationAuthMode =
+  | 'mock'
+  | 'session'
+  | 'payload-internal'
+  | 'public-inquiry'
+  | 'marketing-cron'
+  | 'billing-callback'
+  | 'invalid-source';
+
+/** Platform sales uses its own authorization, never a fabricated customer plan. */
+export type OperationCapability = Capability | 'platform-sales';
 
 export interface OperationRecord {
   /** Discriminator, so a log drain can select these lines out of everything else. */
@@ -109,7 +120,7 @@ export interface OperationRecord {
   action: RecordedAction;
   ctxKind: OperationCtxKind;
   /** The capability the operation was judged against. A closed enumeration. */
-  capability: Capability;
+  capability: OperationCapability;
   latencyMs: number;
   outcome: OperationOutcome;
   authMode: OperationAuthMode;
@@ -141,7 +152,7 @@ export function ctxKindOf(ctx: CtxShape | null): OperationCtxKind {
 
 export interface OperationRecordInput {
   descriptor?: OperationDescriptor;
-  capability: Capability;
+  capability: OperationCapability;
   ctxKind: OperationCtxKind;
   outcome: OperationOutcome;
   /** Wall time across the whole block — session, gate and handler together. */

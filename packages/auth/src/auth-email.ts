@@ -48,16 +48,75 @@ export interface AuthEmailMessage {
 }
 
 /**
- * The two mails this module sends. The purpose prefixes the idempotency key so
- * a verification retry and a reset retry for the same account can never
+ * The three mails this module sends. The purpose prefixes the idempotency key
+ * so a verification retry and a reset retry for the same account can never
  * collapse into one send, and it names the mail in the log line.
+ *
+ * `incident` is doc 31 §4.3's guardian leg ("S3 → guardian in-app + email").
+ * It rides this module rather than a second sender because there is one
+ * configured `from`, one API key and one redaction rule for a recipient, and a
+ * safety alert is the mail that can least afford to be the one wired
+ * differently.
  */
-export type AuthEmailPurpose = 'verify' | 'reset';
+export type AuthEmailPurpose =
+  | 'verify'
+  | 'reset'
+  | 'incident'
+  | 'consent-code'
+  | 'consent-confirm';
 
 const PURPOSE_LABEL: Record<AuthEmailPurpose, string> = {
   verify: 'verification email',
   reset: 'password reset email',
+  incident: 'guardian incident email',
+  'consent-code': 'consent code email',
+  'consent-confirm': 'consent confirmation email',
 };
+
+/**
+ * The consent code (doc 06 §3.1, email-plus's first contact). Fifteen minutes
+ * is `CODE_TTL_MINUTES` in consent-flow.ts; the sentence moves with it.
+ */
+export function consentCodeEmail(to: string, code: string): AuthEmailMessage {
+  const safeCode = escapeHtml(code);
+  return {
+    to,
+    subject: `${code} is your Moyo permission code`,
+    text: [
+      'Enter this code in Moyo to confirm you are giving permission as a parent or guardian:',
+      '',
+      code,
+      '',
+      "It works for fifteen minutes. If you didn't ask for it, ignore this email — nothing is recorded until the code is entered.",
+    ].join('\n'),
+    html: [
+      '<p>Enter this code in Moyo to confirm you are giving permission as a parent or guardian:</p>',
+      `<p style="font-size:2em;letter-spacing:0.2em"><strong>${safeCode}</strong></p>`,
+      "<p>It works for fifteen minutes. If you didn't ask for it, ignore this email — nothing is recorded until the code is entered.</p>",
+    ].join('\n'),
+  };
+}
+
+/**
+ * The "plus": a second, separate message after the code is verified. It
+ * carries no link and no code on purpose — the point of it is that the parent
+ * sees it arrive and comes back to say so.
+ */
+export function consentConfirmationEmail(to: string): AuthEmailMessage {
+  return {
+    to,
+    subject: 'One more step for your Moyo permission',
+    text: [
+      'Your code was accepted. To finish, go back to Moyo and tap "I confirmed it".',
+      '',
+      "Permission isn't recorded until you do. If this wasn't you, don't tap it — nothing happens.",
+    ].join('\n'),
+    html: [
+      '<p>Your code was accepted. To finish, go back to Moyo and tap <strong>I confirmed it</strong>.</p>',
+      "<p>Permission isn't recorded until you do. If this wasn't you, don't tap it — nothing happens.</p>",
+    ].join('\n'),
+  };
+}
 
 /**
  * The environment shape this module reads. Typed structurally rather than as
@@ -379,4 +438,109 @@ export function sendResetPasswordEmailFor(
   options?: { fetch?: FetchLike },
 ): Promise<SendOutcome> {
   return deliver(config, 'reset', resetPasswordEmail, data, options);
+}
+
+// ── Doc 31 §4.3: the guardian incident mail ──────────────────────────────────
+
+/**
+ * Everything the incident mail is allowed to say. A closed list on purpose:
+ * the composer takes THIS and not the report, so a transcript excerpt, the
+ * plane's summary line or a reporter's note has no field to arrive through.
+ * The first name is the one word about the child the mail carries, and the
+ * link is where the rest lives, behind the guardian's own sign-in.
+ */
+export interface IncidentEmailFacts {
+  /** First name only. The caller splits; this module never sees the surname. */
+  readonly learnerFirstName: string;
+  /** A parent-facing category label ("a safety concern"), never the enum key. */
+  readonly categoryLabel: string;
+  /** ISO 8601. Rendered as a UTC date and time, which is what the app shows. */
+  readonly occurredAt: string;
+  /** The guardian alerts screen (`/alerts`), absolute. */
+  readonly alertsUrl: string;
+}
+
+const utcStamp = (iso: string): string => {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
+};
+
+/**
+ * The incident mail. No excerpt, no summary, no words from the session: the
+ * body says WHAT KIND of thing was filed, WHEN, about WHOM (first name), and
+ * WHERE to read it. The alert itself is the app's to show, after sign-in.
+ */
+export function incidentEmail(to: string, facts: IncidentEmailFacts): AuthEmailMessage {
+  const name = facts.learnerFirstName.trim() || 'your child';
+  const when = utcStamp(facts.occurredAt);
+  const safeName = escapeHtml(name);
+  const safeLabel = escapeHtml(facts.categoryLabel);
+  const safeUrl = escapeHtml(facts.alertsUrl);
+  return {
+    to,
+    subject: `Moyo: a safety alert about ${name}`,
+    text: [
+      `Moyo's tutor filed a safety alert about ${name}.`,
+      '',
+      `What: ${facts.categoryLabel}`,
+      `When: ${when}`,
+      '',
+      'Open your alerts to read what happened, what the tutor did, and what happens next:',
+      facts.alertsUrl,
+      '',
+      'This email carries no details of the conversation on purpose. They are in the app, behind your sign-in.',
+    ].join('\n'),
+    html: [
+      `<p>Moyo's tutor filed a safety alert about ${safeName}.</p>`,
+      `<p>What: ${safeLabel}<br>When: ${escapeHtml(when)}</p>`,
+      '<p>Open your alerts to read what happened, what the tutor did, and what happens next:</p>',
+      `<p><a href="${safeUrl}">${safeUrl}</a></p>`,
+      '<p>This email carries no details of the conversation on purpose. They are in the app, behind your sign-in.</p>',
+    ].join('\n'),
+  };
+}
+
+export interface IncidentEmailDelivery {
+  /** The guardian's Better Auth row — id scopes the idempotency key. */
+  readonly guardian: AuthEmailRecipient;
+  /** The incident's minted id. One mail per (guardian, incident), ever. */
+  readonly incidentId: string;
+  readonly facts: IncidentEmailFacts;
+}
+
+/**
+ * The guardian leg of the fan-out. Same placeholder refusal as the two Better
+ * Auth callbacks (a `@learners.invalid` address is a child's row, and a child
+ * is never the recipient of their own incident), same log-and-rethrow, and an
+ * idempotency key over (guardian, incident) so a pg-boss retry after a partial
+ * send reaches Resend as the same request rather than a second alert.
+ */
+export async function sendIncidentEmailFor(
+  config: AuthEmailConfig,
+  delivery: IncidentEmailDelivery,
+  options?: { fetch?: FetchLike },
+): Promise<SendOutcome> {
+  const to = delivery.guardian.email;
+  if (!to) return 'skipped-no-address';
+  if (isPlaceholderEmail(to)) return 'skipped-placeholder';
+
+  try {
+    await sendAuthEmail(config, incidentEmail(to, delivery.facts), {
+      purpose: 'incident',
+      idempotencyKey: idempotencyKeyFor('incident', delivery.guardian.id, delivery.incidentId),
+      ...(options?.fetch ? { fetch: options.fetch } : {}),
+    });
+  } catch (error) {
+    const detail =
+      error instanceof AuthEmailSendError
+        ? { error: error.name, status: error.status }
+        : { error: error instanceof Error ? error.name : typeof error };
+    console.error(
+      `[auth-email] ${PURPOSE_LABEL.incident} failed for incident ${delivery.incidentId}`,
+      detail,
+    );
+    throw error;
+  }
+  return 'sent';
 }

@@ -61,11 +61,18 @@ describe('which methods are on offer', () => {
     );
   });
 
-  it('always keeps the KBA fallback reachable', () => {
+  it('keeps the KBA fallback reachable wherever a question source exists', () => {
     assert.ok(availableMethods(DEFAULT_CONSENT_ENVIRONMENT).includes('kba'));
     assert.ok(
-      availableMethods({ disclosesToThirdParties: true, hasVerifiedCard: false }).includes('kba'),
+      availableMethods({ ...DEFAULT_CONSENT_ENVIRONMENT, disclosesToThirdParties: true }).includes('kba'),
     );
+  });
+
+  it('offers only email-plus where the server has no text sender and no KBA source', () => {
+    const live = { ...DEFAULT_CONSENT_ENVIRONMENT, canSendText: false, hasKbaProvider: false };
+    assert.deepEqual(availableMethods(live), ['email-plus']);
+    assert.equal(startChallenge('text-plus', '+15550100', live).ok, false);
+    assert.equal(startChallenge('kba', 'Identity check', live).ok, false);
   });
 });
 

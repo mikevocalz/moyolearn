@@ -1,0 +1,103 @@
+diff --git a/scripts/spm/generate-spm-autolinking.js b/scripts/spm/generate-spm-autolinking.js
+index e0f4c2e..773f5cb 100644
+--- a/scripts/spm/generate-spm-autolinking.js
++++ b/scripts/spm/generate-spm-autolinking.js
+@@ -1709,43 +1709,6 @@ function main(argv /*:: ?: Array<string> */) /*: void */ {
+     });
+   }
+ 
+-  // Prune stale wrappers, header dirs and lib aliases for entries no longer
+-  // autolinked. Preserve both wrapper-managed and self-managed names; only
+-  // entries that are no longer autolinked at all get removed. Note:
+-  // `packages/` only has wrapper-managed names (self-managed deps live in
+-  // their own source dirs), but `headers/` has both since we populate the
+-  // central tree for everyone. `libs/` keeps only the aliases written above,
+-  // so a dep that stopped being self-managed loses its alias too.
+-  const activeNames /*: Set<string> */ = new Set([
+-    ...wrapperDirs.keys(),
+-    ...selfManagedDirs.keys(),
+-  ]);
+-  const pruneTargets /*: Array<[string, Set<string>]> */ = [
+-    ['packages', activeNames],
+-    ['headers', activeNames],
+-    ['libs', wantedLibAliases],
+-  ];
+-  for (const [subdir, keptNames] of pruneTargets) {
+-    const dir = path.join(outputDir, subdir);
+-    try {
+-      const existing /*: Array<{name: string, isSymbolicLink(): boolean, isDirectory(): boolean}> */ =
+-        // $FlowFixMe[incompatible-type] Dirent typing
+-        fs.readdirSync(dir, {withFileTypes: true});
+-      for (const entry of existing) {
+-        if (keptNames.has(entry.name)) continue;
+-        const stale = path.join(dir, entry.name);
+-        if (entry.isSymbolicLink() || !entry.isDirectory()) {
+-          fs.unlinkSync(stale);
+-        } else {
+-          fs.rmSync(stale, {recursive: true, force: true});
+-        }
+-        log(`Removed stale ${subdir}/${entry.name}`);
+-      }
+-    } catch {
+-      // dir doesn't exist – fine
+-    }
+-  }
+-
+   // Invoke discovered framework plugins now that the RN dep graph + autolinking
+   // data are final. Their package/product contributions merge into the
+   // aggregator below; this runs in add/update AND every build-time sync (both
+@@ -1794,6 +1757,54 @@ function main(argv /*:: ?: Array<string> */) /*: void */ {
+     );
+   }
+ 
++  // A plugin may register its package through its own libs/<Name> alias
++  // (react-native-webgpu does). Prune after the plugins ran and keep those
++  // aliases too. Pruning first deleted the alias and the plugin recreated it
++  // with a new inode, which is the "Missing package product" failure described
++  // above whenever Xcode had already loaded that package root.
++  for (const dep of pluginPackageDeps) {
++    if (dep.path != null && path.dirname(path.resolve(dep.path)) === path.resolve(libsDir)) {
++      wantedLibAliases.add(path.basename(dep.path));
++    }
++  }
++
++  // Prune stale wrappers, header dirs and lib aliases for entries no longer
++  // autolinked. Preserve both wrapper-managed and self-managed names; only
++  // entries that are no longer autolinked at all get removed. Note:
++  // `packages/` only has wrapper-managed names (self-managed deps live in
++  // their own source dirs), but `headers/` has both since we populate the
++  // central tree for everyone. `libs/` keeps only the aliases written above,
++  // so a dep that stopped being self-managed loses its alias too.
++  const activeNames /*: Set<string> */ = new Set([
++    ...wrapperDirs.keys(),
++    ...selfManagedDirs.keys(),
++  ]);
++  const pruneTargets /*: Array<[string, Set<string>]> */ = [
++    ['packages', activeNames],
++    ['headers', activeNames],
++    ['libs', wantedLibAliases],
++  ];
++  for (const [subdir, keptNames] of pruneTargets) {
++    const dir = path.join(outputDir, subdir);
++    try {
++      const existing /*: Array<{name: string, isSymbolicLink(): boolean, isDirectory(): boolean}> */ =
++        // $FlowFixMe[incompatible-type] Dirent typing
++        fs.readdirSync(dir, {withFileTypes: true});
++      for (const entry of existing) {
++        if (keptNames.has(entry.name)) continue;
++        const stale = path.join(dir, entry.name);
++        if (entry.isSymbolicLink() || !entry.isDirectory()) {
++          fs.unlinkSync(stale);
++        } else {
++          fs.rmSync(stale, {recursive: true, force: true});
++        }
++        log(`Removed stale ${subdir}/${entry.name}`);
++      }
++    } catch {
++      // dir doesn't exist – fine
++    }
++  }
++
+   // Plugin sidecars. All are ALWAYS written — even `[]` — so removing a
+   // plugin (or dropping its declaration) clears stale entries. Machine-local
+   // absolute paths; gitignored + regenerated every sync.

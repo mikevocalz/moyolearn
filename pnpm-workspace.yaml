@@ -37,32 +37,41 @@ onlyBuiltDependencies:
 # One version per dependency, declared once. Every package.json uses `catalog:`.
 catalog:
   # runtime core (Expo SDK 58 — RN 0.88.0)
-  "@anthropic-ai/sdk": 0.126.0
-  react: 19.3.0
-  react-dom: 19.3.0
-  react-native: 0.88.0
-  react-native-web: 0.21.2
-  expo: 58.0.19
-  "@expo/metro-runtime": ~58.0.15
-  expo-build-properties: ~58.0.11
-  expo-font: ~58.0.10
-  expo-image: ~58.0.17
-  expo-document-picker: ~58.0.4
+  "@anthropic-ai/sdk": 1.14.0
+  react: 19.3.1
+  react-dom: 19.3.1
+  react-native: 0.88.1
+  react-native-web: 0.21.4
+  expo: 58.0.26
+  "@expo/metro-runtime": ~58.0.17
+  expo-build-properties: ~58.0.12
+  expo-font: ~58.0.12
+  expo-image: ~58.0.18
+  expo-document-picker: ~58.0.5
   expo-image-picker: ~58.0.10
-  expo-image-manipulator: ~58.0.15
+  expo-image-manipulator: ~58.0.16
+  # HELD — the next release of each of these four ships its own SwiftPM
+  # Package.swift, and the one in patches/ that the iOS app build links against
+  # (tooling/ios-spm.mjs) no longer applies on top of it. Upstream's manifests
+  # differ in header products, package paths, iOS floor and source lists, and
+  # audio-api 1.0 also downloads prebuilt codecs at resolve time. Taking them
+  # means reconciling each manifest with ours and proving it in an iOS SwiftPM
+  # build, not a version edit. Latest on 2026-11-25: svg 15.16.1,
+  # keyboard-controller 1.24.0 (Expo SDK 58 itself expects 1.22.7),
+  # enriched-html 1.2.0, audio-api 1.0.1.
   react-native-audio-api: 0.13.4
-  react-native-youtube-bridge: 2.2.3
-  expo-linking: ~58.0.14
-  expo-router: ~58.0.26
+  react-native-youtube-bridge: 2.2.4
+  expo-linking: ~58.0.17
+  expo-router: ~58.0.32
   expo-screen-capture: ~58.0.6
-  expo-secure-store: ~58.0.2
-  expo-splash-screen: ~58.0.11
-  expo-status-bar: ~58.0.4
-  expo-system-ui: ~58.0.6
-  expo-updates: ~58.0.18
-  expo-web-browser: ~58.0.6
-  expo-print: ~58.0.8
-  expo-sharing: ~58.0.22
+  expo-secure-store: ~58.0.3
+  expo-splash-screen: ~58.0.14
+  expo-status-bar: ~58.0.5
+  expo-system-ui: ~58.0.7
+  expo-updates: ~58.0.22
+  expo-web-browser: ~58.1.0
+  expo-print: ~58.0.9
+  expo-sharing: ~58.0.23
   "@gorhom/bottom-sheet": 5.2.14
   react-native-keyboard-controller: 1.22.9
   react-native-mmkv: 4.3.2
@@ -74,20 +83,25 @@ catalog:
   nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
   nitrogen: 1.0.0-alpha.nightly.100.g107f6fc66597
   react-native-enriched-html: 1.1.1
-  react-native-gesture-handler: 3.4.0
+  react-native-gesture-handler: 3.5.0
   # expo-router imports it; listed so the iOS SwiftPM build links it (see tooling/ios-spm.mjs).
   "@react-native-masked-view/masked-view": 0.3.2
-  react-native-reanimated: 4.7.1
-  react-native-webgpu: 0.21.1
-  typegpu: 0.12.9
-  react-native-safe-area-context: ~5.10.1
-  react-native-screens: ~4.30.0
+  react-native-reanimated: 4.8.0
+  react-native-webgpu: 0.26.0
+  # WebGPU 0.24 downloads Dawn from the react-native-skia `binaries-158.1.0`
+  # release itself and no longer depends on this package. Graphite still takes
+  # its Dawn from here (tooling/enable-skia-graphite.mjs), so the shared owner
+  # is declared directly; same source commit and patch list as binaries.json.
+  react-native-webgpu-dawn: 158.1.0
+  typegpu: 0.12.12
+  react-native-safe-area-context: ~5.11.1
+  react-native-screens: ~4.30.1
   # Declared explicitly even though react-native-screens already pulls it in:
   # `TutorPresence` imports `Freeze` directly, and a hoisted transitive is a
   # phantom dependency that disappears the day screens changes its own tree.
   # The version is the one screens resolves, so nothing new is installed.
   react-freeze: 1.0.4
-  react-native-worklets: 0.13.1
+  react-native-worklets: 0.14.0
   react-native-vision-camera: 5.2.3
   # HELD AT 0.9.3 — 0.10.2 is published and is an API break, not a bump.
   # 0.10 splits the flat export into subpaths (`react-native-executorch/cv`,
@@ -110,17 +124,17 @@ catalog:
   # Held with it: the fetcher registers into executorch's runtime.
   react-native-executorch-expo-resource-fetcher: 0.9.1
   "@shopify/react-native-skia": 2.14.0
-  react-native-skia-graphite-android: 157.1.0
-  react-native-skia-graphite-apple-ios: 157.1.0
-  react-native-skia-graphite-apple-macos: 157.1.0
-  "@react-navigation/native": 7.4.1
+  react-native-skia-graphite-android: 158.1.0
+  react-native-skia-graphite-apple-ios: 158.1.0
+  react-native-skia-graphite-apple-macos: 158.1.0
+  "@react-navigation/native": 7.5.2
   solito: 5.0.0
-  lucide-react: 1.47.0
-  lucide-react-native: 1.47.0
+  lucide-react: 1.80.0
+  lucide-react-native: 1.80.0
   react-native-svg: 15.16.0
   react-native-pulsar: 1.7.0
   "@expo/html-elements": 58.0.3
-  "@expo/ui": ~58.0.23
+  "@expo/ui": ~58.0.29
   expo-paste-input: 0.2.2
   expo-drag-drop-content-view: 0.9.2
   sonner: 2.0.8
@@ -174,25 +188,25 @@ catalog:
   # WebSocket service, and IndexedDB does not exist on React Native, so both
   # would be a dependency for a path nothing takes. Persistence is one encoded
   # update through the storage this feature already has.
-  yjs: 13.6.32
+  yjs: 13.6.33
   "@quickdrawjs/core": 0.2.0
   "@quickdrawjs/react": 0.2.0
   "@quickdrawjs/react-native": 0.2.0
   react-native-webview: 14.0.1
 
   # web
-  next: 16.3.5
+  next: 16.4.6
   nextjs-toploader: 3.9.17
 
   # styling (Uniwind — Tailwind 4 only; uniwind pins @tailwindcss/node to the
   # exact tailwindcss version below, so bump the two together or not at all)
-  uniwind: 1.12.0
+  uniwind: 1.14.0
   tailwindcss: 4.3.3
   "@tailwindcss/postcss": 4.3.3
   "@tailwindcss/vite": 4.3.3
   react-native-css: 3.0.7
-  tailwind-merge: 3.7.0
-  tailwind-variants: 3.3.1
+  tailwind-merge: 3.7.1
+  tailwind-variants: 4.0.2
 
   # 3D / avatar renderer (doc 22). Pinned exactly, and bumped only by a
   # reviewed PR with golden diffs attached: r186 removes PCFSoftShadowMap on
@@ -206,32 +220,39 @@ catalog:
   # marketing site (apps/web-vite) — motion + globe. R3F 9 declares Expo peers
   # (expo-gl, react-native, expo-file-system) because it ships a native
   # renderer; this app is web-only, so those peers are intentionally unmet.
-  gsap: 3.15.0
+  gsap: 3.15.1
   # Kinetrell's web entry (`kinetrell/web/gsap`, re-exported by @acme/motion/web)
   # imports `useGSAP` from here at module top, so any bundle reaching the
   # motion web wrapper needs it. 2.1.2 is npm latest (2026-11-04) and sits in
   # Kinetrell's `>=2.1.2 <3` peer range.
   "@gsap/react": 2.1.2
-  lenis: 1.3.26
-  "@react-three/fiber": 9.7.0
-  "@react-three/drei": 10.7.8
+  lenis: 1.3.28
+  "@react-three/fiber": 9.8.2
+  "@react-three/drei": 10.7.9
   topojson-client: 3.1.0
   "@types/topojson-client": 3.1.5
   "@types/three": 0.186.0
 
   # state / data
-  "@tanstack/react-query": 5.103.1
-  "@tanstack/react-virtual": 3.14.13
+  "@tanstack/react-query": 5.108.4
+  "@tanstack/react-virtual": 3.14.28
   "@tanstack/react-form": 1.33.5
-  "@tanstack/react-pacer": 0.23.0
+  "@tanstack/react-pacer": 0.24.1
+  # HELD AT 8.21.3 — 9.3.1 is published and is a rewrite, not a bump. v9 builds
+  # tables through `useTable` with registered features and store subscriptions;
+  # `useReactTable`/`getCoreRowModel` survive only on the `/legacy` entry, and
+  # `ColumnDef`, `Row` and `Table` gain a features type parameter. DataTable,
+  # its story, the ops leads table and the summary draft queue (about 1,500
+  # lines) use sorting, row selection and column visibility, so the port needs
+  # those checked in a rendered table, not only a clean typecheck.
   "@tanstack/react-table": 8.21.3
   # Marketing-site routing + SSR (ADR-001). Start is Router plus a server, so
   # `src/routes` + createFileRoute + routeTree.gen.ts are the same artefacts in
   # both — the SPA fallback (Lane B) is a plugin swap, not a rewrite. Start's
   # vite peer is `>=7.0.0`, which is why the `vite` entry below is 7.x.
-  "@tanstack/react-router": 1.170.41
-  "@tanstack/react-start": 1.168.60
-  "@legendapp/list": 3.3.11
+  "@tanstack/react-router": 1.170.46
+  "@tanstack/react-start": 1.169.7
+  "@legendapp/list": 3.9.1
   "@legendapp/motion": 2.5.3
   # Meta VR Layout SDK JS halves, quest flavor only (apps/mobile
   # src/spatial/metaWindows.ts). Same pins as Harlem Might's lockfile; the
@@ -239,8 +260,8 @@ catalog:
   "@metavr/layout-compat": 1.0.0
   "@metavr/layout-window-compat": 1.0.0
   date-fns: 4.4.0
-  zustand: 5.0.15
-  zod: 4.6.5
+  zustand: 5.1.0
+  zod: 4.6.7
   # Handoff QR (doc 36 §2 / doc 37 §2): pure-JS encoder only — `create()` gives
   # the module matrix synchronously and the panel draws it with kit Views, so
   # one universal component serves web and native with no react-native-svg on
@@ -264,7 +285,7 @@ catalog:
   # move together or install fails outright rather than drifting.
   "@payloadcms/tanstack-start": 4.0.0-canary.33
   graphql: 16.14.2 # payload peers ^16
-  pg: 8.23.0
+  pg: 8.23.1
   # The job runner (doc 12 §6 · docs/design/jobs.md). Same Postgres, `jobs`
   # schema. Its own `pg` dependency is `^8.23.0`, which is the line above
   # exactly — one driver in the workspace, not two, so the queue and the
@@ -288,7 +309,7 @@ catalog:
   # the adapter shipped in that exact release.
   auth: 1.7.2
   stripe: 22.6.2
-  sharp: 0.35.4
+  sharp: 0.35.5
   "@types/pg": 8.23.1
 
   # observability (doc 12 §7 · docs/design/slo.md). Two SDKs, one release train
@@ -299,41 +320,45 @@ catalog:
   #
   # Neither SDK initialises without a DSN, so a checkout with no SENTRY_DSN /
   # EXPO_PUBLIC_SENTRY_DSN runs with the reporter off rather than half on.
-  "@sentry/nextjs": 10.75.0
-  "@sentry/react-native": 8.27.0
+  "@sentry/nextjs": 10.78.0
+  "@sentry/react-native": 8.36.0
 
   # tooling
   typescript: ~6.0.3
   # Dev-only probes: avatar shader compilation/browser rendering and the
   # business studio DOM gesture regression. None reaches a shipped bundle.
   esbuild: 0.28.2
-  jsdom: 30.1.2
-  playwright: 1.63.0
+  jsdom: 31.0.1
+  playwright: 1.65.1
   # Same version playwright 1.63.0 depends on, so this installs nothing new. Named
   # because tooling/web-designer-pro (shoot, matrix, filmstrip, fallback) and
   # tooling/check-font-fallbacks.mjs require it from the repo root; relying on
   # the hoisted transitive copy would be a phantom dependency.
-  playwright-core: 1.63.0
-  "@types/react": ~19.3.0
+  playwright-core: 1.65.1
+  "@types/react": ~19.3.2
   # Must stay on the Node major `engines.node` (>=24.15.0 <26) actually allows —
   # typing against 26 describes a runtime this repo refuses to start on.
   "@types/node": ^24.13.3
   "@types/react-dom": ^19.3.0
+  # HELD on 9 — eslint 10.15.0 is published, but eslint-plugin-import 2.32.0,
+  # eslint-plugin-react 7.37.5, eslint-plugin-react-hooks 7.0.1 and
+  # eslint-plugin-jsx-a11y 6.10.2 (pulled in by eslint-config-expo and
+  # eslint-config-next) all peer `eslint` at ^9 or lower.
   eslint: ^9.39.2
-  eslint-config-expo: ~58.0.3
-  eslint-config-next: 16.3.5
+  eslint-config-expo: ~58.0.4
+  eslint-config-next: 16.4.6
   "@eslint/eslintrc": ^3.3.7
-  storybook: 10.6.0
-  "@storybook/react-vite": 10.6.0
-  "@storybook/addon-a11y": 10.6.0
+  storybook: 10.6.9
+  "@storybook/react-vite": 10.6.9
+  "@storybook/addon-a11y": 10.6.9
   # Vite 8 + plugin-react 6, required by @payloadcms/tanstack-start (it peers
   # vite >=8, @vitejs/plugin-react ^6 and @vitejs/plugin-rsc ^0.5.21). The
   # earlier 7.x pin existed only because plugin-react 4.7.0 stopped at ^7;
   # bumping both together removes that ceiling. @storybook/builder-vite@10.5.8
   # peers ^5||^6||^7||^8, so Storybook rides along.
-  vite: 8.3.0
-  nitro: 3.0.260610-beta
-  "@vitejs/plugin-react": 6.1.1
+  vite: 8.3.8
+  nitro: 3.0.261103-rc
+  "@vitejs/plugin-react": 6.3.0
   # The React Server Components environment the Payload admin renders in
   # (ADR-003). `@payloadcms/tanstack-start` peers `^0.5.21`; this is the
   # version its own demo ships against, which is the only combination anyone
@@ -345,7 +370,7 @@ catalog:
   # never resolves the bare specifier; adding then removing it produced a
   # byte-identical `dist/client/index.js` (md5 e5d5b495…), so it was carrying
   # nothing but install weight and an unmet `webpack` peer.
-  "@vitejs/plugin-rsc": 0.5.35
-  vite-plugin-react-native-web: 2.5.0
+  "@vitejs/plugin-rsc": 0.5.39
+  vite-plugin-react-native-web: 3.2.0
   babel-plugin-react-compiler: 1.0.0
-  turbo: 2.10.13
+  turbo: 2.11.13

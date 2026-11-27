@@ -32,16 +32,25 @@ import { reportRouteError } from '@/lib/report-error';
 // answer is the failure this route exists to fix, wearing a 200.
 export const dynamic = 'force-dynamic';
 
-const statusFor = (message: string): number => (message === 'Unauthenticated' ? 401 : 500);
+/**
+ * The 401 names itself; everything else is a fixed sentence. The real message
+ * has gone to Sentry by the time this answers, and a response body is read by
+ * whoever sent the request (security pass M7).
+ */
+const failure = (error: unknown): NextResponse => {
+  if (error instanceof Error) reportRouteError(error);
+  if (error instanceof Error && error.message === 'Unauthenticated') {
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+  }
+  return NextResponse.json({ error: 'Server error' }, { status: 500 });
+};
 
 export async function GET(request: NextRequest) {
   try {
     const incidents = await guardianIncidents(auth, request.headers, { loadGuardianIncidents });
     return NextResponse.json({ ok: true, incidents });
   } catch (error) {
-    if (error instanceof Error) reportRouteError(error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: statusFor(message) });
+    return failure(error);
   }
 }
 
@@ -88,8 +97,6 @@ export async function POST(request: NextRequest) {
     if (view === null) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ ok: true, incident: view });
   } catch (error) {
-    if (error instanceof Error) reportRouteError(error);
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: statusFor(message) });
+    return failure(error);
   }
 }

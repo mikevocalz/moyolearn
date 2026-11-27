@@ -13,6 +13,8 @@
 
 import { getAuthMode } from '../../../providers/session/auth-mode';
 import { API_URL } from '../../../core/api-url.ts';
+import { sessionHeaders } from '../../../core/api-session.ts';
+import { sessionCookieSource } from '../../../providers/session/session-cookie';
 
 /** The 15-minute promise, mirrored client-side for the mock path's expiry copy. */
 const MOCK_TTL_MS = 15 * 60 * 1000;
@@ -40,10 +42,13 @@ export async function mintHandoffCode(learnerAuthId: string): Promise<HandoffMin
     };
   }
   try {
-    const res = await fetch(`${API_URL}/api/handoff`, {
+    const url = `${API_URL}/api/handoff`;
+    const res = await fetch(url, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      // Guardian-authenticated: on native the session lives in SecureStore,
+      // not the cookie jar (core/api-session.ts).
+      headers: { 'Content-Type': 'application/json', ...(await sessionHeaders(url, sessionCookieSource)) },
       body: JSON.stringify({ learnerAuthId }),
     });
     if (!res.ok) return { kind: 'failed', message: 'Could not create a code. Try again.' };
@@ -85,21 +90,29 @@ export type CreateLearnerResult =
   | { kind: 'created'; learnerAuthId: string }
   | { kind: 'failed'; message: string };
 
-/** One child per call; the children step loops its rows. */
+/**
+ * One child per call; the children step loops its rows. The consent travels
+ * as the server's own id for the recorded verification (consent.service.ts),
+ * never as a record the client wrote: the route reads the grant from its row
+ * and refuses a child whose id names nothing this guardian verified.
+ */
 export async function createLearnerOnServer(input: {
   username: string;
   password: string;
   displayName: string;
-  consent: { method: string; scope: string; policyVersion: string; evidenceRef?: string };
+  consentId: string;
 }): Promise<CreateLearnerResult> {
   if (getAuthMode() !== 'live') {
     return { kind: 'created', learnerAuthId: `mock-learner-${input.username}` };
   }
   try {
-    const res = await fetch(`${API_URL}/api/family/learners`, {
+    const url = `${API_URL}/api/family/learners`;
+    const res = await fetch(url, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      // Guardian-authenticated: on native the session lives in SecureStore,
+      // not the cookie jar (core/api-session.ts).
+      headers: { 'Content-Type': 'application/json', ...(await sessionHeaders(url, sessionCookieSource)) },
       body: JSON.stringify(input),
     });
     if (!res.ok) {

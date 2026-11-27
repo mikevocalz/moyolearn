@@ -5,27 +5,42 @@
 // whatever issued it knows that — and issuing belongs on a server, where the
 // code is never in the hands of the person being verified.
 //
-// So this is a port. The dev channel below is a real implementation of it, not a
-// placeholder that returns true: it mints a code, holds it, compares against it,
-// and forgets it once used. That is what makes the screen honest today — it
-// checks a real code — while the swap to a server-backed channel stays one
-// import, with the same three methods and the same shape.
+// So this is a port with two implementations. The LIVE channel talks to
+// /api/family/consent/*, where the server mints the code, mails it, compares
+// it and writes the record with the guardian taken from the session
+// (consent-verification.ts; security finding H3). The DEV channel is a real
+// in-memory implementation of the same four calls, not a `return true` stub:
+// it mints a code, holds it, compares against it and forgets it once used, so
+// a dev build still checks a real code. `createConsentChannel()` picks by auth
+// mode, and a release build is live by construction (auth-mode.ts).
 // SOT: docs/pack/06-auth-onboarding-spec.md §3.1
-// SOT-KEYWORDS: consent channel code send verify confirm dev email-plus text-plus
+// SOT-KEYWORDS: consent channel code send verify confirm record dev live email-plus
 
 import type { ConsentMethod } from '@acme/auth';
+import { API_URL } from '../../../core/api-url.ts';
+import { sessionHeaders, type SessionCookieSource } from '../../../core/api-session.ts';
+import { getAuthMode } from '../../../providers/session/auth-mode.ts';
 
 export interface ConsentChannel {
-  /** Sends a code to `target`. Resolves when it is on its way, not when it lands. */
-  send: (method: ConsentMethod, target: string) => Promise<void>;
-  /** Whether `code` is the one that was sent. Never "is this a plausible code". */
-  verify: (target: string, code: string) => Promise<boolean>;
+  /** Sends a code to `target`. Resolves with the challenge once it is on its way, not when it lands. */
+  send: (method: ConsentMethod, target: string) => Promise<{ challengeId: string }>;
+  /** Whether `code` is the one that was sent for this challenge. Never "is this a plausible code". */
+  verify: (challengeId: string, code: string) => Promise<boolean>;
   /**
    * The "plus": a SECOND contact, sent after the first is verified. Separate from
    * `send` because it is a separate message with a separate purpose, and the day
    * it becomes one call is the day someone collapses the two into one.
    */
-  sendConfirmation: (method: ConsentMethod, target: string) => Promise<void>;
+  sendConfirmation: (challengeId: string) => Promise<void>;
+  /**
+   * Writes the record and answers with its id. The children step sends that id
+   * and nothing else; the server reads the grant back from its own row. A KBA
+   * challenge has no server row (dev only), so the id may be null there.
+   */
+  record: (
+    challengeId: string | null,
+    input: { scope: string; policyVersion: string },
+  ) => Promise<{ consentId: string }>;
 }
 
 export const CODE_LENGTH = 6;
@@ -56,25 +71,97 @@ export interface DevConsentChannel extends ConsentChannel {
  * used code does not work twice.
  */
 export function createDevConsentChannel(random: () => number = Math.random): DevConsentChannel {
-  const issued = new Map<string, string>();
+  const issued = new Map<string, { target: string; code: string }>();
+  const byTarget = new Map<string, string>();
+  let next = 1;
 
   return {
     send: async (_method, target) => {
-      issued.set(target, mintCode(random));
+      const challengeId = `dev-challenge-${next++}`;
+      issued.set(challengeId, { target, code: mintCode(random) });
+      byTarget.set(target, challengeId);
+      return { challengeId };
     },
-    verify: async (target, code) => {
-      const expected = issued.get(target);
-      if (expected === undefined) return false;
-      if (expected !== code.trim()) return false;
+    verify: async (challengeId, code) => {
+      const challenge = issued.get(challengeId);
+      if (!challenge) return false;
+      if (challenge.code !== code.trim()) return false;
       // One code, one use. Leaving it live means a second guardian on the same
       // device finishes a verification they never received.
-      issued.delete(target);
+      issued.delete(challengeId);
+      byTarget.delete(challenge.target);
       return true;
     },
     sendConfirmation: async () => {
       // The confirming contact carries a link, not a code — there is nothing to
       // hold onto, and the guardian returning is the signal.
     },
-    peek: (target) => issued.get(target),
+    record: async (challengeId) => ({ consentId: `dev-consent-${challengeId ?? `kba-${next++}`}` }),
+    peek: (target) => {
+      const challengeId = byTarget.get(target);
+      return challengeId ? issued.get(challengeId)?.code : undefined;
+    },
   };
+}
+
+/**
+ * What the live routes answer with on a refusal; the message is for the screen.
+ * `cookies` is the native session source (core/api-session.ts): without it a
+ * signed-in guardian on a phone posts with no session and meets a 401.
+ */
+async function postJson<T>(
+  path: string,
+  body: Record<string, unknown>,
+  cookies: SessionCookieSource | null,
+  fetchImpl: typeof fetch,
+): Promise<T> {
+  const url = `${API_URL}${path}`;
+  let res: Response;
+  try {
+    res = await fetchImpl(url, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...(await sessionHeaders(url, cookies)) },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new Error('Could not reach Moyo. Check your connection and try again.');
+  }
+  const data = (await res.json().catch(() => null)) as (T & { error?: string }) | null;
+  if (!res.ok) throw new Error(data?.error ?? 'Something went wrong. Try again.');
+  if (!data) throw new Error('Something went wrong. Try again.');
+  return data;
+}
+
+/** The server-backed channel: four routes, one guardian, taken from the session. */
+export function createLiveConsentChannel(
+  cookies: SessionCookieSource | null = null,
+  fetchImpl: typeof fetch = (input, init) => fetch(input, init),
+): ConsentChannel {
+  const post = <T>(path: string, body: Record<string, unknown>) => postJson<T>(path, body, cookies, fetchImpl);
+  return {
+    send: async (method, target) => {
+      const issue = await post<{ challengeId: string }>('/api/family/consent/challenge', { method, target });
+      return { challengeId: issue.challengeId };
+    },
+    verify: async (challengeId, code) => {
+      const result = await post<{ matched: boolean }>('/api/family/consent/verify', { challengeId, code });
+      return result.matched;
+    },
+    sendConfirmation: async (challengeId) => {
+      await post<{ ok: true }>('/api/family/consent/confirm', { challengeId });
+    },
+    record: async (challengeId, input) => {
+      if (!challengeId) throw new Error('This permission method is not available here. Verify by email instead.');
+      return post<{ consentId: string }>('/api/family/consent/record', { challengeId, ...input });
+    },
+  };
+}
+
+/**
+ * Live in live mode; the dev channel only where the session is a fixture too.
+ * The caller passes the platform's session cookie source (null on web).
+ */
+export function createConsentChannel(cookies: SessionCookieSource | null = null): ConsentChannel {
+  return getAuthMode() === 'live' ? createLiveConsentChannel(cookies) : createDevConsentChannel();
 }

@@ -26,13 +26,15 @@ import type {
   AdvanceResult,
   CreateSubmissionInput,
   HomeworkQuestionView,
+  HomeworkSubmissionSummary,
   HomeworkSubmissionView,
   QuestionOutcome,
   ReviseQuestionInput,
 } from '../homework/homework.types.ts';
-import type { ProblemStorage } from './problem-storage.shared.ts';
+import type { ProblemEvidence, ProblemStorage } from './problem-storage.shared.ts';
 import { questionForTutor, type WorksheetQuestion } from './worksheet-questions.ts';
 import { clearWorksheet, readWorksheet, type WorksheetSession } from './worksheet-session.ts';
+import { nextUndoneIndex } from '../homework/homework-prior-work.ts';
 
 /** Where the device copy stands against the server. */
 export type WorksheetSyncStatus = 'idle' | 'syncing' | 'confirmed' | 'pending' | 'reconciled' | 'error';
@@ -112,6 +114,35 @@ export function readCacheRecord(storage: ProblemStorage, learnerAuthId: string):
   }
 }
 
+/**
+ * A sheet a guardian uploaded with every problem already marked done. The server
+ * stores it `complete` from the start, which on its own is indistinguishable from
+ * a worksheet the learner finished; what separates them is that every problem is
+ * a prior mark and no tutor session was ever started on it.
+ */
+function isAllMarkedOnArrival(summary: HomeworkSubmissionSummary): boolean {
+  return summary.status === 'complete' && summary.tutorSessionId === null &&
+    summary.questionCount > 0 && summary.alreadyDoneCount === summary.questionCount;
+}
+
+/**
+ * Cache-miss discovery. Open work keeps precedence; only when there is none does
+ * the NEWEST sheet get a say, and only if it is all-marked, so the learner sees
+ * the all-done state for the sheet just assigned rather than an unrelated
+ * practice problem. An older all-marked sheet behind newer work is history.
+ */
+export function discoverWorksheet(
+  owned: readonly HomeworkSubmissionSummary[],
+): HomeworkSubmissionSummary | undefined {
+  const open = owned.find((s) => s.status === 'in-progress') ?? owned.find((s) => s.status === 'ready');
+  if (open) return open;
+  const newest = owned.reduce<HomeworkSubmissionSummary | undefined>(
+    (latest, s) => (latest === undefined || s.createdAt > latest.createdAt ? s : latest),
+    undefined,
+  );
+  return newest !== undefined && isAllMarkedOnArrival(newest) ? newest : undefined;
+}
+
 function writeCacheRecord(storage: ProblemStorage, record: WorksheetCacheRecord): void {
   storage.set(worksheetKeyFor(record.learnerAuthId), JSON.stringify(record));
 }
@@ -135,10 +166,11 @@ export function applyMove(
         }
       : q,
   );
-  const next = questions[move.expectedIndex + 1];
+  const nextIndex = nextUndoneIndex(questions, move.expectedIndex);
+  const next = questions[nextIndex];
   // Past the last question the server keeps the cursor on it and marks the work complete.
   return next
-    ? { ...view, questions, currentIndex: move.expectedIndex + 1, currentQuestionId: next.questionId, status: 'in-progress' }
+    ? { ...view, questions, currentIndex: nextIndex, currentQuestionId: next.questionId, status: 'in-progress' }
     : { ...view, questions, status: 'complete' };
 }
 
@@ -179,8 +211,9 @@ export function toWorksheetQuestion(question: HomeworkQuestionView): WorksheetQu
 
 /** The exact text handed to `setProblem` for the view's current question. */
 export function currentPrompt(view: HomeworkSubmissionView): string | null {
+  if (view.status === 'complete') return null;
   const question = view.questions[view.currentIndex];
-  return question ? questionForTutor(toWorksheetQuestion(question), view) : null;
+  return question && question.priorWork !== 'complete' ? questionForTutor(toWorksheetQuestion(question), view) : null;
 }
 
 /**
@@ -222,6 +255,24 @@ export function questionIndexForPrompt(view: HomeworkSubmissionView, prompt: str
   return view.questions.findIndex((q) => questionForTutor(toWorksheetQuestion(q), view).trim() === wanted);
 }
 
+/**
+ * A worksheet question still on screen after the device's worksheet rolled over
+ * to a different assignment. The capture store keeps the last problem it was
+ * given; once the cache holds another submission, a reading problem whose
+ * question is in neither its ids nor its wording belongs to the finished sheet
+ * and must give way to the new one.
+ */
+export function isLeftoverWorksheetProblem(
+  view: HomeworkSubmissionView,
+  problem: string | null,
+  isReading: boolean,
+  evidence: ProblemEvidence | null,
+): boolean {
+  if (!problem?.trim() || !isReading || evidence === null) return false;
+  if (view.questions.some((q) => q.questionId === evidence.questionId)) return false;
+  return questionIndexForPrompt(view, problem) < 0;
+}
+
 function localDateOf(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -256,15 +307,19 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
   const now = () => (ports.now ? ports.now() : new Date()).toISOString();
   // One flush at a time: two overlapping flushes would send the same move twice.
   const flushing = new Map<number, Promise<void>>();
+  const starting = new Set<number>();
 
   return (set, get) => {
     let selectionEpoch = 0;
+    // A read issued before a cursor move/start must not replace that newer write.
+    let cacheVersion = 0;
     const load = (learnerAuthId: string): WorksheetCacheRecord | null => readCacheRecord(storage, learnerAuthId);
     const isSelected = (learnerAuthId: string, epoch: number) =>
       selectionEpoch === epoch && get().ownerId === learnerAuthId;
 
     const commit = (record: WorksheetCacheRecord | null, learnerAuthId: string, status: WorksheetSyncStatus, epoch: number) => {
       if (!isSelected(learnerAuthId, epoch)) return;
+      cacheVersion += 1;
       if (record === null) {
         storage.remove(worksheetKeyFor(learnerAuthId));
         set({ current: null, ownerId: learnerAuthId, pending: [], status });
@@ -281,12 +336,20 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         try {
           const result = await client.advance(record.confirmed.submissionId, move);
           if (!isSelected(learnerAuthId, epoch)) return;
+          const latest = load(learnerAuthId);
+          if (!latest || latest.confirmed.submissionId !== record.confirmed.submissionId) return;
+          // More moves or a transcription revision may have landed while this
+          // request waited. Confirm only its first move and retain the rest.
+          record = latest;
           const rest = record.pending.slice(1);
           const confirmed = adoptCursor(applyMove(record.confirmed, move, now()), result);
           record = { ...record, confirmed, pending: rest };
           commit(record, learnerAuthId, rest.length === 0 ? 'confirmed' : 'pending', epoch);
         } catch (error) {
           if (!isSelected(learnerAuthId, epoch)) return;
+          const latest = load(learnerAuthId);
+          if (!latest || latest.confirmed.submissionId !== record.confirmed.submissionId) return;
+          record = latest;
           if (error instanceof StaleCursorError) {
             // Another device moved first. Its cursor wins; every local move after
             // the refused one assumed the old cursor, so they go too.
@@ -386,7 +449,7 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
               if (!isSelected(learnerAuthId, epoch)) return null;
               const owned = submissions.filter((s) => s.learnerAuthId === learnerAuthId);
               const selected = submissionId === undefined
-                ? owned.find((s) => s.status === 'in-progress') ?? owned.find((s) => s.status === 'ready')
+                ? discoverWorksheet(owned)
                 : owned.find((s) => s.submissionId === submissionId);
               if (!selected) {
                 set({ status: 'idle' });
@@ -411,15 +474,51 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         if (!isSelected(learnerAuthId, epoch)) return null;
         record = load(learnerAuthId);
         if (record === null || record.pending.length > 0) return get().current;
+        if (starting.has(epoch)) return get().current;
+
+        // A finished sheet is not where the next assignment lives. Without this,
+        // a cached complete worksheet (finished here, or all-marked on arrival)
+        // would hide every later guardian assignment on this device forever.
+        if (submissionId === undefined && record.confirmed.status === 'complete') {
+          const discoverVersion = cacheVersion;
+          try {
+            const submissions = await client.listSubmissions();
+            if (!isSelected(learnerAuthId, epoch)) return null;
+            if (cacheVersion !== discoverVersion) return get().current;
+            // Only work assigned after the finished sheet can replace it: an older
+            // sheet left open is history, and caching it would stop rediscovery.
+            const after = record.confirmed.createdAt;
+            const selected = discoverWorksheet(submissions.filter((s) =>
+              s.learnerAuthId === learnerAuthId && s.createdAt > after));
+            if (selected && selected.submissionId !== record.confirmed.submissionId) {
+              const fresh = await client.getSubmission(selected.submissionId);
+              if (!isSelected(learnerAuthId, epoch)) return null;
+              if (cacheVersion !== discoverVersion) return get().current;
+              if (fresh.learnerAuthId !== learnerAuthId) throw new ApiError(403);
+              commit({ schemaVersion: 2, learnerAuthId, confirmed: fresh, pending: [] }, learnerAuthId, 'confirmed', epoch);
+              return get().current;
+            }
+          } catch (error) {
+            if (!isSelected(learnerAuthId, epoch)) return null;
+            // Discovery is best effort; the refresh below reports its own failure.
+            if (error instanceof ApiError && error.status === 403) {
+              set({ status: 'error' });
+              return get().current;
+            }
+          }
+        }
 
         const before = get().status;
+        const readVersion = cacheVersion;
         try {
           const fresh = await client.getSubmission(record.confirmed.submissionId);
           if (!isSelected(learnerAuthId, epoch)) return null;
+          if (cacheVersion !== readVersion) return get().current;
           if (fresh.learnerAuthId !== learnerAuthId) throw new ApiError(403);
           commit({ ...record, confirmed: fresh }, learnerAuthId, before === 'reconciled' ? 'reconciled' : 'confirmed', epoch);
         } catch (error) {
           if (!isSelected(learnerAuthId, epoch)) return null;
+          if (cacheVersion !== readVersion) return get().current;
           // The row is gone (erased, or never this learner's): the cache must not outlive it.
           if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
             commit(null, learnerAuthId, 'idle', epoch);
@@ -455,13 +554,23 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         const epoch = selectionEpoch;
         const record = load(ownerId);
         if (record === null || record.confirmed.tutorSessionId === tutorSessionId) return;
+        if (starting.has(epoch)) return;
+        starting.add(epoch);
+        cacheVersion += 1;
         try {
+          await flush(ownerId, epoch);
+          if (!isSelected(ownerId, epoch) || load(ownerId)?.pending.length) return;
+          set({ status: 'syncing' });
           const view = await client.startSubmission(record.confirmed.submissionId, { tutorSessionId });
           if (!isSelected(ownerId, epoch)) return;
-          const latest = load(ownerId) ?? record;
-          commit({ ...latest, confirmed: { ...latest.confirmed, tutorSessionId: view.tutorSessionId } }, ownerId, get().status, epoch);
-        } catch {
-          // Unlinked is not wrong, only less useful to the report; the screen retries on its next session id.
+          const latest = load(ownerId);
+          if (!latest || latest.confirmed.submissionId !== view.submissionId) return;
+          if (view.learnerAuthId !== ownerId) throw new ApiError(403);
+          commit({ ...latest, confirmed: view, pending: [] }, ownerId, 'confirmed', epoch);
+        } catch (error) {
+          if (isSelected(ownerId, epoch)) set({ status: isRetryableError(error) ? 'pending' : 'error' });
+        } finally {
+          starting.delete(epoch);
         }
       },
 
@@ -469,6 +578,7 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         const { ownerId, current } = get();
         if (ownerId === null || current === null || current.status === 'complete') return get().status;
         const epoch = selectionEpoch;
+        if (starting.has(epoch)) return get().status;
         const record = load(ownerId);
         if (record === null) return get().status;
         const move: AdvanceInput = {

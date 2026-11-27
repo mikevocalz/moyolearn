@@ -7,7 +7,8 @@ permissions:
 jobs:
   quest:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Cold native engine compilation exceeded the previous one-hour job limit.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,16 +23,44 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify Expo Android publication metadata
         run: node --test tooling/expo-android-publication.test.mjs
+      - name: Verify PICO service flavor isolation
+        run: node --test apps/mobile/plugins/__tests__/pico-*.test.cjs apps/mobile/plugins/__tests__/viro-native-registration.test.cjs
+      - name: Test actual Gradle native ABI propagation
+        run: node --test tooling/pico-native-architectures.test.mjs tooling/viro-native-registration.test.mjs
       - name: Install pinned native toolchain
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
       - name: Test real CMake and Ninja pool scheduling
         run: python3 tooling/test-native-compile-pools.py --cmake "$ANDROID_HOME/cmake/3.22.1/bin/cmake" --ninja "$ANDROID_HOME/cmake/3.22.1/bin/ninja"
+      - name: Test APK renderer verification
+        run: node --test tooling/verify-quest-apk.test.mjs
       - name: Assemble Quest debug app
         working-directory: apps/mobile/android
         env:
           ORG_GRADLE_PROJECT_moyoNativeJobPool: '2'
         run: bash "$GITHUB_WORKSPACE/tooling/run-with-resource-heartbeat.sh" bash gradlew :app:assembleQuestDebug --stacktrace --max-workers=1 --no-parallel -PreactNativeArchitectures=arm64-v8a '-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'
+      - name: Verify generated Quest manifest and renderer pin
+        env:
+          MOYO_REQUIRE_MERGED_QUEST_MANIFEST: '1'
+        run: node --test apps/mobile/plugins/__tests__/*.test.cjs
+      - name: Verify the packaged Quest renderer
+        run: >-
+          node tooling/verify-quest-apk.mjs
+          --apk apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk
+          --strip-tool "$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip"
+          --output apps/mobile/android/app/build/outputs/apk/quest/debug/renderer-verification.json
+      - name: Keep verified Quest candidate for device acceptance
+        uses: actions/upload-artifact@v4
+        with:
+          name: quest-debug-${{ github.sha }}
+          retention-days: 7
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk
+            apps/mobile/android/app/build/outputs/apk/quest/debug/output-metadata.json
+            apps/mobile/android/app/build/outputs/apk/quest/debug/renderer-verification.json
+            apps/mobile/android/app/build/intermediates/merged_manifests/questDebug/processQuestDebugManifest/AndroidManifest.xml
       - name: Verify generated native compile and link pools
         if: always()
         run: node tooling/verify-native-compile-pools.mjs
@@ -43,3 +72,80 @@ jobs:
             apps/mobile/android/build/reports
             apps/mobile/android/app/build/reports
           if-no-files-found: ignore
+  mobile-runtime:
+    # Quest's required headset features and arm64 binary are kept in the quest job.
+    # This is the existing ordinary-mobile flavor on a real x86_64 emulator.
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 security backports
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # verified v4 commit
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # verified v4 commit
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: pnpm install --frozen-lockfile
+      - name: Verify runtime acceptance contracts
+        run: node --test tooling/native-runtime-smoke.test.mjs apps/mobile/plugins/__tests__/pico-*.test.cjs apps/mobile/plugins/__tests__/viro-native-registration.test.cjs
+      - name: Test actual Gradle native ABI propagation
+        run: node --test tooling/pico-native-architectures.test.mjs tooling/viro-native-registration.test.mjs
+      - name: Install pinned native toolchain
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
+      - name: Assemble ordinary mobile debug app for the emulator
+        working-directory: apps/mobile/android
+        env:
+          ORG_GRADLE_PROJECT_moyoNativeJobPool: '2'
+        run: bash "$GITHUB_WORKSPACE/tooling/run-with-resource-heartbeat.sh" bash gradlew :app:assembleMobileDebug --stacktrace --max-workers=1 --no-parallel -PreactNativeArchitectures=x86_64 '-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'
+      - name: Release the build daemon before running the emulator
+        working-directory: apps/mobile/android
+        run: bash gradlew --stop
+      - name: Enable KVM for the hosted emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Execute Android emulator rendering and lifecycle checks
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # verified v2 commit
+        env:
+          MOYO_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          cores: 2
+          ram-size: 3072M
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -camera-front none
+          script: node tooling/native-runtime-smoke.mjs --platform android --serial emulator-5554 --app "$GITHUB_WORKSPACE/apps/mobile/android/app/build/outputs/apk/mobile/debug/app-mobile-debug.apk" --artifacts "$RUNNER_TEMP/moyo-android-runtime"
+      # The diagnostics artifact is the full record; this puts the failing phase
+      # and the tool's own words in the job log, where a reviewer looks first.
+      - name: Show native runtime failure
+        if: failure()
+        run: |
+          dir="$RUNNER_TEMP/moyo-android-runtime"
+          [ -d "$dir" ] || exit 0
+          cat "$dir/receipt.json" || true
+          tail -n 120 "$dir/runtime.log" || true
+          [ -f "$dir/junit.xml" ] && grep -A20 "<failure" "$dir/junit.xml" | head -n 80 || true
+          find "$dir" -name runner.log -exec tail -n 120 {} \; || true
+          find "$dir" -name android-crash.log -exec tail -n 80 {} \; || true
+          find "$dir" -name android-react-native.log -exec tail -n 120 {} \; || true
+          find "$dir" -name android-port-reverse.log -exec tail -n 60 {} \; || true
+          find "$dir" -name android-metro-reachability.log -exec tail -n 60 {} \; || true
+          find "$dir" -name android-adbd.log -exec tail -n 60 {} \; || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: android-mobile-runtime-diagnostics
+          path: |
+            ${{ runner.temp }}/moyo-android-runtime
+            apps/mobile/android/build/reports
+            apps/mobile/android/app/build/reports
+          if-no-files-found: warn
