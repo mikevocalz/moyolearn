@@ -480,8 +480,9 @@ function incidentPorts(
   return {
     ...ports(async () => ({ text: CLEAN_COPY, model: 'test-classifier' }), saved),
     loadSession: async () => ({ ...session, messages }),
-    loadSessionIncidents: async (sessionId) => {
+    loadSessionIncidents: async (ctx, sessionId) => {
       assert.equal(sessionId, 'sess_1', 'incidents must be read for the session being summarised');
+      assert.equal(ctx.learnerId, 'learner_1', 'incidents must be read for the session row’s own learner');
       return incidents;
     },
   };
@@ -523,6 +524,21 @@ describe('security pass H2 — a turn an S3 incident names is absent from the su
     );
     assert.ok(!JSON.stringify(saved[0]).includes(`"${FLAGGED_TEXT}"`));
     assert.ok(saved[0]?.problems.some((row) => row.childAnswer === SAFE_TEXT));
+  });
+
+  it('ignores an incident about ANOTHER learner that names this session (PR #157 review)', async () => {
+    // `relatedSessionId` is a client-named handle; a learner who knew this
+    // session id could file an S3 "on" it. Their incident must not edit
+    // learner_1's record, even if a repository ever returned it.
+    const saved: SessionSummaryReport[] = [];
+    await generateSessionSummary(
+      'sess_1',
+      incidentPorts([incident({ subjectLearnerId: 'learner_9', incidentId: 'inc_forged' })], saved),
+    );
+    assert.ok(
+      saved[0]?.problems.some((row) => row.childAnswer === FLAGGED_TEXT),
+      'another learner’s incident removed this learner’s turn from their own summary',
+    );
   });
 
   it('ignores S1 and S2 — a redirect is logged, never withheld from the record (doc 07 §3 layer 4)', () => {

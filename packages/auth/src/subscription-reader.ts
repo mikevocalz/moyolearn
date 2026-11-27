@@ -32,6 +32,10 @@ export type SubscriptionRow = Pick<
  *     retries are exhausted, so the benefit of the doubt has already been spent.
  *   `paused` → `canceled`. A paused subscription is not billing and not
  *     serving; read-only grace plus export (doc 05 §6) is exactly right for it.
+ * Neither of those two has paid for the period its row still names, so their
+ * projection carries NO `periodEnd` (see `UNPAID_PERIOD`): a `canceled` row with
+ * a future end is a paying customer serving notice, and `entitlementStateOf`
+ * honours that end — an unpaid or paused row must not inherit it.
  *   `incomplete_expired` → `incomplete`. Both mean the first payment never
  *     landed, which is "never started", not "ended".
  * The map is exhaustive over the plugin's union, so a status Better Auth adds
@@ -49,6 +53,13 @@ const STATUS: Record<Subscription['status'], SubscriptionStatus> = {
 };
 
 /**
+ * Stripe statuses whose row may still name a future `periodEnd` that nobody paid
+ * for. `SubscriptionState.periodEnd` is "access runs to here", so for these the
+ * honest projection is no end at all, which `entitlementStateOf` reads as lapsed.
+ */
+const UNPAID_PERIOD: ReadonlySet<Subscription['status']> = new Set(['paused', 'unpaid']);
+
+/**
  * Row → projection. An unrecognised `plan` string becomes `null` rather than a
  * cast: a row naming a plan this build does not ship must not carry that plan's
  * limits, and `null` resolves to the zeroed limits in `entitlementsFor`.
@@ -58,7 +69,8 @@ export function toSubscriptionState(row: SubscriptionRow): SubscriptionState {
     plan: isPlanName(row.plan) ? row.plan : null,
     status: STATUS[row.status],
     referenceId: row.referenceId,
-    periodEnd: row.periodEnd ? new Date(row.periodEnd).toISOString() : null,
+    periodEnd:
+      row.periodEnd && !UNPAID_PERIOD.has(row.status) ? new Date(row.periodEnd).toISOString() : null,
     trialEnd: row.trialEnd ? new Date(row.trialEnd).toISOString() : null,
     cancelAtPeriodEnd: row.cancelAtPeriodEnd === true,
     seats: row.seats ?? null,

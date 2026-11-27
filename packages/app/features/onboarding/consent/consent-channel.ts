@@ -18,6 +18,7 @@
 
 import type { ConsentMethod } from '@acme/auth';
 import { API_URL } from '../../../core/api-url.ts';
+import { sessionHeaders, type SessionCookieSource } from '../../../core/api-session.ts';
 import { getAuthMode } from '../../../providers/session/auth-mode.ts';
 
 export interface ConsentChannel {
@@ -103,14 +104,24 @@ export function createDevConsentChannel(random: () => number = Math.random): Dev
   };
 }
 
-/** What the live routes answer with on a refusal; the message is for the screen. */
-async function post<T>(path: string, body: Record<string, unknown>): Promise<T> {
+/**
+ * What the live routes answer with on a refusal; the message is for the screen.
+ * `cookies` is the native session source (core/api-session.ts): without it a
+ * signed-in guardian on a phone posts with no session and meets a 401.
+ */
+async function postJson<T>(
+  path: string,
+  body: Record<string, unknown>,
+  cookies: SessionCookieSource | null,
+  fetchImpl: typeof fetch,
+): Promise<T> {
+  const url = `${API_URL}${path}`;
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetchImpl(url, {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await sessionHeaders(url, cookies)) },
       body: JSON.stringify(body),
     });
   } catch {
@@ -123,7 +134,11 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
 }
 
 /** The server-backed channel: four routes, one guardian, taken from the session. */
-export function createLiveConsentChannel(): ConsentChannel {
+export function createLiveConsentChannel(
+  cookies: SessionCookieSource | null = null,
+  fetchImpl: typeof fetch = (input, init) => fetch(input, init),
+): ConsentChannel {
+  const post = <T>(path: string, body: Record<string, unknown>) => postJson<T>(path, body, cookies, fetchImpl);
   return {
     send: async (method, target) => {
       const issue = await post<{ challengeId: string }>('/api/family/consent/challenge', { method, target });
@@ -143,7 +158,10 @@ export function createLiveConsentChannel(): ConsentChannel {
   };
 }
 
-/** Live in live mode; the dev channel only where the session is a fixture too. */
-export function createConsentChannel(): ConsentChannel {
-  return getAuthMode() === 'live' ? createLiveConsentChannel() : createDevConsentChannel();
+/**
+ * Live in live mode; the dev channel only where the session is a fixture too.
+ * The caller passes the platform's session cookie source (null on web).
+ */
+export function createConsentChannel(cookies: SessionCookieSource | null = null): ConsentChannel {
+  return getAuthMode() === 'live' ? createLiveConsentChannel(cookies) : createDevConsentChannel();
 }

@@ -32,6 +32,22 @@ import {
 export const CONSENT_CODE_LENGTH = 6;
 
 /**
+ * How many codes one guardian may have sent in a rolling window. The target is
+ * an address the guardian types, so without a ceiling a signed-in account is a
+ * way to make Moyo mail anyone, repeatedly. Five an hour leaves room for a
+ * typo, an expired code and a burnt one, which is every honest reason to ask
+ * again; the same five-per-hour the marketing inquiry limit uses.
+ */
+export const CONSENT_SENDS_PER_WINDOW = 5;
+export const CONSENT_SEND_WINDOW_MINUTES = 60;
+
+/** The ceiling `create` enforces: fewer than `max` rows sent at or after `since`. */
+export interface ConsentSendLimit {
+  since: string;
+  max: number;
+}
+
+/**
  * One row per verification attempt, from "code sent" to "record written". The
  * row IS the consent record once `recordedAt` is set: the learner route reads
  * `method`, `scope`, `policyVersion` and `evidenceRef` from here by id, never
@@ -57,11 +73,25 @@ export interface ConsentVerificationRow {
   evidenceRef: string | null;
 }
 
-/** Only the reads and writes verification needs, so it runs without a database. */
+/**
+ * Only the reads and writes verification needs, so it runs without a database.
+ *
+ * The two limits are enforced by the store, not around it, because each is a
+ * read-then-write that concurrent requests would otherwise race: `create`
+ * counts this guardian's recent sends and inserts under one lock, and
+ * `claimAttempt` spends a guess with one conditional increment. A check here
+ * followed by a separate write lets N parallel requests all pass the check.
+ */
 export interface ConsentVerificationStore {
-  create(row: Omit<ConsentVerificationRow, 'id'>): Promise<{ id: string }>;
+  /** Inserts the row, or answers null when its guardian has already hit `limit`. */
+  create(row: Omit<ConsentVerificationRow, 'id'>, limit: ConsentSendLimit): Promise<{ id: string } | null>;
   find(id: string): Promise<ConsentVerificationRow | null>;
   update(id: string, patch: Partial<Omit<ConsentVerificationRow, 'id'>>): Promise<void>;
+  /**
+   * Atomically `attempts + 1` where `attempts < max`; the new count, or null
+   * when the budget was already spent.
+   */
+  claimAttempt(id: string, max: number): Promise<number | null>;
 }
 
 /** The two mails, sent by whoever holds the sender config (apps/web does). */
@@ -137,7 +167,7 @@ export async function startConsentChallenge(
   const now = options.now ?? new Date();
   const code = generateConsentCode(options.random);
   const codeHash = hashConsentCode(code);
-  const { id } = await deps.store.create({
+  const created = await deps.store.create({
     guardianAuthId: input.guardianAuthId,
     method: input.method,
     sentTo,
@@ -151,7 +181,17 @@ export async function startConsentChallenge(
     scope: null,
     policyVersion: null,
     evidenceRef: null,
+  }, {
+    since: new Date(now.getTime() - CONSENT_SEND_WINDOW_MINUTES * 60_000).toISOString(),
+    max: CONSENT_SENDS_PER_WINDOW,
   });
+  if (!created) {
+    throw new ConsentVerificationError(
+      'You’ve asked for several codes in a short time. Wait a little while, then send a new one.',
+      429,
+    );
+  }
+  const { id } = created;
   await deps.mailer.sendCode(sentTo, code, consentIdempotencyKey('code', id, codeHash));
   return {
     challengeId: id,
@@ -202,9 +242,16 @@ export interface ConsentVerifyResult {
 }
 
 /**
- * Compare and count. The verdict is the machine's — expired and burnt refuse a
- * correct code, which is the whole point of having limits — and the attempt
- * count is written back so a guess costs something across requests.
+ * Claim, then compare. The verdict is the machine's — expired and burnt refuse
+ * a correct code, which is the whole point of having limits.
+ *
+ * THE GUESS IS PAID FOR BEFORE IT IS CHECKED. Reading `attempts`, comparing,
+ * then writing the new count back let concurrent guesses all read the same
+ * count and each write `count + 1`, so a burst of parallel requests got far
+ * more than MAX_CODE_ATTEMPTS tries. `claimAttempt` is one conditional
+ * increment, so at most MAX_CODE_ATTEMPTS requests ever reach the comparison,
+ * however many arrive at once. A correct guess spends its slot too; once the
+ * code is verified the count no longer matters.
  */
 export async function verifyConsentCode(
   deps: ConsentVerificationDeps,
@@ -216,14 +263,19 @@ export async function verifyConsentCode(
   const challenge = toChallenge(row);
   if (challenge.codeVerified) return { verdict: 'verified', matched: true };
 
+  // Burnt and expired answer without spending anything, in the machine's order.
+  if (challenge.attempts >= MAX_CODE_ATTEMPTS) return { verdict: 'burnt', matched: false };
+  if (isCodeExpired(challenge, now)) return { verdict: 'expired', matched: false };
+
+  const claimed = await deps.store.claimAttempt(row.id, MAX_CODE_ATTEMPTS);
+  if (claimed === null) return { verdict: 'burnt', matched: false };
+
+  // Judged against the count this request claimed, not the one it read.
   const matched = hashConsentCode(input.code) === row.codeHash;
-  const result = verifyCode(challenge, matched, now);
+  const result = verifyCode({ ...challenge, attempts: claimed - 1 }, matched, now);
   if (result.verdict === 'verified') {
     await deps.store.update(row.id, { codeVerifiedAt: now.toISOString() });
     return { verdict: 'verified', matched: true };
-  }
-  if (result.challenge.attempts !== row.attempts) {
-    await deps.store.update(row.id, { attempts: result.challenge.attempts });
   }
   return { verdict: result.verdict, matched: false };
 }

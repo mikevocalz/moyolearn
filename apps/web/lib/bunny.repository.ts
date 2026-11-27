@@ -14,7 +14,7 @@
 // SOT: CONTRIBUTING.md §The block · packages/app/features/media/presign.rules.ts
 // SOT-KEYWORDS: bunny presign repository storage upload credential env erase forget everything learner media prefix scope
 import 'server-only';
-import { learnerMediaScope } from '@acme/app/features/media/presign.rules.ts';
+import { learnerMediaScope, normalizeMediaPrefix } from '@acme/app/features/media/presign.rules.ts';
 import type {
   EraseLearnerMedia,
   EraseSubjectMedia,
@@ -43,9 +43,10 @@ const EXPIRES_IN = 15 * 60;
  * defaulted to a folder name (as `app/api/media/sweep` does) would walk a prefix
  * nothing was written to on any deployment where the variable is unset, find
  * nothing, and report a successful deletion of a child's files that are still
- * there. The write path defines the read path.
+ * there. The write path defines the read path — and the ownership checks
+ * (`/api/media/view`, the attachment PATCH) read it from here for that reason.
  */
-const mediaPrefix = (): string => (process.env.BUNNY_MEDIA_PREFIX ?? '').replace(/^\/+|\/+$/g, '');
+export const mediaPrefix = (): string => normalizeMediaPrefix(process.env.BUNNY_MEDIA_PREFIX);
 
 export const signUpload: SignUpload = (key, contentType) => {
   const zone = process.env.BUNNY_STORAGE_ZONE_NAME;

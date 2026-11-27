@@ -287,6 +287,8 @@ export async function saveBoardUpdate(
 export interface AttachUploadedMediaRules {
   /** `NEXT_PUBLIC_BUNNY_CDN_BASE_URL`. Empty means no URL can be ours. */
   readonly cdnBase: string;
+  /** `BUNNY_MEDIA_PREFIX`, the namespace `signUpload` writes every key under. */
+  readonly mediaPrefix: string;
 }
 
 /**
@@ -311,7 +313,7 @@ export async function attachUploadedMedia(
   rules: AttachUploadedMediaRules,
 ): Promise<void> {
   return protectedOperation(auth, headers, async (ctx) => {
-    assertOwnMediaKey(mediaOwner(ctx.learnerId, ctx.orgId), input.storageKey, input.url, rules.cdnBase);
+    assertOwnMediaKey(mediaOwner(ctx.learnerId, ctx.orgId), input.storageKey, input.url, rules.cdnBase, rules.mediaPrefix);
     const patched = await patchAttachment(ctx, input.sessionId, input.messageId, input.attachmentId, {
       url: input.url,
       storageKey: input.storageKey,

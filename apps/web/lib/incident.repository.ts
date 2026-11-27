@@ -161,17 +161,28 @@ const dataFrom = (report: IncidentReport) => ({
 });
 
 /**
- * Every incident filed against one tutoring session, for the summary pipeline
- * (doc 34 §4 step 4). UNSCOPED on purpose, like `loadSessionForSummary`: the
- * caller is the job handler, which has no session and takes its identity from
- * the session row. Bounded because a session is twenty minutes long and a
- * hundred incidents in one is not a list-length problem.
+ * Every incident filed against one tutoring session ABOUT ITS LEARNER, for the
+ * summary pipeline (doc 34 §4 step 4). The caller is the job handler, which has
+ * no session and takes its identity from the session row — so `ctx.learnerId`
+ * is the session's own learner, never a payload field.
+ *
+ * Scoped by learner as well as session because `relatedSessionId` is the
+ * client's conversation handle: a session-only match let one learner file an
+ * incident "on" another child's session and strip that child's turns from
+ * their summary. `summary.service.ts` re-filters on the same two facts.
+ * Bounded because a session is twenty minutes long and a hundred incidents in
+ * one is not a list-length problem.
  */
-export const loadIncidentsForSession: LoadSessionIncidents = async (sessionId) =>
+export const loadIncidentsForSession: LoadSessionIncidents = async (ctx, sessionId) =>
   withPayload(async (payload) => {
     const { docs } = await payload.find({
       collection: 'incidentReports',
-      where: { relatedSessionId: { equals: sessionId } },
+      where: {
+        and: [
+          { relatedSessionId: { equals: sessionId } },
+          { subjectLearnerAuthId: { equals: ctx.learnerId } },
+        ],
+      },
       sort: 'occurredAt',
       limit: 100,
     });

@@ -26,6 +26,7 @@ import type {
   AdvanceResult,
   CreateSubmissionInput,
   HomeworkQuestionView,
+  HomeworkSubmissionSummary,
   HomeworkSubmissionView,
   QuestionOutcome,
   ReviseQuestionInput,
@@ -111,6 +112,35 @@ export function readCacheRecord(storage: ProblemStorage, learnerAuthId: string):
   } catch {
     return null;
   }
+}
+
+/**
+ * A sheet a guardian uploaded with every problem already marked done. The server
+ * stores it `complete` from the start, which on its own is indistinguishable from
+ * a worksheet the learner finished; what separates them is that every problem is
+ * a prior mark and no tutor session was ever started on it.
+ */
+function isAllMarkedOnArrival(summary: HomeworkSubmissionSummary): boolean {
+  return summary.status === 'complete' && summary.tutorSessionId === null &&
+    summary.questionCount > 0 && summary.alreadyDoneCount === summary.questionCount;
+}
+
+/**
+ * Cache-miss discovery. Open work keeps precedence; only when there is none does
+ * the NEWEST sheet get a say, and only if it is all-marked, so the learner sees
+ * the all-done state for the sheet just assigned rather than an unrelated
+ * practice problem. An older all-marked sheet behind newer work is history.
+ */
+export function discoverWorksheet(
+  owned: readonly HomeworkSubmissionSummary[],
+): HomeworkSubmissionSummary | undefined {
+  const open = owned.find((s) => s.status === 'in-progress') ?? owned.find((s) => s.status === 'ready');
+  if (open) return open;
+  const newest = owned.reduce<HomeworkSubmissionSummary | undefined>(
+    (latest, s) => (latest === undefined || s.createdAt > latest.createdAt ? s : latest),
+    undefined,
+  );
+  return newest !== undefined && isAllMarkedOnArrival(newest) ? newest : undefined;
 }
 
 function writeCacheRecord(storage: ProblemStorage, record: WorksheetCacheRecord): void {
@@ -401,7 +431,7 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
               if (!isSelected(learnerAuthId, epoch)) return null;
               const owned = submissions.filter((s) => s.learnerAuthId === learnerAuthId);
               const selected = submissionId === undefined
-                ? owned.find((s) => s.status === 'in-progress') ?? owned.find((s) => s.status === 'ready')
+                ? discoverWorksheet(owned)
                 : owned.find((s) => s.submissionId === submissionId);
               if (!selected) {
                 set({ status: 'idle' });

@@ -23,11 +23,12 @@ const teacher: ProtectedCtx = { learnerId: 'teacher_1', isLearner: false, orgId:
 const ADA_PHOTO = `${BASE}/image/ada_1/2026-10-15/u-1/page.jpg`;
 const ORG_PHOTO = `${BASE}/image/riverside/2026-10-15/u-2/page.jpg`;
 
-function ports(wards: Map<string, string[]>): MediaAccessPorts & { signed: string[] } {
+function ports(wards: Map<string, string[]>, mediaPrefix = ''): MediaAccessPorts & { signed: string[] } {
   const signed: string[] = [];
   return {
     signed,
     cdnBase: BASE,
+    mediaPrefix,
     loadGuardianWards: async (ctx) => wards.get(ctx.learnerId) ?? [],
     sign: (url) => {
       signed.push(url);
@@ -87,5 +88,21 @@ describe('security pass H4 — /api/media/view signs only what the caller may se
     await assert.rejects(() => signMediaUrlFor(ada, `${BASE}/image/ada_1/../ben_1/u/y.jpg`, p), MediaNotFound);
     await assert.rejects(() => signMediaUrlFor(ada, `${BASE}/image/ada_1`, p), MediaNotFound);
     assert.deepEqual(p.signed, []);
+  });
+
+  it('signs a prefixed key for its owner when BUNNY_MEDIA_PREFIX is set (PR #157 review)', async () => {
+    // `signUpload` writes `<prefix>/<kind>/<owner>/…`; the viewer must read the
+    // owner from under that namespace and still sign the full, original URL.
+    const prefixed = `${BASE}/moyolearn/image/ada_1/2026-11-25/upload_1/homework.png`;
+    const p = ports(new Map(), 'moyolearn');
+    assert.equal(await signMediaUrlFor(ada, prefixed, p), `${prefixed}?token=t&expires=1`);
+    assert.deepEqual(p.signed, [prefixed]);
+    await assert.rejects(() => signMediaUrlFor(ben, prefixed, ports(new Map(), 'moyolearn')), MediaNotFound);
+    // A key outside the configured namespace is not one this deployment wrote.
+    await assert.rejects(() => signMediaUrlFor(ada, ADA_PHOTO, ports(new Map(), 'moyolearn')), MediaNotFound);
+    await assert.rejects(
+      () => signMediaUrlFor(ada, `${BASE}/other/image/ada_1/2026-11-25/u/p.png`, ports(new Map(), 'moyolearn')),
+      MediaNotFound,
+    );
   });
 });

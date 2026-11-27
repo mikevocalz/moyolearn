@@ -108,8 +108,9 @@ export function canAdvance(step: GuardianStep, draft: GuardianDraft): boolean {
     case 'account':
       // The password is session-only state and is checked by the screen
       // (account.ts, `isGuardianAccountComplete`); the draft holds the two
-      // fields that may persist. A signed-in guardian passes this gate on the
-      // session alone, so the screen is also where that exemption lives.
+      // fields that may persist. A signed-in guardian passes the step on the
+      // session alone; the screen gates it with `canLeaveAccountStep`
+      // (account.ts), which owns that exemption.
       return /.+@.+\..+/.test(draft.email.trim()) && draft.guardianName.trim().length > 0;
     case 'consent':
       // Consent gates everything after it — doc 06 §2 forbids a child existing

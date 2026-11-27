@@ -73,6 +73,27 @@ export const isGuardianAccountComplete = (input: GuardianAccountInput) =>
   Object.keys(guardianAccountProblems(input)).length === 0;
 
 /**
+ * Whether Continue on the account step is live.
+ *
+ * A signed-in guardian passes on the session alone: the step hides the name,
+ * email and password fields because the account already exists, so gating them
+ * on those fields (empty in a fresh draft, e.g. a guardian adding a child from
+ * the Family tab) left the button disabled with nothing on screen to fill in.
+ * Everyone else needs a name and an email; a live build also needs the
+ * password, because Continue creates the account.
+ */
+export function canLeaveAccountStep(state: {
+  signedIn: boolean;
+  live: boolean;
+  account: GuardianAccountInput;
+}): boolean {
+  if (state.signedIn) return true;
+  const problems = guardianAccountProblems(state.account);
+  if (problems.name || problems.email) return false;
+  return !state.live || !problems.password;
+}
+
+/**
  * Where the verification link lands. Native gets the app's own scheme — it is
  * a trusted origin in `createAuth`, and the pattern `moyo://` matches any path
  * under it — so the mail reopens the flow on the step that is waiting. A

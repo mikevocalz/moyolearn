@@ -25,6 +25,7 @@ import {
   type KbaQuestion,
 } from '@acme/auth';
 import { getAuthMode } from '../../../providers/session/auth-mode.ts';
+import { sessionCookieSource } from '../../../providers/session/session-cookie';
 import { createConsentChannel, type ConsentChannel } from './consent-channel';
 
 export type ConsentStage = 'notice' | 'method' | 'challenge' | 'done';
@@ -96,7 +97,7 @@ const BLANK = {
 export const useConsentFlow = create<ConsentState>((set, get) => ({
   ...BLANK,
   env: environmentFor(),
-  channel: createConsentChannel(),
+  channel: createConsentChannel(sessionCookieSource),
   setStage: (stage) => set({ stage, problem: null }),
   setChannel: (channel) => set({ channel }),
   setEnv: (env) => set((s) => ({ env: { ...s.env, ...env } })),

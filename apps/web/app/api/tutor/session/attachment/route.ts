@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { attachUploadedMedia, MediaKeyRejected, SessionNotFound } from '@acme/app/server';
 import { patchAttachment } from '@/lib/tutor-session.repository';
+import { mediaPrefix } from '@/lib/bunny.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -68,7 +69,7 @@ export async function PATCH(request: NextRequest) {
       // The service checks `storageKey` against the caller's own folder and
       // `url` against the key, so a client cannot attach an address it did not
       // upload to (security pass H4).
-      { cdnBase: process.env.NEXT_PUBLIC_BUNNY_CDN_BASE_URL ?? '' },
+      { cdnBase: process.env.NEXT_PUBLIC_BUNNY_CDN_BASE_URL ?? '', mediaPrefix: mediaPrefix() },
     );
     return NextResponse.json({ ok: true });
   } catch (error) {

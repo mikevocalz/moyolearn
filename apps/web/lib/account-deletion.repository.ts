@@ -128,6 +128,14 @@ const SUBJECT_COLLECTIONS = [
     their family is the one event that ends it.
   */
   { collection: 'consents', fields: ['learnerAuthId', 'guardianAuthId'] },
+  /*
+    The verification rows behind those consents (H3), pending and recorded
+    alike. Each holds the guardian's full email in `sentTo` and is keyed by a
+    TEXT auth id, so deleting the Better Auth user cascades to nothing here —
+    this entry is their only deleter. The row names its guardian itself, so
+    an interrupted run leaves it traceable and a re-run takes it.
+  */
+  { collection: 'consent-verifications', fields: ['guardianAuthId'] },
   { collection: 'guardianships', fields: ['learnerAuthId', 'guardianAuthId'] },
 ] as const;
 
