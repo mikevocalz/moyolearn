@@ -458,6 +458,34 @@ export function worksheetStateCreator(ports: WorksheetCachePorts): StateCreator<
         if (record === null || record.pending.length > 0) return get().current;
         if (starting.has(epoch)) return get().current;
 
+        // A finished sheet is not where the next assignment lives. Without this,
+        // a cached complete worksheet (finished here, or all-marked on arrival)
+        // would hide every newer guardian assignment on this device forever.
+        if (submissionId === undefined && record.confirmed.status === 'complete') {
+          const discoverVersion = cacheVersion;
+          try {
+            const submissions = await client.listSubmissions();
+            if (!isSelected(learnerAuthId, epoch)) return null;
+            if (cacheVersion !== discoverVersion) return get().current;
+            const selected = discoverWorksheet(submissions.filter((s) => s.learnerAuthId === learnerAuthId));
+            if (selected && selected.submissionId !== record.confirmed.submissionId) {
+              const fresh = await client.getSubmission(selected.submissionId);
+              if (!isSelected(learnerAuthId, epoch)) return null;
+              if (cacheVersion !== discoverVersion) return get().current;
+              if (fresh.learnerAuthId !== learnerAuthId) throw new ApiError(403);
+              commit({ schemaVersion: 2, learnerAuthId, confirmed: fresh, pending: [] }, learnerAuthId, 'confirmed', epoch);
+              return get().current;
+            }
+          } catch (error) {
+            if (!isSelected(learnerAuthId, epoch)) return null;
+            // Discovery is best effort; the refresh below reports its own failure.
+            if (error instanceof ApiError && error.status === 403) {
+              set({ status: 'error' });
+              return get().current;
+            }
+          }
+        }
+
         const before = get().status;
         const readVersion = cacheVersion;
         try {
