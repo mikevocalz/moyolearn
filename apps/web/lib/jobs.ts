@@ -44,7 +44,7 @@ import {
 import { POST as retentionSweep } from '@/app/api/retention/sweep/route';
 import { POST as mediaSweep } from '@/app/api/media/sweep/route';
 import { distillTranscript } from './distill.service';
-import { guardianIncidentEmailSender } from './guardian-alert-email';
+import { guardianAlertsUrl, guardianIncidentEmailSender } from './guardian-alert-email';
 import { loadGuardianContacts, loadLearnerFirstName } from './guardian-contact.repository';
 import { loadIncident, loadIncidentsForSession, saveIncident } from './incident.repository';
 import { loadEduPriorFacts, loadEduTurnsInWindow } from './edu.repository';
@@ -236,11 +236,18 @@ export function jobHandlers(): JobHandlers {
     'safety.alert.guardian': async (payload) => {
       const report = await loadIncident(payload.incidentId);
       if (report === null) return;
+      /*
+        The link is built only when a mail will carry it, and from the learning
+        app's origin, never `origin()` (a sweep's internal URL, localhost when
+        unset). Without a sender the leg is `in-app` alone and needs no link, so
+        a missing `NEXT_PUBLIC_APP_URL` cannot stop the in-app marker there.
+      */
+      const sendEmail = guardianIncidentEmailSender();
       const notified = await deliverGuardianAlert(report, {
         loadGuardianContacts,
         loadLearnerFirstName,
-        sendEmail: guardianIncidentEmailSender(),
-        alertsUrl: new URL('/alerts', origin()).toString(),
+        sendEmail,
+        alertsUrl: sendEmail === null ? '' : guardianAlertsUrl(),
       });
       if (notified !== report) await saveIncident(notified);
     },
