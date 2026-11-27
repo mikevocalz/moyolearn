@@ -26,7 +26,7 @@ import 'server-only';
 // SOT-KEYWORDS: summary service pipeline generate guardian report view teacher share token draft queue approve suppress viewed loop
 import { createHash, randomBytes } from 'node:crypto';
 import type { Auth } from '@acme/auth/server';
-import { safetyLayer, safetyLayerSync, screen } from '@acme/safety';
+import { safetyLayer, safetyLayerSync, screen, tierAtLeast, type IncidentReport } from '@acme/safety';
 import { planeRegisterFor, type VoiceBand } from '@acme/student-model';
 import { scrubText } from '@acme/inference';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
@@ -138,6 +138,13 @@ export type LoadHomeworkForSession = (
   sessionId: string,
 ) => Promise<HomeworkSubmissionView | null>;
 
+/**
+ * Every incident filed against one session (doc 31 §4), any tier. The service
+ * keeps the S3-and-up ones and drops the turns they are about BEFORE the
+ * evidence is extracted — see `excludeIncidentTurns`.
+ */
+export type LoadSessionIncidents = (sessionId: string) => Promise<readonly IncidentReport[]>;
+
 export interface GenerateSummaryPorts {
   readonly loadSession: LoadSessionForSummary;
   readonly loadSummary: LoadSummaryBySession;
@@ -146,6 +153,8 @@ export interface GenerateSummaryPorts {
   readonly loadBand: LoadBand;
   readonly narrativeModel: NarrativeModel;
   readonly saveSummary: SaveSummaryReport;
+  /** Required, not optional: a root that forgets it would publish the turn an incident was filed about. */
+  readonly loadSessionIncidents: LoadSessionIncidents;
   /**
    * Optional so a composition root that predates worksheets keeps compiling;
    * without it every session reports from chat evidence alone.
@@ -186,19 +195,30 @@ export async function generateSessionSummary(
   // Identity from the ROW, never from the queue payload — the distill rule.
   const ctx: ProtectedCtx = { learnerId: session.learnerAuthId, isLearner: true };
 
-  const [turns, priorFacts, band, submission] = await Promise.all([
+  const [turns, priorFacts, band, submission, incidents] = await Promise.all([
     ports.loadEvidenceTurns(ctx, session.openedAt, session.closedAt),
     ports.loadPriorFacts(ctx),
     ports.loadBand(ctx),
     ports.loadHomeworkForSession?.(ctx, sessionId) ?? Promise.resolve(null),
+    ports.loadSessionIncidents(sessionId),
   ]);
+
+  /*
+    §4 step 4 begins HERE, not at the screen. A turn an S3 or S4 incident was
+    filed about is removed before the extractor sees it, so it can reach
+    neither a verbatim answer row nor the narrative's input. The output
+    classifier below still runs over whatever is left; the two are different
+    questions (what was filed, versus what the rendered text looks like) and
+    the security pass found the second standing in for the first.
+  */
+  const messages = excludeIncidentTurns(session.messages, incidents);
 
   const chatEvidence = extractEvidence({
     sessionId,
     problem: session.problem,
     openedAt: session.openedAt,
     closedAt: session.closedAt,
-    messages: session.messages,
+    messages,
     turns,
     masteryFacts: priorFacts.flatMap((fact) =>
       fact.kind === 'mastery' ? [{ skillId: fact.skillId, p: fact.p, attempts: fact.attempts }] : [],
@@ -266,6 +286,64 @@ export async function generateSessionSummary(
 
   await ports.saveSummary(report);
   return { found: true, outcome: publishable ? 'published' : 'suppressed' };
+}
+
+/**
+ * How far either side of an incident's `occurredAt` a learner turn is treated as
+ * the turn it was filed about, when the report carries no message ids.
+ *
+ * The automated path files from the Safety Plane's verdict, which holds a turn
+ * and not the transcript's own ids (`incidentFromSafetyEvent` leaves
+ * `messageIds` empty for that reason), so the clock is the only join. Two
+ * minutes is wider than any single exchange and narrower than a session: an
+ * innocent answer typed in the same breath is withheld, which costs a parent one
+ * line, where the alternative costs them a crisis disclosure in paragraph three.
+ */
+export const INCIDENT_TURN_WINDOW_MS = 2 * 60_000;
+
+/**
+ * Doc 34 §2's rule read against doc 31's record: a turn that is the subject of
+ * an S3-or-higher incident is not summary material. Named ids win when the
+ * report has them; otherwise every LEARNER turn inside the window around
+ * `occurredAt` goes, and so does the tutor turn that answered it — the plane's
+ * deflection script is harmless text, but it is half of an exchange a parent is
+ * told about elsewhere, and a recap that quotes half of it is a recap that
+ * points at the other half.
+ */
+export function excludeIncidentTurns(
+  messages: readonly StoredMessage[],
+  incidents: readonly IncidentReport[],
+  windowMs: number = INCIDENT_TURN_WINDOW_MS,
+): readonly StoredMessage[] {
+  const filed = incidents.filter((incident) => tierAtLeast(incident.severity, 'S3'));
+  if (filed.length === 0) return messages;
+
+  const namedIds = new Set(filed.flatMap((incident) => incident.transcriptExcerpt?.messageIds ?? []));
+  const clocks = filed.map((incident) => new Date(incident.occurredAt).getTime()).filter(Number.isFinite);
+
+  const isSubject = (message: StoredMessage): boolean => {
+    if (namedIds.has(message.id)) return true;
+    if (message.role !== 'learner') return false;
+    const at = new Date(message.createdAt).getTime();
+    if (!Number.isFinite(at)) return false;
+    return clocks.some((clock) => Math.abs(at - clock) <= windowMs);
+  };
+
+  const kept: StoredMessage[] = [];
+  let dropNextTutor = false;
+  for (const message of messages) {
+    if (isSubject(message)) {
+      dropNextTutor = true;
+      continue;
+    }
+    if (dropNextTutor && message.role === 'tutor') {
+      dropNextTutor = false;
+      continue;
+    }
+    dropNextTutor = false;
+    kept.push(message);
+  }
+  return kept;
 }
 
 /** Model first, deterministic on ANY failure — and the lint judges both. */

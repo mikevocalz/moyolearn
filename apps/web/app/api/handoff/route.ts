@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: statusFor(message) });
+    const status = statusFor(message);
+    // A 401 or 403 carries its own sentence; an unexpected failure carries a
+    // fixed one. The real message has gone to Sentry above, and an internal
+    // error string in a response body is a leak (security pass M7).
+    return NextResponse.json({ error: status === 500 ? 'Server error' : message }, { status });
   }
 }

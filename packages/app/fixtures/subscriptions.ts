@@ -28,6 +28,8 @@ export function mockSubscriptionsFor(persona: Persona): SubscriptionState[] {
       status: persona.id === LAPSED_PERSONA_ID ? 'canceled' : 'active',
       referenceId: persona.id,
       periodEnd: null,
+      trialEnd: null,
+      cancelAtPeriodEnd: false,
       seats: null,
     },
     // Seats mirror the walkthrough org (`ops-studio` holds 6, ACCOUNTS.md) so
@@ -37,6 +39,8 @@ export function mockSubscriptionsFor(persona: Persona): SubscriptionState[] {
       status: 'active',
       referenceId: membership.orgId,
       periodEnd: null,
+      trialEnd: null,
+      cancelAtPeriodEnd: false,
       seats: membership.role === 'owner' ? 6 : 1,
     })),
   ];

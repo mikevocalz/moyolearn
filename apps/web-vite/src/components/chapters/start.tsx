@@ -30,6 +30,13 @@
  * SOT-KEYWORDS: site chapter start pricing family plan early bird trial cta
  *               compress thunk placeholder eligibility renewal web-vite
  */
+import {
+  additionalChildSentence,
+  consumerTrialDays,
+  monthlyPrice,
+  monthlyPriceLine,
+  CONSUMER_PLANS,
+} from '@acme/auth/plan-catalog';
 import { Container, Heading, Text } from '@acme/ui/typography';
 import { Link, List, ListItem, Paragraph, Section, View } from '@acme/ui/primitives';
 import { APP_START } from '@/app-links';
@@ -40,6 +47,11 @@ const FRONT_DOOR = APP_START;
 
 const SCOPE = '.chapter-start';
 
+const PLUS = CONSUMER_PLANS.plus;
+const FAMILY = CONSUMER_PLANS.family;
+const TRIAL_DAYS = consumerTrialDays();
+const FAMILY_RIDER = additionalChildSentence('family');
+
 const PLUS_INCLUDED = [
   'Unlimited AI tutor',
   'Tutor Room',
@@ -49,7 +61,7 @@ const PLUS_INCLUDED = [
 ] as const;
 
 const FAMILY_INCLUDED = [
-  'Everything in Plus for up to 3 children',
+  `Everything in Plus for up to ${FAMILY.includedChildren} children`,
   'Parent dashboard',
   'Family progress',
   'Shared calendar',
@@ -89,19 +101,19 @@ export function StartChapter() {
 
         <View className="flex flex-col gap-stack md:flex-row md:gap-group">
           <PricingCard
-            name="Moyo Plus"
-            price="$14.99"
+            name={PLUS.title}
+            price={monthlyPrice('plus')}
             period="/mo"
-            audience="Individual learner"
+            audience={PLUS.audience}
             included={PLUS_INCLUDED}
           />
           <PricingCard
-            name="Moyo Family"
-            price="$24.99"
+            name={FAMILY.title}
+            price={monthlyPrice('family')}
             period="/mo"
-            audience="Families"
+            audience={FAMILY.audience}
             included={FAMILY_INCLUDED}
-            note="Each additional child after the first 3 is $11/mo."
+            {...(FAMILY_RIDER ? { note: FAMILY_RIDER } : {})}
           />
         </View>
 
@@ -112,7 +124,7 @@ export function StartChapter() {
           the exact point of decision.
         */}
         <Paragraph className="text-site-body text-moyo-ink">
-          30 days free. A card is required to start, we&rsquo;ll email you before the
+          {TRIAL_DAYS} days free. A card is required to start, we&rsquo;ll email you before the
           first charge, and you can cancel anytime in the app.
         </Paragraph>
 
@@ -138,8 +150,8 @@ export function StartChapter() {
           on the page: that is the ClassPass pattern this chapter refused.
         */}
         <Paragraph className="text-site-body text-moyo-ink-muted">
-          After the 30-day free trial, Moyo Plus renews at $14.99/mo and Moyo Family at
-          $24.99/mo. Each additional child beyond the first 3 is $11/mo. Cancel anytime in the app.
+          After the {TRIAL_DAYS}-day free trial, {PLUS.title} renews at {monthlyPriceLine('plus')} and{' '}
+          {FAMILY.title} at {monthlyPriceLine('family')}. {FAMILY_RIDER} Cancel anytime in the app.
         </Paragraph>
 
         <View className="gap-stack">

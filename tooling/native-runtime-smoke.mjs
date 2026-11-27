@@ -155,8 +155,11 @@ export async function retainAndroidFailureDiagnostics(device, destination, { env
       'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'OkHttp:V', 'AndroidRuntime:V', '*:S']],
     // Whether the device can still reach Metro through the harness's reverse.
     ['android-port-reverse.log', 'android-port-reverse', ['reverse', '--list']],
+    // Keep nc's stdin open while Metro answers: on EOF toybox nc half-closes the
+    // socket, and adbd's reverse forwarder then closes the whole stream, which
+    // can drop the reply. The sleep bounds the read; nc exits when Metro closes.
     ['android-metro-reachability.log', 'android-metro-reachability',
-      ['shell', `printf 'GET /status HTTP/1.0\\r\\n\\r\\n' | toybox nc -w 5 127.0.0.1 ${METRO_PORT}`]],
+      ['shell', `(printf 'GET /status HTTP/1.0\\r\\n\\r\\n'; sleep 5) | toybox nc -w 5 127.0.0.1 ${METRO_PORT}`]],
     // A reverse mapping lives in adbd. When adbd restarts, every mapping and open
     // adb shell is dropped. Record when adbd last started and why memory ran low.
     ['android-adbd.log', 'android-adbd', ['shell', 'getprop init.svc.adbd; ps -A -o PID,STIME,ELAPSED,NAME | grep -E "adbd|PID"; '

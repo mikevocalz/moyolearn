@@ -11,7 +11,19 @@
  * SOT-KEYWORDS: copy content pages safety privacy terms about contact faq footer
  */
 
+import {
+  additionalChildPrice,
+  consumerTrialDays,
+  coverageSentence,
+  monthlyPriceSentence,
+  CONSUMER_PLANS,
+} from '@acme/auth/plan-catalog';
+
 export const EMAIL = 'info@moyolearn.com' as const;
+
+const TRIAL_DAYS = consumerTrialDays();
+const PLUS = CONSUMER_PLANS.plus;
+const FAMILY = CONSUMER_PLANS.family;
 
 export const safety = {
   heading: 'Safety at Moyo',
@@ -92,7 +104,7 @@ export const terms = {
     },
     {
       title: 'Payments and trials',
-      body: 'Start with 30 days free. Then your chosen plan renews monthly. Cancel anytime in the app.',
+      body: `Start with ${TRIAL_DAYS} days free. Then your chosen plan renews monthly. Cancel anytime in the app.`,
     },
     {
       title: 'Acceptable use',
@@ -159,7 +171,7 @@ export const faq = {
     },
     {
       q: 'How much does Moyo cost?',
-      a: 'Moyo Plus is $14.99 a month for one learner. Moyo Family is $24.99 a month for up to 3 children. Each additional child after the first 3 is $11 a month.',
+      a: `${PLUS.title} is ${monthlyPriceSentence('plus')} for ${coverageSentence('plus')}. ${FAMILY.title} is ${monthlyPriceSentence('family')} for ${coverageSentence('family')}. Each additional child after the first ${FAMILY.includedChildren} is ${additionalChildPrice('family')} a month.`,
     },
     {
       q: 'Is Moyo safe for kids?',
@@ -171,7 +183,7 @@ export const faq = {
     },
     {
       q: 'Can I cancel?',
-      a: 'Yes. You can cancel anytime in the app. Your access continues through the current paid month. New accounts get 30 days free.',
+      a: `Yes. You can cancel anytime in the app. Your access continues through the current paid month. New accounts get ${TRIAL_DAYS} days free.`,
     },
     {
       q: 'What ages is Moyo for?',

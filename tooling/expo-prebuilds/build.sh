@@ -3,8 +3,8 @@
 #
 # Expo's SwiftPM autolinking plugin (expo/scripts/spm) links every Expo module that
 # mixes Swift and Objective-C as a prebuilt XCFramework pair (Debug + Release). On
-# npm only expo-modules-core, expo-file-system, expo-font, expo-image and
-# expo-image-manipulator carry them. This script builds the rest with Expo's own
+# npm only expo-modules-core, expo-file-system, expo-font, expo-image,
+# expo-image-manipulator and (since 58.0.9) expo-print carry them. This script builds the rest with Expo's own
 # pipeline (`et prebuild`, tools/src/prebuilds in expo/expo) from the expo commit
 # the installed packages were published from.
 #
@@ -22,14 +22,11 @@ OUT=${2:?out dir}
 REPO_ROOT=$(cd "$(dirname "$0")/../.." && pwd -P)
 HERE="$REPO_ROOT/tooling/expo-prebuilds"
 
-# expo@58.0.19 and expo-modules-core@58.0.26 were both published from this commit
-# (tags `expo@58.0.19`, `expo-modules-core@58.0.26`). Every package built below has
-# the same version in its package.json at this commit as on npm, except expo-print:
-# it is 58.0.7 here and 58.0.8 on npm. 58.0.8 changed no source; it only republished
-# the npm prebuild, compiled against a newer ExpoModulesCore that exports
-# AnyModule._classTypes. Linking that prebuild against this ExpoModulesCore stopped
-# dyld at launch with "Symbol not found" (iOS native run 45615528693), so expo-print
-# is built here from the same commit as the core.
+# expo-commit.txt is the head of expo/expo's sdk-58 branch on 2026-11-25, where
+# expo is 58.0.26, expo-modules-core 58.1.0 and expo-modules-jsi 58.0.23. Every
+# package built below has the same version in its package.json at this commit as
+# the one pnpm installs. Move the pin whenever an Expo patch release changes any
+# of them: the SPM plugin refuses headers built from another expo-modules-jsi.
 EXPO_COMMIT=$(tr -d '[:space:]' < "$HERE/expo-commit.txt")
 RN_VERSION=$(node -p "require('$REPO_ROOT/node_modules/react-native/package.json').version")
 
@@ -59,16 +56,12 @@ git -C "$EXPO" sparse-checkout set \
   packages/expo packages/precompile packages/expo-modules-core packages/expo-modules-jsi \
   packages/expo-modules-autolinking \
   packages/@expo/json-file packages/@expo/osascript packages/@expo/plist \
-  packages/@expo/internal-scripts packages/@expo/require-utils \
+  packages/@expo/internal-scripts packages/@expo/require-utils packages/@expo/platforms \
   packages/unimodules-app-loader packages/expo-task-manager packages/expo-background-task \
   packages/expo-ui packages/expo-file-system packages/expo-font packages/expo-image \
   packages/expo-image-manipulator packages/expo-print
 git -C "$EXPO" fetch -q --depth 1 --filter=blob:none origin "$EXPO_COMMIT"
 git -C "$EXPO" checkout -q --force FETCH_HEAD
-
-# Upstream fix pending: `et prebuild` passes the package name as the xcodebuild
-# scheme, and Xcode names no scheme "@expo/ui".
-git -C "$EXPO" apply "$HERE/expotools-scoped-package-scheme.patch"
 
 # expo-task-manager ships no spm.config.json; ours comes from the pnpm patch.
 cp "$REPO_ROOT/node_modules/expo-task-manager/spm.config.json" "$EXPO/packages/expo-task-manager/spm.config.json"
@@ -80,8 +73,13 @@ ln -sfn "$REPO_ROOT/node_modules/react-native" "$EXPO/apps/bare-expo/node_module
 
 cd "$EXPO"
 npx -y pnpm@12.2.1 install --filter 'expotools...' --filter 'expo-modules-core...' --ignore-scripts
-for pkg in json-file osascript plist; do
-  (cd "packages/@expo/$pkg" && npx -y pnpm@12.2.1 run build)
+# --ignore-scripts skips every workspace build, so build the ones expotools
+# loads from build/. At the expo-commit.txt pin that includes
+# expo-modules-autolinking/internal/prebuiltArtifactPaths, and autolinking
+# needs @expo/platforms and @expo/require-utils built first.
+for pkg in @expo/json-file @expo/osascript @expo/plist \
+  @expo/platforms @expo/require-utils expo-modules-autolinking; do
+  (cd "packages/$pkg" && npx -y pnpm@12.2.1 run build)
 done
 
 CI=1 node tools/bin/expotools.js prebuild --react-native-version "$RN_VERSION" "${PACKAGES[@]}"

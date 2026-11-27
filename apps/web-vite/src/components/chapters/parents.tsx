@@ -37,6 +37,12 @@
  * SOT-KEYWORDS: site chapter parents magazine editorial serif session report
  *               trust safety screentime controls price honesty ink-frame web-vite
  */
+import {
+  additionalChildPrice,
+  coverageSentence,
+  monthlyPriceSentence,
+  CONSUMER_PLANS,
+} from '@acme/auth/plan-catalog';
 import { Container, Heading, Text } from '@acme/ui/typography';
 import {
   Figcaption,
@@ -318,9 +324,10 @@ export function ParentsChapter() {
             One price, every child
           </Text>
           <Paragraph className="font-moyo-display text-site-lead text-moyo-ink">
-            $14.99 a month for one learner, $24.99 a month for the whole family. Each
-            additional child after the first 3 is $11. No ads. Nothing about your
-            child sold, ever.
+            {monthlyPriceSentence('plus')} for {coverageSentence('plus')},{' '}
+            {monthlyPriceSentence('family')} for the whole family. Each additional child after the
+            first {CONSUMER_PLANS.family.includedChildren} is {additionalChildPrice('family')}. No
+            ads. Nothing about your child sold, ever.
           </Paragraph>
           <Link href="/pricing" className="text-site-body text-moyo-primary underline">
             See what&rsquo;s included

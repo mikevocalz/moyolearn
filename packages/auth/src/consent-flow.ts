@@ -60,20 +60,36 @@ export interface ConsentEnvironment {
   disclosesToThirdParties: boolean;
   /** True once the guardian has a card on file — the classic method, already paid for. */
   hasVerifiedCard: boolean;
+  /**
+   * Whether a text message can actually be sent. Text-plus is lawful where
+   * nothing is disclosed, but lawful is not the same as wired: the live
+   * channel has an email sender and no SMS provider, so it sets this false and
+   * the method is not offered. The dev channel mints codes for anything.
+   */
+  canSendText: boolean;
+  /**
+   * Whether a real KBA question source exists. The demo provider in
+   * `kba.data.ts` is honest about being a demo; a live flow without a bought
+   * identity source sets this false rather than scoring four known answers.
+   */
+  hasKbaProvider: boolean;
 }
 
 export const DEFAULT_CONSENT_ENVIRONMENT: ConsentEnvironment = {
   disclosesToThirdParties: false,
   hasVerifiedCard: false,
+  canSendText: true,
+  hasKbaProvider: true,
 };
 
 export function availableMethods(env: ConsentEnvironment): ConsentMethod[] {
   const methods: ConsentMethod[] = ['email-plus'];
-  if (!env.disclosesToThirdParties) methods.push('text-plus');
+  if (!env.disclosesToThirdParties && env.canSendText) methods.push('text-plus');
   if (env.hasVerifiedCard) methods.push('card');
-  // KBA is always reachable, but as the fallback doc 06 §3.1 puts behind
-  // "having trouble?" — it is the highest-friction path, not a first offer.
-  methods.push('kba');
+  // KBA is reachable wherever a question source exists, but as the fallback
+  // doc 06 §3.1 puts behind "having trouble?" — the highest-friction path, not
+  // a first offer.
+  if (env.hasKbaProvider) methods.push('kba');
   return methods;
 }
 

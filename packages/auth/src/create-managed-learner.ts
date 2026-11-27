@@ -29,6 +29,8 @@ export interface LearnerWriter {
     scope: string;
     policyVersion: string;
     evidenceRef?: string;
+    /** The server-side verification row the grant was read from (consent-verification.ts). */
+    verificationId?: string;
     grantedAt: string;
   }): Promise<void>;
 }
@@ -58,6 +60,7 @@ export async function createManagedLearner(
       scope: input.consent.scope,
       policyVersion: input.consent.policyVersion,
       evidenceRef: input.consent.evidenceRef,
+      verificationId: input.consent.verificationId,
       grantedAt: new Date().toISOString(),
     });
   } catch (cause) {

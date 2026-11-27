@@ -337,7 +337,7 @@ test('failed Android diagnostic collection stays bounded and still retains the o
     ['-s', 'emulator-5554', 'logcat', '-b', 'main', '-d', '-v', 'threadtime', '-t', '1500',
       'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'OkHttp:V', 'AndroidRuntime:V', '*:S'],
     ['-s', 'emulator-5554', 'reverse', '--list'],
-    ['-s', 'emulator-5554', 'shell', "printf 'GET /status HTTP/1.0\\r\\n\\r\\n' | toybox nc -w 5 127.0.0.1 8081"],
+    ['-s', 'emulator-5554', 'shell', "(printf 'GET /status HTTP/1.0\\r\\n\\r\\n'; sleep 5) | toybox nc -w 5 127.0.0.1 8081"],
     ['-s', 'emulator-5554', 'shell', 'getprop init.svc.adbd; ps -A -o PID,STIME,ELAPSED,NAME | grep -E "adbd|PID"; '
       + 'cat /proc/meminfo | head -6; logcat -b all -d -v threadtime | grep -iE "adbd|lmkd|lowmemorykiller|am_kill|am_low_memory" | tail -n 200'],
   ]);

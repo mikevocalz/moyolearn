@@ -10,9 +10,9 @@ import { useMemo } from 'react';
 import {
   can,
   daysLeft,
-  entitlementsFor,
-  subscriptionFor,
+  resolveEntitlement,
   type Capability,
+  type EntitlementState,
   type Entitlements,
   type SubscriptionState,
 } from '@acme/auth';
@@ -21,6 +21,8 @@ import { useEntitlementStore } from './store';
 
 export interface ResolvedEntitlements {
   entitlements: Entitlements;
+  /** trial · active · past-due · cancel-at-period-end · lapsed · restored · none. */
+  state: EntitlementState;
   subscription: SubscriptionState;
   /** Null until the webhook truth has arrived, or when there is no period. */
   daysLeft: number | null;
@@ -36,10 +38,10 @@ export function useEntitlements(): ResolvedEntitlements {
   return useMemo(() => {
     // Ops contexts bill to the org; everything else bills to the person.
     const referenceId = activeContext.orgId ?? user?.id ?? null;
-    const subscription = subscriptionFor(subscriptions, referenceId);
-    const entitlements = entitlementsFor(subscription);
+    const { subscription, state, entitlements } = resolveEntitlement(subscriptions, referenceId);
     return {
       entitlements,
+      state,
       subscription,
       daysLeft: daysLeft(subscription),
       loaded,

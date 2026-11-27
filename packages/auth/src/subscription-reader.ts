@@ -18,8 +18,11 @@ import { isPlanName } from './billing-plans.ts';
 import type { SubscriptionState, SubscriptionStatus } from './entitlements.ts';
 import type { Auth } from './server.ts';
 
-/** Derived from the plugin's own row type — the five columns this projection reads. */
-export type SubscriptionRow = Pick<Subscription, 'plan' | 'status' | 'referenceId' | 'periodEnd' | 'seats'>;
+/** Derived from the plugin's own row type — the seven columns this projection reads. */
+export type SubscriptionRow = Pick<
+  Subscription,
+  'plan' | 'status' | 'referenceId' | 'periodEnd' | 'trialEnd' | 'cancelAtPeriodEnd' | 'seats'
+>;
 
 /**
  * Stripe ships eight statuses; doc 06 §4's projection names six. The two extra
@@ -56,6 +59,8 @@ export function toSubscriptionState(row: SubscriptionRow): SubscriptionState {
     status: STATUS[row.status],
     referenceId: row.referenceId,
     periodEnd: row.periodEnd ? new Date(row.periodEnd).toISOString() : null,
+    trialEnd: row.trialEnd ? new Date(row.trialEnd).toISOString() : null,
+    cancelAtPeriodEnd: row.cancelAtPeriodEnd === true,
     seats: row.seats ?? null,
   };
 }

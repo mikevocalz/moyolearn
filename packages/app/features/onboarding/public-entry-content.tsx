@@ -6,11 +6,35 @@
 // SOT: docs/pack/04-screen-briefs.md §S14 · docs/pack/06-auth-onboarding-spec.md §2
 // SOT-KEYWORDS: onboarding public entry sign-in handoff guardian tutor owner teacher
 
+import type { ComponentType } from 'react';
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, Heading, MoyoLearnLogo, PressScale } from '@acme/ui';
+import { getAuthMode } from '../../providers/session/auth-mode';
 import { onboardingPath } from './flow/flow';
-import { DevPersonaSwitch } from './dev-persona-switch';
+
+/**
+ * The QA hatch, or nothing. This is the ONLY place the persona switch is
+ * mounted: the `/onboarding/dev` route that used to carry it bare is gone.
+ *
+ * Loaded with `require` behind a literal `__DEV__` test so Metro drops the
+ * component and the fixture personas it imports from a release bundle (see
+ * `providers/session/session.tsx` for why the test is spelled out). The auth
+ * mode is checked as well: a dev build pointed at the live server has a real
+ * session, and a fixture persona written over it is a corrupt session, not QA.
+ */
+function devPersonaSwitch(): ComponentType | null {
+  if (getAuthMode() === 'live') return null;
+  if (typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('./dev-persona-switch') as typeof import('./dev-persona-switch');
+    return mod.DevPersonaSwitch;
+  }
+  return null;
+}
+
+/** Resolved once at module scope; see `providers/session/session.tsx`. */
+const DevPersonaSwitch = devPersonaSwitch();
 
 export function PublicEntryContent() {
   const router = useRouter();
@@ -76,14 +100,8 @@ export function PublicEntryContent() {
         />
       </View>
 
-      {__DEV__ ? (
+      {DevPersonaSwitch ? (
         <View className="gap-stack rounded-card border-2 border-danger bg-surface-sunken p-4">
-          <Heading level={2} size="title" className="text-danger">
-            Development only
-          </Heading>
-          <TWText className="text-body text-text">
-            For QA and design review.
-          </TWText>
           <DevPersonaSwitch />
         </View>
       ) : null}

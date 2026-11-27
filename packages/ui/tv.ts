@@ -15,7 +15,9 @@
 // dropped afterwards, at merge time.
 // SOT: packages/theme/tokens.ts `uiRamp` + `typeScale`
 // SOT-KEYWORDS: tailwind variants merge config font-size ramp tv slots classgroup
-import { createTV } from 'tailwind-variants';
+// tailwind-variants 4 takes `twMergeConfig` only on its `/config` entry; the
+// root entry's `createTV` accepts `twMerge` alone and would drop the ramp.
+import { createTV } from 'tailwind-variants/config';
 
 /**
  * Keep in step with `uiRamp`, `typeScale` and `siteTypeScale` in tokens.ts.

@@ -85,12 +85,17 @@ export type CreateLearnerResult =
   | { kind: 'created'; learnerAuthId: string }
   | { kind: 'failed'; message: string };
 
-/** One child per call; the children step loops its rows. */
+/**
+ * One child per call; the children step loops its rows. The consent travels
+ * as the server's own id for the recorded verification (consent.service.ts),
+ * never as a record the client wrote: the route reads the grant from its row
+ * and refuses a child whose id names nothing this guardian verified.
+ */
 export async function createLearnerOnServer(input: {
   username: string;
   password: string;
   displayName: string;
-  consent: { method: string; scope: string; policyVersion: string; evidenceRef?: string };
+  consentId: string;
 }): Promise<CreateLearnerResult> {
   if (getAuthMode() !== 'live') {
     return { kind: 'created', learnerAuthId: `mock-learner-${input.username}` };

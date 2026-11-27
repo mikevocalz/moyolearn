@@ -58,6 +58,19 @@ export interface ChildDraft {
 export interface GuardianDraft {
   email: string;
   /**
+   * What the account is called. Better Auth requires a name at sign-up, and a
+   * parent's own name is the one the family and handoff copy can greet by.
+   * The password is NOT on the draft: the draft persists (store.ts), and a
+   * credential in plaintext storage outlives the step that needed it.
+   */
+  guardianName: string;
+  /**
+   * The server's id for the verified consent record (consent.service.ts). The
+   * learner route reads consent from this row, never from the body, so the
+   * draft carries the reference and the record is for the screen's copy.
+   */
+  consentId: string | null;
+  /**
    * Doc 37 §1.3 / §2 — the personalization moment: the instant the guardian
    * names the family, the flow answers with "WELCOME, THE ___ FAMILY" (Nike Run
    * Club's "you're in" beat). Kept on the draft so the handoff and feed copy
@@ -78,10 +91,12 @@ export interface GuardianDraft {
 
 export const EMPTY_DRAFT: GuardianDraft = {
   email: '',
+  guardianName: '',
   familyName: '',
   consentAccepted: false,
   consentMethod: null,
   consentRecord: null,
+  consentId: null,
   children: [],
 };
 
@@ -91,13 +106,18 @@ export function canAdvance(step: GuardianStep, draft: GuardianDraft): boolean {
     case 'welcome':
       return true;
     case 'account':
-      return /.+@.+\..+/.test(draft.email);
+      // The password is session-only state and is checked by the screen
+      // (account.ts, `isGuardianAccountComplete`); the draft holds the two
+      // fields that may persist. A signed-in guardian passes this gate on the
+      // session alone, so the screen is also where that exemption lives.
+      return /.+@.+\..+/.test(draft.email.trim()) && draft.guardianName.trim().length > 0;
     case 'consent':
       // Consent gates everything after it — doc 06 §2 forbids a child existing
       // without one, and the only way to guarantee that here is to refuse to
       // move on. A finished VERIFICATION, not an accepted notice: reading the
       // notice is the first half, and the half that has no legal weight alone.
-      return draft.consentRecord !== null;
+      // The server's id for that record is what the children step sends.
+      return draft.consentRecord !== null && draft.consentId !== null;
     case 'family':
       // One word is a family name; the gate only refuses silence, because the
       // welcome beat this step answers with needs a name to say.
@@ -145,7 +165,7 @@ export function isChildComplete(child: ChildDraft, draft: GuardianDraft): boolea
   // child passwords (store.ts), so re-validating a committed row's blank
   // password would strand a guardian behind a field they already used.
   if (child.learnerAuthId) return true;
-  if (!draft.consentRecord) return false;
+  if (!draft.consentRecord || !draft.consentId) return false;
   if (Object.keys(childProblems(child)).length > 0) return false;
   return validateCreateLearner({
     guardianAuthId: 'pending',

@@ -26,9 +26,10 @@ import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Badge, Button, Card, FadeIn, Heading, LoadingSkeleton, PlanCard, Text } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
 import { useEntitlements } from '../../providers/entitlements';
-import type { SubscriptionState } from '@acme/auth';
+import { entitlementStateOf, isBusinessPlan, type SubscriptionState } from '@acme/auth';
 import type { OrgSettingsRead } from './org-settings.service';
-import { formatPeriodDate, PLAN_DISPLAY } from './org-settings.data';
+import { formatPeriodDate } from './org-settings.data';
+import { businessMonthlyPrice, BUSINESS_PLAN_DISPLAY } from '../billing/business-plan-display';
 
 export function OrgSettingsContent({ read }: { read: OrgSettingsRead }) {
   const router = useRouter();
@@ -170,34 +171,53 @@ function PlanSummary({ subscription }: { subscription: SubscriptionState }) {
     );
   }
 
-  const display = PLAN_DISPLAY[plan];
+  // An org reference only ever files ops plans; a consumer plan here is a data
+  // fault, and the honest rendering of a fault is "no plan", not a family price
+  // on an org surface (doc 05 §2.2).
+  if (!isBusinessPlan(plan)) {
+    return (
+      <View className="gap-1">
+        <Text>No plan on record.</Text>
+        <Text variant="caption" tone="muted">This organization isn’t on a plan yet.</Text>
+      </View>
+    );
+  }
+
+  const display = BUSINESS_PLAN_DISPLAY[plan];
   const endDate = periodEnd ? formatPeriodDate(periodEnd) : null;
+  const state = entitlementStateOf(subscription);
 
   return (
     <View className="gap-stack">
       {/* Static (no onSelect) — PW-05's summary mode; nothing here is a chooser. */}
       <PlanCard
-        name={display.title}
-        price={display.price}
-        period={display.period}
+        context="org"
         tier="business"
-        badge={status === 'trialing' ? 'Trial' : undefined}
-        trialLine={status === 'trialing' && endDate ? `Free month ends ${endDate}` : undefined}
+        name={display.title}
+        price={businessMonthlyPrice(plan)}
+        period="/mo"
+        badge={state === 'trial' ? 'Trial' : undefined}
+        trialLine={state === 'trial' && endDate ? `Free month ends ${endDate}` : undefined}
       />
 
       {/* Doc 38 §5B's status → treatment table, display only. */}
-      {status === 'active' && endDate ? <FactRow label="Next payment" value={endDate} /> : null}
-      {status === 'canceled' ? (
+      {state === 'active' && endDate ? <FactRow label="Next payment" value={endDate} /> : null}
+      {state === 'cancel-at-period-end' || state === 'lapsed' ? (
         <View className="gap-1">
           {/* "· Resume" waits for the Stripe mount — a resume affordance with
               nothing behind it would be a designed dead end (flow law). */}
-          <FactRow label="Plan ends" value={endDate ?? 'at the period’s end'} />
+          <FactRow
+            label={state === 'lapsed' ? 'Plan ended' : 'Plan ends'}
+            value={endDate ?? 'at the period’s end'}
+          />
           <Text variant="caption" tone="muted">
-            Everything stays readable and exportable after that — nothing you’ve set up is lost.
+            {state === 'lapsed'
+              ? 'Everything stays readable and exportable — nothing you’ve set up is lost.'
+              : 'Everything stays readable and exportable after that — nothing you’ve set up is lost.'}
           </Text>
         </View>
       ) : null}
-      {status === 'past_due' ? (
+      {state === 'past-due' ? (
         // Non-blocking by design: past_due keeps writing (entitlements.ts) and
         // this banner never locks the org out of its own settings.
         <View className="gap-element rounded-card border-2 border-border bg-surface-sunken p-inset">

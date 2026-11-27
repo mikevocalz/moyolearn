@@ -169,7 +169,15 @@ export { OtpField, type OtpFieldProps, type OtpMode } from './OtpField';
 export { LearnerCodeEntry, type LearnerCodeEntryProps } from './LearnerCodeEntry';
 export { PasswordField, PasswordRules, type PasswordFieldProps, type PasswordRulesProps } from './PasswordField';
 export { RoleChoiceCard, type RoleChoiceCardProps } from './RoleChoiceCard';
-export { PlanCard, type PlanCardProps, type PlanTier } from './PlanCard';
+export {
+  PlanCard,
+  type PlanCardContext,
+  type PlanCardData,
+  type PlanCardProps,
+  type PlanCardScope,
+  type PlanTier,
+} from './PlanCard';
+export { planCardDecision, type PlanCardRender } from './plan-card-guard';
 
 // cool-shell toolbelt (J-component-plan) — presentational; state stays with the owning screen.
 export { FilterBar, type FilterBarProps } from './FilterBar';
