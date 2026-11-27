@@ -1,7 +1,9 @@
 // The consent-verification store and mailer (doc 06 §3.1), as a repository.
 //
 // Rows are matched by ID and then by the guardian the service passes from the
-// session; the code never reaches this module, only its hash. The mailer is
+// session; the code never reaches this module, only its hash. The two limits
+// (sends per guardian, guesses per code) are enforced in SQL here so that
+// concurrent requests cannot race past them; see `create` and `claimAttempt`. The mailer is
 // the same Resend sender Better Auth's verification and reset mails use, with
 // the same loud failure when it is not configured: a server with no sender
 // cannot verify consent, and it has to say so rather than mint codes nobody
@@ -41,10 +43,64 @@ const toRow = (doc: ConsentVerification): ConsentVerificationRow => ({
 });
 
 export const consentVerificationStore: ConsentVerificationStore = {
-  async create(row) {
+  /*
+    COUNT AND INSERT UNDER ONE LOCK, IN SQL. The send limit is a
+    read-then-write: through Payload's Local API (a `count` then a `create`)
+    concurrent challenges would all count the same number and all insert. A
+    transaction-scoped advisory lock keyed on the guardian serialises exactly
+    those requests — the pattern `marketing.repository.ts` uses for its own
+    per-key writes — and `payload.db.pool` is the one pool, as
+    `jobs-health.repository.ts` notes. The collection has no hooks, so the
+    insert skips nothing Payload would have run.
+  */
+  async create(row, limit) {
     const payload = await getPayload({ config });
-    const doc = await payload.create({ collection: 'consent-verifications', data: { ...row } });
-    return { id: String(doc.id) };
+    const client = await payload.db.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
+        `consent-send:${row.guardianAuthId}`,
+      ]);
+      const sent = await client.query<{ n: number }>(
+        'SELECT count(*)::int AS n FROM payload.consent_verifications WHERE guardian_auth_id = $1 AND sent_at >= $2',
+        [row.guardianAuthId, limit.since],
+      );
+      if ((sent.rows[0]?.n ?? 0) >= limit.max) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+      const inserted = await client.query<{ id: number }>(
+        `INSERT INTO payload.consent_verifications
+           (guardian_auth_id, method, sent_to, code_hash, sent_at, attempts, code_verified_at,
+            confirmation_sent_at, confirmed_at, recorded_at, scope, policy_version, evidence_ref)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         RETURNING id`,
+        [
+          row.guardianAuthId,
+          row.method,
+          row.sentTo,
+          row.codeHash,
+          row.sentAt,
+          row.attempts,
+          row.codeVerifiedAt,
+          row.confirmationSentAt,
+          row.confirmedAt,
+          row.recordedAt,
+          row.scope,
+          row.policyVersion,
+          row.evidenceRef,
+        ],
+      );
+      await client.query('COMMIT');
+      const id = inserted.rows[0]?.id;
+      if (id === undefined) throw new Error('consent-verifications insert returned no id');
+      return { id: String(id) };
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
   },
 
   async find(id) {
@@ -58,6 +114,27 @@ export const consentVerificationStore: ConsentVerificationStore = {
   async update(id, patch) {
     const payload = await getPayload({ config });
     await payload.update({ collection: 'consent-verifications', id: Number(id), data: { ...patch } });
+  },
+
+  /*
+    ONE CONDITIONAL INCREMENT. Payload's `update` writes a value the caller
+    computed from an earlier read, which is how concurrent guesses overwrote
+    each other's counts; this lets Postgres do the arithmetic and the bound in
+    the same statement, so no more than `max` guesses are ever paid for.
+    `attempts` is `numeric` (the migration), hence the cast back.
+  */
+  async claimAttempt(id, max) {
+    if (!/^\d+$/.test(id)) return null;
+    const payload = await getPayload({ config });
+    const result = await payload.db.pool.query<{ attempts: string }>(
+      `UPDATE payload.consent_verifications
+          SET attempts = attempts + 1, updated_at = now()
+        WHERE id = $1 AND attempts < $2
+        RETURNING attempts::text AS attempts`,
+      [Number(id), max],
+    );
+    const attempts = result.rows[0]?.attempts;
+    return attempts === undefined ? null : Number(attempts);
   },
 };
 

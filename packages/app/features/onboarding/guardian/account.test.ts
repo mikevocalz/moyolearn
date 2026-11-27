@@ -8,6 +8,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  canLeaveAccountStep,
   createGuardianAccount,
   guardianAccountProblems,
   isGuardianAccountComplete,
@@ -115,5 +116,24 @@ describe('guardianAccountProblems', () => {
       password: 'Twelve characters or more — length beats symbols.',
     });
     assert.equal(isGuardianAccountComplete(draft), true);
+  });
+});
+
+describe('canLeaveAccountStep', () => {
+  const blank = { name: '', email: '', password: '' };
+
+  it('lets a signed-in guardian past with a fresh draft — the step shows them no fields to fill', () => {
+    assert.equal(canLeaveAccountStep({ signedIn: true, live: true, account: blank }), true);
+    assert.equal(canLeaveAccountStep({ signedIn: true, live: false, account: blank }), true);
+  });
+
+  it('holds a signed-out guardian until the name and email are there', () => {
+    assert.equal(canLeaveAccountStep({ signedIn: false, live: false, account: blank }), false);
+    assert.equal(canLeaveAccountStep({ signedIn: false, live: false, account: { ...draft, password: '' } }), true);
+  });
+
+  it('also needs the password in a live build, where Continue creates the account', () => {
+    assert.equal(canLeaveAccountStep({ signedIn: false, live: true, account: { ...draft, password: 'short' } }), false);
+    assert.equal(canLeaveAccountStep({ signedIn: false, live: true, account: draft }), true);
   });
 });

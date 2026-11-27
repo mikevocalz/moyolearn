@@ -15,6 +15,8 @@ import {
   startConsentChallenge,
   verifyConsentCode,
   ConsentVerificationError,
+  CONSENT_SENDS_PER_WINDOW,
+  CONSENT_SEND_WINDOW_MINUTES,
   MAX_CODE_ATTEMPTS,
   type ConsentMailer,
   type ConsentVerificationRow,
@@ -25,7 +27,13 @@ function memory() {
   const rows = new Map<string, ConsentVerificationRow>();
   let next = 1;
   const store: ConsentVerificationStore = {
-    async create(row) {
+    // Synchronous between awaits, so each call is atomic the way the
+    // repository's locked insert and conditional UPDATE are.
+    async create(row, limit) {
+      const recent = [...rows.values()].filter(
+        (r) => r.guardianAuthId === row.guardianAuthId && r.sentAt >= limit.since,
+      ).length;
+      if (recent >= limit.max) return null;
       const id = String(next++);
       rows.set(id, { ...row, id });
       return { id };
@@ -37,6 +45,12 @@ function memory() {
       const row = rows.get(id);
       assert.ok(row);
       rows.set(id, { ...row, ...patch });
+    },
+    async claimAttempt(id, max) {
+      const row = rows.get(id);
+      if (!row || row.attempts >= max) return null;
+      rows.set(id, { ...row, attempts: row.attempts + 1 });
+      return row.attempts + 1;
     },
   };
   const mails: { kind: 'code' | 'confirm'; to: string; code?: string }[] = [];
@@ -65,6 +79,23 @@ describe('startConsentChallenge', () => {
     assert.ok(!JSON.stringify(row).includes('444444'));
   });
 
+  it('stops mailing after the per-guardian limit in the window, and only for that guardian', async () => {
+    const { deps, mails } = memory();
+    const now = new Date('2026-11-27T12:00:00Z');
+    for (let i = 0; i < CONSENT_SENDS_PER_WINDOW; i++) {
+      await startConsentChallenge(deps, { guardianAuthId: guardian, method: 'email-plus', target: `stranger${i}@example.com` }, { now });
+    }
+    await assert.rejects(
+      startConsentChallenge(deps, { guardianAuthId: guardian, method: 'email-plus', target: 'one-more@example.com' }, { now }),
+      (error: unknown) => error instanceof ConsentVerificationError && error.status === 429,
+    );
+    assert.equal(mails.length, CONSENT_SENDS_PER_WINDOW, 'a refused send still mailed someone');
+    await startConsentChallenge(deps, { guardianAuthId: 'guardian-2', method: 'email-plus', target: 'grace@example.com' }, { now });
+    const later = new Date(now.getTime() + (CONSENT_SEND_WINDOW_MINUTES + 1) * 60_000);
+    await startConsentChallenge(deps, { guardianAuthId: guardian, method: 'email-plus', target: 'ada@example.com' }, { now: later });
+    assert.equal(mails.length, CONSENT_SENDS_PER_WINDOW + 2);
+  });
+
   it('refuses the methods this server cannot deliver', async () => {
     const { deps } = memory();
     await assert.rejects(
@@ -89,6 +120,32 @@ describe('verifyConsentCode', () => {
       await verifyConsentCode(deps, { guardianAuthId: guardian, challengeId, code: '000000' });
     }
     assert.equal((await verifyConsentCode(deps, { guardianAuthId: guardian, challengeId, code: '444444' })).verdict, 'burnt');
+  });
+
+  it('holds the attempt limit when guesses arrive at once', async () => {
+    const { deps, rows } = memory();
+    const { challengeId } = await startConsentChallenge(deps, { guardianAuthId: guardian, method: 'email-plus', target: 'ada@example.com' }, fixedCode);
+    // Every request reads the row before any writes — the race the old
+    // read-compare-write lost. The last guess is the right code.
+    const guesses = Array.from({ length: MAX_CODE_ATTEMPTS * 4 }, (_, i) => String(100000 + i));
+    guesses.push('444444');
+    const results = await Promise.all(
+      guesses.map((code) => verifyConsentCode(deps, { guardianAuthId: guardian, challengeId, code })),
+    );
+    assert.equal(rows.get(challengeId)!.attempts, MAX_CODE_ATTEMPTS);
+    // Exactly MAX guesses were compared: MAX - 1 wrong, the MAXth burns it.
+    assert.equal(results.filter((r) => r.verdict === 'wrong').length, MAX_CODE_ATTEMPTS - 1);
+    assert.equal(results.at(-1)!.verdict, 'burnt', 'a guess past the limit was still compared');
+    assert.equal(rows.get(challengeId)!.codeVerifiedAt, null);
+  });
+
+  it('still verifies the right code on the last permitted try', async () => {
+    const { deps } = memory();
+    const { challengeId } = await startConsentChallenge(deps, { guardianAuthId: guardian, method: 'email-plus', target: 'ada@example.com' }, fixedCode);
+    for (let i = 0; i < MAX_CODE_ATTEMPTS - 1; i++) {
+      assert.equal((await verifyConsentCode(deps, { guardianAuthId: guardian, challengeId, code: '000000' })).verdict, 'wrong');
+    }
+    assert.equal((await verifyConsentCode(deps, { guardianAuthId: guardian, challengeId, code: '444444' })).verdict, 'verified');
   });
 
   it('reports another guardian’s challenge as absent', async () => {

@@ -34,8 +34,8 @@ import { useGuardianOnboarding } from './store';
 import { GUARDIAN_PLAN_STEP } from './plan-step';
 import {
   createGuardianAccount,
+  canLeaveAccountStep,
   guardianAccountProblems,
-  isGuardianAccountComplete,
   resendFailed,
   resendVerification,
   signInAfterVerification,
@@ -85,8 +85,10 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
   const signedIn = session.status === 'authed';
   const live = getAuthMode() === 'live';
   const accountInput = { name: draft.guardianName, email: draft.email, password: account.password };
-  const accountReady = signedIn || !live || isGuardianAccountComplete(accountInput);
-  const ready = step === 'account' ? canAdvance(step, draft) && accountReady : canAdvance(step, draft);
+  const ready =
+    step === 'account'
+      ? canLeaveAccountStep({ signedIn, live, account: accountInput })
+      : canAdvance(step, draft);
 
   /**
    * Exiting FROM the last step is completion, so it arms the feed's one-time
