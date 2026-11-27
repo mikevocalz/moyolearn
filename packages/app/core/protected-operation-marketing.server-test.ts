@@ -2,7 +2,7 @@
 // SOT: protected-operation.ts · ../marketing/permissions/marketing.permissions.ts
 // SOT-KEYWORDS: protected operation marketing payload cron public billing telemetry security
 import assert from 'node:assert/strict';
-import { after, beforeEach, test } from 'node:test';
+import { after, beforeEach, mock, test } from 'node:test';
 import { registerHooks } from 'node:module';
 import { setOperationSink } from './telemetry.ts';
 import type { OperationRecord } from './telemetry.ts';
@@ -159,6 +159,27 @@ test('public intake stays anonymous and requires its own origin/configuration in
   assert.equal(ctx.scope, 'moyo-platform-sales');
   assert.match(ctx.rateKey, /^[a-f0-9]{64}$/);
   assert.equal(records.at(-1)?.authMode, 'public-inquiry');
+  // The hourly window lives in the repository; the key must not roll over at
+  // UTC midnight and hand the same address a fresh bucket mid-hour.
+  const keyAt = async (iso: string) => {
+    mock.timers.enable({ apis: ['Date'], now: new Date(iso) });
+    try {
+      return (
+        await protectedOperation({
+          source: 'public-inquiry',
+          request,
+          telemetry,
+          operation: async (ctx) => ctx,
+        })
+      ).rateKey;
+    } finally {
+      mock.timers.reset();
+    }
+  };
+  assert.equal(
+    await keyAt('2026-11-25T23:59:30.000Z'),
+    await keyAt('2026-11-26T00:00:30.000Z'),
+  );
   await assert.rejects(
     protectedOperation({
       source: 'public-inquiry',
