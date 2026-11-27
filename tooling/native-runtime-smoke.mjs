@@ -326,6 +326,46 @@ export async function hashMetroBundle(url, { log, timeout = METRO_BUNDLE_TIMEOUT
   }
 }
 
+// A reverse mapping lives in adbd, so an adbd or adb-server restart during the
+// flow silently drops it. A cold relaunch then shows "Unable to load script"
+// while Metro is still up. Each tick lists the mappings, records any that went
+// missing (the evidence a later diagnostic can no longer see, since this puts
+// them back), and re-adds only those. One tick at a time; a slow adb skips ticks.
+export function keepAndroidReverse(serial, ports, {
+  run = (args) => command('adb', ['-s', serial, ...args], { timeout: 10_000, phase: 'android-reverse-refresh' }),
+  intervalMs = 5_000, log,
+} = {}) {
+  const stats = { checks: 0, missing: [], readded: 0, failures: 0, lastError: null };
+  let stopped = false; let running = null;
+  const note = (line) => log?.write(`[android-reverse] ${JSON.stringify({ at: new Date().toISOString(), ...line })}\n`);
+  const tick = async () => {
+    try {
+      const listing = await run(['reverse', '--list']);
+      stats.checks += 1;
+      for (const port of ports) {
+        if (stopped) return;
+        if (new RegExp(`tcp:${port}\\s+tcp:${port}(\\s|$)`).test(listing)) continue;
+        stats.missing.push({ port, at: new Date().toISOString() });
+        note({ event: 'missing', port });
+        await run(['reverse', `tcp:${port}`, `tcp:${port}`]);
+        stats.readded += 1;
+      }
+    } catch (error) {
+      stats.failures += 1; stats.lastError = error.message;
+      note({ event: 'failure', message: error.message });
+    }
+  };
+  const timer = setInterval(() => {
+    if (stopped || running) return;
+    running = tick().finally(() => { running = null; });
+  }, intervalMs);
+  timer.unref?.();
+  return {
+    stats,
+    async stop() { stopped = true; clearInterval(timer); await running; return stats; },
+  };
+}
+
 export function command(executable, args, {
   env = runtimeEnvironment(process.env), log, timeout = 120_000, cwd = ROOT,
   phase = `${basename(executable)} ${args[0] ?? ''}`.trim(),
@@ -446,7 +486,7 @@ async function main() {
       'Positive FPS proves the native render loop executes; retained screenshots still require visual inspection.',
     ],
   };
-  let agent; let agentState; let agentEnv; let metro; let server; let deviceFlags; let failure;
+  let agent; let agentState; let agentEnv; let metro; let server; let deviceFlags; let failure; let reverseKeeper;
   const saveReceipt = () => writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
   try {
     await saveReceipt();
@@ -497,6 +537,7 @@ async function main() {
     receipt.metroBundleSha256 = bundle.sha256;
     receipt.metroBundleRequest = bundle;
     const junit = join(artifacts, 'junit.xml');
+    if (values.platform === 'android') reverseKeeper = keepAndroidReverse(receipt.device.serial, [METRO_PORT, API_PORT], { log });
     // A long Metro bundle can outlast the daemon's idle window. Its fresh
     // attachment precedes the unchanged per-attempt test deadline too.
     await command(process.execPath, [agent, 'test', FLOW, '--maestro', ...deviceFlags,
@@ -514,6 +555,7 @@ async function main() {
     receipt.status = 'failed'; receipt.failure = error.message; failure = error;
     receipt.failureDetails = runtimeFailureDetails(error, metro);
   } finally {
+    if (reverseKeeper) receipt.androidReverseRefresh = await reverseKeeper.stop();
     if (failure && receipt.device?.kind === 'Android emulator') {
       await retainAndroidFailureDiagnostics(receipt.device, artifacts)
         .then((diagnostics) => { receipt.androidFailureDiagnostics = diagnostics; })

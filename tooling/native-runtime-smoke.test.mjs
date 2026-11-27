@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AGENT_DEVICE, IOS_STARTUP_BUDGET, appBundleUrl, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
+  AGENT_DEVICE, IOS_STARTUP_BUDGET, appBundleUrl, METRO_BUNDLE_TIMEOUT_MS, RUNTIME_TEST_BUDGET, agentEnvironment, anonymousApiReply, assertAndroidEmulator, command, keepAndroidReverse, hashMetroBundle, metroEnvironment, runtimeEnvironment, runtimeFailureDetails,
   retainAgentDiagnostics, retainAndroidFailureDiagnostics, retainIosFailureDiagnostics, selectIpad, verifyAgentArchive, verifyRuntimeEvidence,
 } from './native-runtime-smoke.mjs';
 
@@ -458,4 +458,42 @@ test('runtime workflows preserve existing native build gates and add blocking ex
   assert.match(ios, /runner\.temp }}\/moyo-ios-runtime/);
   assert.match(emulator, /if: always\(\)/);
   assert.match(emulator, /runner\.temp }}\/moyo-android-runtime/);
+});
+
+test('the Android reverse keeper records and re-adds a dropped mapping, one tick at a time', async () => {
+  const calls = []; const lines = [];
+  let listing = 'emulator-5554 tcp:8081 tcp:8081\nemulator-5554 tcp:39001 tcp:39001';
+  let active = 0; let maxActive = 0; let failNext = false;
+  const keeper = keepAndroidReverse('emulator-5554', [8081, 39001], {
+    intervalMs: 5,
+    log: { write: (line) => lines.push(line) },
+    run: async (args) => {
+      active += 1; maxActive = Math.max(maxActive, active);
+      calls.push(args.join(' '));
+      await new Promise((done) => setTimeout(done, 12));
+      active -= 1;
+      if (failNext) { failNext = false; throw new Error('adb: device offline'); }
+      if (args[1] === '--list') return listing;
+      if (args[1] === 'tcp:8081') listing += '\nemulator-5554 tcp:8081 tcp:8081';
+      return '';
+    },
+  });
+  await new Promise((done) => setTimeout(done, 30));
+  assert.ok(!calls.some((call) => call.startsWith('reverse tcp:')), 'nothing re-added while both mappings exist');
+  listing = 'emulator-5554 tcp:39001 tcp:39001';
+  await new Promise((done) => setTimeout(done, 60));
+  failNext = true;
+  await new Promise((done) => setTimeout(done, 40));
+  const stats = await keeper.stop();
+  const count = calls.length;
+  await new Promise((done) => setTimeout(done, 30));
+  assert.equal(calls.length, count, 'no call after stop');
+  assert.equal(maxActive, 1, 'ticks never overlap');
+  assert.equal(calls.filter((call) => call === 'reverse tcp:8081 tcp:8081').length, 1);
+  assert.ok(!calls.includes('reverse tcp:39001 tcp:39001'));
+  assert.equal(stats.readded, 1);
+  assert.deepEqual(stats.missing.map((entry) => entry.port), [8081]);
+  assert.equal(stats.failures, 1);
+  assert.equal(stats.lastError, 'adb: device offline');
+  assert.ok(lines.some((line) => line.includes('"event":"missing"') && line.includes('8081')));
 });
