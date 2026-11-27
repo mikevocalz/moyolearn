@@ -293,8 +293,8 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       same retry comes back in a second and a half — earned this time.
     */
     clearStaleFailure();
-    void hydrate(problem ?? '').finally(() => setResumed(true));
-  }, [problem, allPriorDone, hydrate, clearStaleFailure]);
+    void hydrate(problem ?? '', problemIsReading).finally(() => setResumed(true));
+  }, [problem, problemIsReading, allPriorDone, hydrate, clearStaleFailure]);
 
   /*
     Points a stored attachment at its bytes the moment the queue lands them.

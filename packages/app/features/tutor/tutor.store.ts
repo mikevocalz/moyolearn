@@ -10,6 +10,7 @@ import {
 } from '@acme/ui';
 import { streamFetch } from './stream-fetch';
 import { fetchSession, postMessage } from './session.client.ts';
+import { resumedProblem } from './resume-problem.ts';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import {
   API_URL,
@@ -58,7 +59,7 @@ interface TutorState {
    * ask the same question and get the same answer. Identity never travels —
    * the server reads it from `ctx`.
    */
-  hydrate: (problem: string) => Promise<void>;
+  hydrate: (problem: string, isReading?: boolean) => Promise<void>;
   /**
    * Appends a learner turn. Pass `id` to adopt the server's, which is what
    * lets a queued upload address its attachment later.
@@ -220,13 +221,13 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   hintDepth: 0,
   masteryBySkill: {},
   attemptsBySkill: {},
-  hydrate: async (problem) => {
+  hydrate: async (problem, isReading = false) => {
     const generation = get().sessionGeneration;
     const snapshot = await fetchSession(problem);
     if (get().sessionGeneration !== generation) return;
     if (snapshot === null) return;
 
-    const problemText = snapshot.problem.length > 0 ? snapshot.problem : problem;
+    const problemText = resumedProblem(snapshot.problem, problem, isReading);
     const sessionComplete = snapshot.budget.kind === 'session-complete';
 
     /*
