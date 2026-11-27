@@ -84,6 +84,9 @@ jobs:
           [ -d "$dir" ] || exit 0
           tail -n 120 "$dir/runtime.log" || true
           find "$dir" -name daemon.log -exec tail -n 80 {} \; || true
+          find "$dir" -name runner.log -exec tail -n 120 {} \; || true
+          find "$dir" -name ios-app-log.log -exec tail -n 120 {} \; || true
+          grep -o '"iosFailureDiagnostics":{[^}]*' "$dir/receipt.json" | head -c 2000 || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
