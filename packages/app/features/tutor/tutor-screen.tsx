@@ -357,9 +357,15 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const askedForProblem = useRef(false);
   useEffect(() => {
     if (problem || allPriorDone || askedForProblem.current) return;
+    // An empty device is still asking the server for an assigned sheet. Asking
+    // for practice now would race it: a guardian's all-marked upload resolves to
+    // the all-done state, and a practice problem landing first would replace it.
+    // Read fresh rather than from `worksheetSync`: the entry hydrate above sets
+    // `syncing` in this same commit, after this render captured the old status.
+    if (learnerId && useWorksheetStore.getState().status === 'syncing') return;
     askedForProblem.current = true;
     requestNextProblem();
-  }, [problem, allPriorDone, requestNextProblem]);
+  }, [problem, allPriorDone, requestNextProblem, learnerId, worksheetSync]);
 
   // The opening turn. Doc 29 §8's demo arc turns on the first thing a child sees
   // being a question rather than a solution, so the coaching starts on arrival

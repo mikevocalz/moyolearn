@@ -85,6 +85,7 @@ function fakeServer() {
           localDate: view.localDate,
           status: view.status,
           questionCount: view.questions.length,
+          alreadyDoneCount: view.questions.filter((q) => q.priorWork === 'complete').length,
           currentIndex: view.currentIndex,
           outcomes: {
             unattempted: 0, skipped: 0, attempted: 0,
@@ -385,6 +386,54 @@ test('a cache miss chooses the open worksheet and leaves finished work alone', a
   const other = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
   assert.equal(await other.getState().hydrate('learner-1'), null);
   assert.equal(other.getState().status, 'idle');
+});
+
+/** A guardian upload with every problem marked done: the server stores it complete, untutored. */
+function markAllDone(server: ReturnType<typeof fakeServer>, id: string, createdAt: string) {
+  const row = server.rows.get(id)!;
+  server.rows.set(id, {
+    ...row,
+    status: 'complete',
+    createdAt,
+    questions: row.questions.map((q) => ({ ...q, priorWork: 'complete' as const })),
+  });
+}
+
+test('an empty device discovers a guardian’s all-marked upload instead of falling back to practice', async () => {
+  const { server } = setup();
+  server.net.actorId = 'guardian-1';
+  await server.client.createSubmission({ ...input('all-marked'), forLearnerAuthId: 'learner-1' });
+  server.net.actorId = 'learner-1';
+  markAllDone(server, 'all-marked', '2026-10-16T12:00:00.000Z');
+
+  const fresh = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
+  const view = await fresh.getState().hydrate('learner-1');
+  assert.equal(view?.submissionId, 'all-marked');
+  assert.equal(view?.status, 'complete');
+  assert.ok(view?.questions.every((q) => q.priorWork === 'complete'));
+  assert.equal(fresh.getState().status, 'confirmed');
+});
+
+test('open work keeps precedence over a newer all-marked upload, and old all-marked sheets stay history', async () => {
+  const { server } = setup();
+  await server.client.createSubmission(input('open-sheet'));
+  await server.client.createSubmission(input('all-marked'));
+  markAllDone(server, 'all-marked', '2026-10-16T12:00:00.000Z');
+  const first = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
+  assert.equal((await first.getState().hydrate('learner-1'))?.submissionId, 'open-sheet');
+
+  // The open sheet is finished normally afterwards and a newer one finished too:
+  // the older all-marked sheet is no longer what was just assigned.
+  server.rows.set('open-sheet', { ...server.rows.get('open-sheet')!, status: 'complete', createdAt: '2026-10-17T12:00:00.000Z' });
+  const second = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
+  assert.equal(await second.getState().hydrate('learner-1'), null);
+  assert.equal(second.getState().status, 'idle');
+
+  // A tutored sheet is never "all-marked on arrival", even if every mark is prior work.
+  server.rows.delete('open-sheet');
+  server.rows.set('all-marked', { ...server.rows.get('all-marked')!, tutorSessionId: 'session-1' });
+  const third = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
+  assert.equal(await third.getState().hydrate('learner-1'), null);
 });
 
 test('offline discovery waits without inventing a worksheet or losing another learner’s cache', async () => {
