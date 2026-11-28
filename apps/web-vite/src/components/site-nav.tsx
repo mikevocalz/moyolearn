@@ -98,15 +98,16 @@ const useNavStore = create<NavState>()((set) => ({
  * room for the 6px press shadow, so flex centering sets the button and its
  * shadow together in the middle of the bar rather than the button alone.
  */
-const CONTROL_BOX = 'moyo-pressable items-center justify-center h-11 min-h-target-adult mb-1.5';
-/** A control with a text label. */
+const CONTROL_BOX = 'moyo-pressable flex flex-row items-center justify-center h-11 min-h-target-adult mb-1.5';
+/** A control with a text label. `flex` centres the label in the 44px row (a link is inline otherwise). */
 const CONTROL = `${CONTROL_BOX} px-inset-roomy`;
 /** A square icon control (the menu and close buttons). */
 const ICON_CONTROL = `${CONTROL_BOX} w-11 p-0`;
 /** The one filled object in the bar. */
 const CTA = `site-nav-cta ${CONTROL} rounded-moyo-card bg-moyo-primary text-moyo-on-primary text-site-body shadow-moyo-1 transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
-/** The secondary action in the bar — plain type, so the CTA is the only filled object. */
-const LOGIN = `site-nav-login ${CONTROL} text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus`;
+/** The secondary action in the bar — plain type, so the CTA is the only filled object. It takes the
+ * bar's 44px row but not the press shadow: a hard shadow under unfilled text drew a bracket, not a button. */
+const LOGIN = `site-nav-login flex flex-row items-center justify-center h-11 min-h-target-adult mb-1.5 px-inset-roomy rounded-moyo-card text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);
