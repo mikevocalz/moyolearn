@@ -119,6 +119,7 @@ export default defineConfig({
      * the CJS build and lose the named exports.
      */
     noExternal: [
+      '@acme/auth',
       '@acme/theme',
       '@acme/ui',
       'react-native-web',

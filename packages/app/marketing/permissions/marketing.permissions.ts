@@ -151,10 +151,11 @@ export function marketingPublicContext(
   const ip =
     request.headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim() ??
     'unknown';
+  // The key carries no time component on purpose. The repository's rolling
+  // one-hour window is the only clock; a date in the key would hand the same
+  // address a fresh bucket at UTC midnight with the previous hour still spent.
   const rateKey = createHmac('sha256', secret)
-    .update(
-      `${MOYO_MARKETING_SCOPE}:${ip}:${new Date().toISOString().slice(0, 10)}`,
-    )
+    .update(`${MOYO_MARKETING_SCOPE}:${ip}`)
     .digest('hex');
   return contexts.public(rateKey);
 }

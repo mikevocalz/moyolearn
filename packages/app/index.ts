@@ -236,7 +236,11 @@ export {
 export { OnboardingScreen } from './features/onboarding/screen';
 export { PublicEntryContent } from './features/onboarding/public-entry-content';
 export { SignInContent } from './features/onboarding/sign-in-content';
-export { DevPersonaSwitch } from './features/onboarding/dev-persona-switch';
+export { ForgotPasswordContent } from './features/onboarding/forgot-password-content';
+export { ResetPasswordContent, type ResetPasswordContentProps } from './features/onboarding/reset-password-content';
+// `DevPersonaSwitch` is deliberately NOT exported. A barrel export is a static
+// import into every bundle, release included; the welcome screen requires it
+// behind `__DEV__` instead (features/onboarding/public-entry-content.tsx).
 export { OnboardingFlowScreen } from './features/onboarding/flow/screen';
 export { OnboardingFlowContent } from './features/onboarding/flow/flow-content';
 export {

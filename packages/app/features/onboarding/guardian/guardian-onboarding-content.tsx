@@ -21,8 +21,10 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §5
 // SOT-KEYWORDS: onboarding guardian s21 consent children grants screen
 
+import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, FadeIn, Heading, ScaleIn, TextField } from '@acme/ui';
+import { authClient, getAuthMode, useAppSession } from '../../../providers/session';
 import { useGuardianWhatsNext } from './whats-next.store';
 import { ConsentFlowContent } from '../consent/consent-flow-content';
 import { PaywallContent } from '../../paywall/paywall-content';
@@ -30,6 +32,15 @@ import { HandoffCodePanel } from '../handoff/handoff-code-panel';
 import { createLearnerOnServer } from '../handoff/handoff.client';
 import { useGuardianOnboarding } from './store';
 import { GUARDIAN_PLAN_STEP } from './plan-step';
+import {
+  createGuardianAccount,
+  canLeaveAccountStep,
+  guardianAccountProblems,
+  resendFailed,
+  resendVerification,
+  signInAfterVerification,
+  verifyNotice,
+} from './account';
 import {
   canAdvance,
   childProblems as problems,
@@ -46,6 +57,8 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
     draft,
     setStep,
     patch,
+    account,
+    patchAccount,
     addChild,
     patchChild,
     removeChild,
@@ -55,11 +68,27 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
     setCommitError,
     reset,
   } = useGuardianOnboarding();
+  const router = useRouter();
+  const session = useAppSession();
   const { index, total } = stepProgress(step);
   const back = previousStep(step);
   const forward = nextStep(step);
-  const ready = canAdvance(step, draft);
   const armWhatsNext = useGuardianWhatsNext((s) => s.arm);
+
+  /*
+    The account step's three honest ways past it. A signed-in guardian already
+    has the account the step would create; a mock build has no server to create
+    one on, and `createLearnerOnServer` short-circuits on the same condition
+    later; everyone else needs the three fields complete and an account that
+    has been created and signed in, which `advance` below performs.
+  */
+  const signedIn = session.status === 'authed';
+  const live = getAuthMode() === 'live';
+  const accountInput = { name: draft.guardianName, email: draft.email, password: account.password };
+  const ready =
+    step === 'account'
+      ? canLeaveAccountStep({ signedIn, live, account: accountInput })
+      : canAdvance(step, draft);
 
   /**
    * Exiting FROM the last step is completion, so it arms the feed's one-time
@@ -85,8 +114,54 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
    * returned ids are what the handoff step mints codes against. A row that
    * already carries an id (Back → Continue again) is not re-created.
    */
+  /**
+   * The account step creates the account (account.ts). In live mode with no
+   * session, Continue runs sign-up; once the server has answered "verify first"
+   * the same button becomes "I've confirmed my email" and runs sign-in, which
+   * is how the app earns the session the link minted in the phone's browser.
+   */
+  const advanceAccount = async () => {
+    if (!forward) return;
+    if (signedIn || !live) {
+      setStep(forward);
+      return;
+    }
+    patchAccount({ busy: true, feedback: null });
+    const outcome = account.verifyPending
+      ? await signInAfterVerification(authClient, { email: draft.email, password: account.password })
+      : await createGuardianAccount(authClient, accountInput);
+    if (outcome.kind === 'signed-in') {
+      // The password has done its job; a resumed flow must not find it.
+      patchAccount({ busy: false, password: '', verifyPending: false, feedback: null });
+      setStep(forward);
+      return;
+    }
+    if (outcome.kind === 'verify-email') {
+      patchAccount({
+        busy: false,
+        verifyPending: true,
+        feedback: { kind: 'notice', text: verifyNotice(outcome.address) },
+      });
+      return;
+    }
+    patchAccount({ busy: false, feedback: { kind: 'error', text: outcome.message } });
+  };
+
+  const resend = async () => {
+    patchAccount({ busy: true });
+    const sent = await resendVerification(authClient, draft.email);
+    patchAccount({
+      busy: false,
+      feedback: { kind: 'notice', text: sent ? verifyNotice(draft.email.trim()) : resendFailed },
+    });
+  };
+
   const advance = async () => {
     if (!forward) return;
+    if (step === 'account') {
+      await advanceAccount();
+      return;
+    }
     if (step !== 'children') {
       setStep(forward);
       return;
@@ -95,17 +170,12 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
     setCommitError(null);
     for (let i = 0; i < draft.children.length; i++) {
       const child = draft.children[i]!;
-      if (child.learnerAuthId || !draft.consentRecord) continue;
+      if (child.learnerAuthId || !draft.consentId) continue;
       const result = await createLearnerOnServer({
         username: child.username,
         password: child.password,
         displayName: child.displayName,
-        consent: {
-          method: draft.consentRecord.method,
-          scope: draft.consentRecord.scope,
-          policyVersion: draft.consentRecord.policyVersion,
-          evidenceRef: draft.consentRecord.evidenceRef,
-        },
+        consentId: draft.consentId,
       });
       if (result.kind === 'failed') {
         setCommitting(false);
@@ -157,12 +227,77 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
           <Heading level={1} size="title">
             Your account
           </Heading>
-          <TextField
-            label="Your email"
-            hint="Yours, not your child’s. Children here never have an email address."
-            value={draft.email}
-            onChangeText={(email: string) => patch({ email })}
-          />
+          {signedIn ? (
+            <TWText className="text-body text-text">
+              You’re signed in{session.user ? ` as ${session.user.name}` : ''}. The children you add
+              next belong to this account.
+            </TWText>
+          ) : (
+            <>
+              <TextField
+                label="Your name"
+                value={draft.guardianName}
+                onChangeText={(guardianName: string) => patch({ guardianName })}
+                autoComplete="name"
+                textContentType="name"
+                editable={!account.busy && !account.verifyPending}
+              />
+              <TextField
+                label="Your email"
+                hint="Yours, not your child’s. Children here never have an email address."
+                value={draft.email}
+                onChangeText={(email: string) => patch({ email })}
+                inputMode="email"
+                autoCapitalize="none"
+                autoComplete="email"
+                textContentType="emailAddress"
+                editable={!account.busy && !account.verifyPending}
+              />
+              {/* Password rules validate live and per field (Kit, doc 06 §5),
+                  and only once something has been typed: an empty form that
+                  is already red is a scolding, not a hint. */}
+              <TextField
+                label="Password"
+                hint="Twelve characters or more. Length beats symbols."
+                value={account.password}
+                onChangeText={(password: string) => patchAccount({ password, feedback: null })}
+                secureTextEntry
+                autoCapitalize="none"
+                autoComplete="new-password"
+                textContentType="newPassword"
+                editable={!account.busy}
+                error={account.password ? guardianAccountProblems(accountInput).password : undefined}
+              />
+              {/* One live region for both registers; see sign-in-content.tsx. */}
+              {account.feedback ? (
+                <TWText
+                  role="status"
+                  aria-live="polite"
+                  accessibilityLiveRegion="polite"
+                  className={
+                    account.feedback.kind === 'error'
+                      ? 'text-body text-danger'
+                      : 'text-body font-semibold text-text'
+                  }
+                >
+                  {account.feedback.text}
+                </TWText>
+              ) : null}
+              {account.verifyPending ? (
+                <Button
+                  variant="ghost"
+                  title="Send the link again"
+                  onPress={() => void resend()}
+                  disabled={account.busy}
+                />
+              ) : null}
+              <Button
+                variant="ghost"
+                title="Already have an account? Sign in"
+                onPress={() => router.push('/onboarding/sign-in')}
+              />
+            </>
+          )}
         </Section>
       ) : null}
 
@@ -215,8 +350,8 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
           <ConsentFlowContent
             scope="tutoring"
             policyVersion={CONSENT_POLICY_VERSION}
-            onComplete={(record) =>
-              patch({ consentRecord: record, consentMethod: record.method, consentAccepted: true })
+            onComplete={(record, consentId) =>
+              patch({ consentRecord: record, consentId, consentMethod: record.method, consentAccepted: true })
             }
           />
         </Section>
@@ -312,9 +447,15 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
         ) : null}
         {forward ? (
           <Button
-            title={committing ? 'Saving…' : 'Continue'}
+            title={
+              committing || account.busy
+                ? 'Saving…'
+                : step === 'account' && account.verifyPending
+                  ? 'I’ve confirmed my email'
+                  : 'Continue'
+            }
             onPress={() => void advance()}
-            disabled={!ready || committing}
+            disabled={!ready || committing || account.busy}
           />
         ) : step === 'plan' ? null : (
           // The terminal step needs a way to finish that is not "Save & exit",

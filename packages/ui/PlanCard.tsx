@@ -3,11 +3,13 @@
 // J-component-plan §2 row 6).
 //
 // DATA PROPS ONLY: name, price, period, trial line and badge arrive from the
-// role-scoped plan query — no price is ever hardcoded here. Two laws ride the
-// `tier` prop: guardian routes may only pass `family` (enforced by a
-// route-level type, doc 38 §5 FD-13 — deliberately not a runtime check), and
-// this component may NEVER mount on a learner surface, any tier, any state
-// (doc 05 · PW-03b · CONTRIBUTING.md children's surfaces).
+// plan catalogue (`@acme/auth/plan-catalog` for families, the ops display table
+// for orgs) — no price is ever hardcoded here. Two laws ride the `context` /
+// `tier` pair: a guardian surface can only pass `family` and an org surface
+// only `business` (a discriminated union, so the other pairing is a compile
+// error), and this component NEVER draws on a learner surface, any tier, any
+// state (doc 05 · PW-03b · CONTRIBUTING.md children's surfaces). The runtime
+// half of both laws is `planCardDecision`, tested on its own.
 // Selection shares RoleChoiceCard's pattern (J §2 row 6): radio semantics,
 // role-accent underlay + ring from the enclosing RoleScope, check chip, weight
 // — never colour alone. Sanctioned role-accent consumer (check-role-accent).
@@ -24,6 +26,9 @@ import { Article, View } from './primitives';
 import { Text } from './Text';
 import { Check } from './icons';
 import { haptics } from './haptics';
+import { planCardDecision, type PlanCardContext, type PlanTier } from './plan-card-guard';
+
+export type { PlanCardContext, PlanTier } from './plan-card-guard';
 
 const plan = tv({
   slots: {
@@ -55,31 +60,34 @@ const plan = tv({
   defaultVariants: { interactive: false, selected: false },
 });
 
-export type PlanTier = 'family' | 'business';
+/**
+ * Where the card is mounted, paired with the only tier that surface may show.
+ * `{ context: 'guardian', tier: 'business' }` does not type-check, and there is
+ * no `learner` member at all: a learner surface cannot construct these props.
+ */
+export type PlanCardScope =
+  | { context: 'guardian'; tier: 'family' }
+  | { context: 'org'; tier: 'business' };
 
-export interface PlanCardProps {
+export interface PlanCardData {
   name: string;
-  /** e.g. `$11` — from the plan query, never a literal in product code. */
+  /** e.g. `$24.99` — from the plan catalogue, never a literal in product code. */
   price: string;
   /** e.g. `/mo` */
   period: string;
   /** e.g. `after your free month` */
   trialLine?: string;
-  /** e.g. `Early-bird price` — rendered as text, never colour alone. */
+  /** e.g. `Trial` — rendered as text, never colour alone. */
   badge?: string;
   /** ≤ 4 plain rows (doc 38 §5 FD-13). */
   includes?: readonly string[];
-  /**
-   * The rendering guard's type seam: guardian routes are typed to `'family'`
-   * only, so a business tier on a parent surface is a compile error, not a
-   * review catch. Carried for that contract; both tiers draw identically.
-   */
-  tier: PlanTier;
   selected?: boolean;
   /** Present = the card is a radio in the plan chooser; absent = static (PW-05 summary). */
   onSelect?: () => void;
   className?: string;
 }
+
+export type PlanCardProps = PlanCardData & PlanCardScope;
 
 export function PlanCard({
   name,
@@ -88,11 +96,18 @@ export function PlanCard({
   trialLine,
   badge,
   includes,
-  tier: _tier,
+  context,
+  tier,
   selected = false,
   onSelect,
   className,
 }: PlanCardProps) {
+  // The union above makes a mismatched pair unrepresentable in typed callers;
+  // this is the same law for props that arrive untyped (a JS caller, a story
+  // control, a serialised screen). `context` is widened so a learner value that
+  // slips in at runtime is refused rather than cast away.
+  if (planCardDecision(context as PlanCardContext, tier as PlanTier) === 'nothing') return null;
+
   const s = plan({ interactive: !!onSelect, selected });
   const content = (
     <>

@@ -23,6 +23,7 @@ import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
   BetaMessage,
+  BetaMessageContentParam,
   MessageCreateParamsNonStreaming as BetaMessageCreateParamsNonStreaming,
   MessageCreateParamsStreaming as BetaMessageCreateParamsStreaming,
 } from '@anthropic-ai/sdk/resources/beta/messages';
@@ -150,7 +151,10 @@ export function paramsFor(request: InferenceRequest): BetaMessageCreateParamsStr
  * caption: it is the OCR reading plus whatever the child said, and the reading
  * is what the Safety Plane's input layers actually classified.
  */
-function contentFor(payload: InferencePayload): BetaMessageCreateParamsStreaming['messages'][number]['content'] {
+// Typed as the user turn's content. SDK 1.x widened `messages[number]` to a
+// union with tool-addition and tool-removal turns whose `content` is optional,
+// so indexing the params type now admits `undefined`.
+function contentFor(payload: InferencePayload): BetaMessageContentParam {
   if (!payload.image) return payload.message;
   return [
     {

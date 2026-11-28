@@ -6,6 +6,7 @@ import 'server-only';
 import { createHash, randomUUID } from 'node:crypto';
 import { Pool, type PoolClient } from 'pg';
 import { z } from 'zod';
+import { plansFor } from '@acme/auth/billing-plans';
 import {
   connectionCount,
   inquiryEvent,
@@ -171,6 +172,9 @@ export async function listInquiries(orgId: string) {
   return result.rows.map((row) => inquirySummary.parse(row.record));
 }
 
+/** Sales attribution counts organisation plans only; billing links and receipts share this list. */
+const ORGANIZATION_PLAN_NAMES = plansFor('organization').map((plan) => plan.name);
+
 export async function saveInquiryUpdate(
   orgId: string,
   actorId: string,
@@ -222,13 +226,16 @@ export async function saveInquiryUpdate(
     if (input.action === 'link-billing') {
       // The subscription reference is resolved here. A submitted Stripe id or
       // email domain can never establish who paid or which business owns it.
+      // Organisation plans only, the same allowlist `saveVerifiedPayment` uses:
+      // a family plan can never produce a sales order, so linking one would
+      // report success and then silently attribute nothing.
       const linked = await client.query(
         `SELECT s."stripeCustomerId" AS customer_id FROM better_auth.subscription s
-        WHERE s."referenceId"=$1 AND s."stripeCustomerId" IS NOT NULL AND s."stripeSubscriptionId" IS NOT NULL AND (
+        WHERE s."referenceId"=$1 AND s."stripeCustomerId" IS NOT NULL AND s."stripeSubscriptionId" IS NOT NULL AND s.plan = ANY($3) AND (
           EXISTS(SELECT 1 FROM better_auth.organization o WHERE o.id=s."referenceId") OR
           EXISTS(SELECT 1 FROM better_auth."user" u WHERE u.id=s."referenceId" AND lower(u.email)=$2 AND u."emailVerified"=true AND coalesce(u."guardianManaged",false)=false AND coalesce(u."isMinor",false)=false))
         ORDER BY s.id LIMIT 1`,
-        [input.referenceId, record.email],
+        [input.referenceId, record.email, ORGANIZATION_PLAN_NAMES],
       );
       const customer = z
         .string()
@@ -236,7 +243,7 @@ export async function saveInquiryUpdate(
         .safeParse(linked.rows[0]?.customer_id);
       if (!customer.success)
         throw new MarketingError(
-          'No verified adult or organization subscription matches this reference.',
+          'No verified business-plan subscription matches this reference. Family plans cannot be linked to a sales inquiry.',
           422,
         );
       const occupied = await client.query(
@@ -439,9 +446,10 @@ export async function saveVerifiedPayment(
     // Incomplete evidence is held privately until an exact canonical association can
     // establish whether it belongs here. It never becomes revenue by customer match.
     if (!input.moyoPriceSeen && input.evidenceStatus !== 'incomplete') {
+      // Organisation plans only: a family subscription never counts as sales revenue.
       const canonical = await client.query(
-        'SELECT 1 FROM better_auth.subscription WHERE "stripeSubscriptionId"=$1 AND "stripeCustomerId"=$2 LIMIT 1',
-        [input.subscriptionId, input.customerId],
+        'SELECT 1 FROM better_auth.subscription WHERE "stripeSubscriptionId"=$1 AND "stripeCustomerId"=$2 AND plan = ANY($3) LIMIT 1',
+        [input.subscriptionId, input.customerId, ORGANIZATION_PLAN_NAMES],
       );
       if (!canonical.rowCount) return;
     }

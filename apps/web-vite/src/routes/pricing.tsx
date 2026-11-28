@@ -6,6 +6,7 @@
  * SOT-KEYWORDS: route pricing page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';
+import { coverageSentence, monthlyPriceSentence, CONSUMER_PLANS } from '@acme/auth/plan-catalog';
 import { Main } from '@acme/ui/primitives';
 import { SiteNav } from '@/components/site-nav';
 import { SiteFooter } from '@/components/site-footer';
@@ -13,8 +14,7 @@ import { StartChapter } from '@/components/chapters/start';
 
 const SITE_ORIGIN = 'https://moyolearn.com';
 const TITLE = 'Pricing — Moyo';
-const DESCRIPTION =
-  'Moyo Plus is $14.99 a month for one learner, $24.99 a month for the whole family. Start learning today.';
+const DESCRIPTION = `${CONSUMER_PLANS.plus.title} is ${monthlyPriceSentence('plus')} for ${coverageSentence('plus')}, ${monthlyPriceSentence('family')} for the whole family. Start learning today.`;
 
 export const Route = createFileRoute('/pricing')({
   head: () => ({

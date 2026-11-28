@@ -8,6 +8,7 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §7
 // SOT-KEYWORDS: proxy auth session redirect login protected operation cron bearer machine route public paths
 import { NextResponse, type NextRequest } from 'next/server';
+import { RETURN_PATH_PARAM, safeReturnPath } from '@/lib/return-path';
 
 const PUBLIC_PATHS = [
   '/login',
@@ -98,6 +99,20 @@ export async function proxy(request: NextRequest) {
   if (isPublic) return NextResponse.next();
 
   /*
+    THE INTERRUPTED PAGE TRAVELS WITH THE BOUNCE. A guardian opening an
+    incident mail's `/alerts` link without a session used to sign in and land
+    on `/tutor`. The path goes along as `?next=`, through `safeReturnPath` —
+    the same gate the login route and form apply, so nothing but a local path
+    this app serves is ever written there or read back.
+  */
+  const loginRedirect = () => {
+    const login = new URL('/login', request.url);
+    const back = safeReturnPath(`${request.nextUrl.pathname}${request.nextUrl.search}`);
+    if (back !== null && back !== '/') login.searchParams.set(RETURN_PATH_PARAM, back);
+    return NextResponse.redirect(login);
+  };
+
+  /*
     AN API ROUTE ANSWERS WITH A STATUS, NOT WITH A LOGIN PAGE.
 
     Redirecting `/api/*` to `/login` is invisible to `fetch`, which follows the
@@ -110,7 +125,7 @@ export async function proxy(request: NextRequest) {
   const unauthenticated = () =>
     request.nextUrl.pathname.startsWith('/api/')
       ? NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
-      : NextResponse.redirect(new URL('/login', request.url));
+      : loginRedirect();
 
   try {
     const { auth } = await import('@/lib/auth');

@@ -15,8 +15,9 @@
 // SOT: CONTRIBUTING.md §The block · packages/app/features/media/retention.ts
 // SOT-KEYWORDS: tutor session attachment api route patch upload url storage key retention
 import { NextRequest, NextResponse } from 'next/server';
-import { attachUploadedMedia, SessionNotFound } from '@acme/app/server';
+import { attachUploadedMedia, MediaKeyRejected, SessionNotFound } from '@acme/app/server';
 import { patchAttachment } from '@/lib/tutor-session.repository';
+import { mediaPrefix } from '@/lib/bunny.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -65,16 +66,27 @@ export async function PATCH(request: NextRequest) {
       request.headers,
       { sessionId, messageId, attachmentId, url, storageKey, expiresAt: str(body.expiresAt) },
       patchAttachment,
+      // The service checks `storageKey` against the caller's own folder and
+      // `url` against the key, so a client cannot attach an address it did not
+      // upload to (security pass H4).
+      { cdnBase: process.env.NEXT_PUBLIC_BUNNY_CDN_BASE_URL ?? '', mediaPrefix: mediaPrefix() },
     );
     return NextResponse.json({ ok: true });
   } catch (error) {
-    if (error instanceof Error) reportRouteError(error);
     // The same 404 covers "no such session", "not yours" and "no such
     // attachment" — telling them apart would let a caller probe for ids.
     if (error instanceof SessionNotFound) {
       return NextResponse.json({ error: 'No such session' }, { status: 404 });
     }
-    const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: message === 'Unauthenticated' ? 401 : 500 });
+    // A key or URL outside the caller's folder is a bad request. The sentence
+    // is a fixed one from the rules module, never an echo of the input.
+    if (error instanceof MediaKeyRejected) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof Error && error.message === 'Unauthenticated') {
+      return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 });
+    }
+    if (error instanceof Error) reportRouteError(error);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

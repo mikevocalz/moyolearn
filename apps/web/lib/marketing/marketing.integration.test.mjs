@@ -585,6 +585,68 @@ test('an already-linked customer waits for the exact late subscription associati
     ),
   );
 });
+test('a family plan invoice is never recorded as sales revenue', async () => {
+  await pool.query(
+    `INSERT INTO better_auth.subscription(id,plan,"referenceId","stripeCustomerId","stripeSubscriptionId",status) VALUES('family-synthetic','family','synthetic-family-user','cus_Family','sub_Family','active')`,
+  );
+  await repository.saveVerifiedPayment(
+    org,
+    paidReceipt({
+      invoiceId: 'in_Family',
+      customerId: 'cus_Family',
+      subscriptionId: 'sub_Family',
+      evidenceStatus: 'mismatch',
+      moyoPriceSeen: false,
+    }),
+  );
+  assert.equal(
+    await count('marketing_verified_payments', "WHERE id='in_Family'"),
+    0,
+  );
+});
+test('a family subscription is refused as a billing link even when its verified adult email matches', async () => {
+  const saved = await repository.saveInquiry(org, input(), 'rate');
+  await pool.query(
+    `INSERT INTO better_auth."user"(id,name,email,"emailVerified") VALUES('synthetic-family-owner','Synthetic owner','adult@example.invalid',true);
+     INSERT INTO better_auth.subscription(id,plan,"referenceId","stripeCustomerId","stripeSubscriptionId",status) VALUES('family-owner-sub','family','synthetic-family-owner','cus_FamilyOwner','sub_FamilyOwner','active')`,
+  );
+  await assert.rejects(
+    repository.saveInquiryUpdate(
+      org,
+      'synthetic-owner',
+      saved.id,
+      update('link-billing', { referenceId: 'synthetic-family-owner' }),
+    ),
+    { status: 422 },
+  );
+  const row = (
+    await pool.query(
+      'SELECT stripe_customer_id,billing_reference_id FROM payload.marketing_inquiries WHERE id=$1',
+      [saved.id],
+    )
+  ).rows[0];
+  assert.equal(row.stripe_customer_id, null);
+  assert.equal(row.billing_reference_id, null);
+  // The same verified adult on a business plan still links.
+  await pool.query(
+    `INSERT INTO better_auth.subscription(id,plan,"referenceId","stripeCustomerId","stripeSubscriptionId",status) VALUES('solo-owner-sub','ops-solo','synthetic-family-owner','cus_SoloOwner','sub_SoloOwner','active')`,
+  );
+  await repository.saveInquiryUpdate(
+    org,
+    'synthetic-owner',
+    saved.id,
+    update('link-billing', { referenceId: 'synthetic-family-owner' }),
+  );
+  assert.equal(
+    (
+      await pool.query(
+        'SELECT stripe_customer_id FROM payload.marketing_inquiries WHERE id=$1',
+        [saved.id],
+      )
+    ).rows[0].stripe_customer_id,
+    'cus_SoloOwner',
+  );
+});
 test('incomplete or mixed invoice evidence stays visible and private repair cannot change the original payment', async () => {
   const saved = await linkedBillingInquiry();
   const invoice = paidReceipt({ evidenceStatus: 'incomplete' });

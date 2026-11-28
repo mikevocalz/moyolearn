@@ -6,6 +6,8 @@ export interface WorksheetQuestion {
   sourcePage: number;
   sourceNumber: number | null;
   text: string;
+  /** Guardian-confirmed prior work, separate from transcription and grading. */
+  priorWork?: 'none' | 'partial' | 'complete';
 }
 
 export interface WorksheetExtraction {

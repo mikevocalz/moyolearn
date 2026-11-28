@@ -15,6 +15,7 @@ import {
   loadSubmissionForLearner,
   loadSubmissionOwner,
   reviseQuestion,
+  revisePriorWork,
   startSubmission,
 } from '@/lib/homework.repository';
 import { loadGuardianWards } from '@/lib/summary.repository';
@@ -26,6 +27,7 @@ export const homeworkPorts = {
   loadSubmission: loadSubmissionForLearner,
   listSubmissions,
   reviseQuestion,
+  revisePriorWork,
   startSubmission,
   advanceSubmission,
   issueEvidence: issueHomeworkEvidence,

@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import { createReadStream, createWriteStream, readdirSync, statSync } from 'node:fs';
 import { copyFile, lstat, mkdir, mkdtemp, readFile, readdir, writeFile } from 'node:fs/promises';
 import { createServer, get as httpGet } from 'node:http';
+import { homedir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -114,9 +115,32 @@ export async function retainAgentDiagnostics(stateDir, destination) {
   return copied.sort();
 }
 
+const DIAGNOSTIC_LIMIT = 512 * 1024;
+
+// Run one OS diagnostic command into a file, keeping the first 512 KiB. A
+// failed or slow command becomes a warning; it never replaces the test result.
+async function retainCommandOutput(destination, name, phase, executable, args, { env, files, warnings, timeout = 20_000 }) {
+  const chunks = []; let bytes = 0; let truncated = false;
+  const log = { write: (chunk) => {
+    const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    const remaining = Math.max(0, DIAGNOSTIC_LIMIT - bytes);
+    if (remaining === 0) { truncated ||= data.length > 0; return; }
+    if (data.length > remaining) truncated = true;
+    const retained = data.subarray(0, remaining);
+    chunks.push(retained); bytes += retained.length;
+  } };
+  await command(executable, args, { env, log, phase, timeout })
+    .catch((error) => { warnings.push(error.message); });
+  if (truncated) chunks.push(Buffer.from('\n[diagnostic output truncated at 512 KiB]\n'));
+  await writeFile(join(destination, name), Buffer.concat(chunks));
+  files.push(name);
+}
+
 // A failed launch can leave only the Android launcher in the UI hierarchy.
 // Capture the OS crash/exit evidence while the verified temporary emulator is
 // still alive; never turn a diagnostic failure into a replacement test result.
+// The app's own log buffer carries what React Native reported before a red
+// box, such as the network error behind "Could not load bundle".
 export async function retainAndroidFailureDiagnostics(device, destination, { env = runtimeEnvironment(process.env) } = {}) {
   if (device?.kind !== 'Android emulator' || !/^emulator-\d+$/.test(device.serial)
     || !device.abis?.includes('x86_64')) {
@@ -127,21 +151,66 @@ export async function retainAndroidFailureDiagnostics(device, destination, { env
   const diagnostics = [
     ['android-crash.log', 'android-crash-buffer', ['logcat', '-b', 'crash', '-d', '-v', 'threadtime', '-t', '400']],
     ['android-app-exit-info.log', 'android-app-exit-info', ['shell', 'dumpsys', 'activity', 'exit-info', APP_ID]],
+    ['android-react-native.log', 'android-react-native-log', ['logcat', '-b', 'main', '-d', '-v', 'threadtime', '-t', '1500',
+      'ReactNativeJS:V', 'ReactNative:V', 'ReactHost:V', 'OkHttp:V', 'AndroidRuntime:V', '*:S']],
+    // Whether the device can still reach Metro through the harness's reverse.
+    ['android-port-reverse.log', 'android-port-reverse', ['reverse', '--list']],
+    // Keep nc's stdin open while Metro answers: on EOF toybox nc half-closes the
+    // socket, and adbd's reverse forwarder then closes the whole stream, which
+    // can drop the reply. The sleep bounds the read; nc exits when Metro closes.
+    ['android-metro-reachability.log', 'android-metro-reachability',
+      ['shell', `(printf 'GET /status HTTP/1.0\\r\\n\\r\\n'; sleep 5) | toybox nc -w 5 127.0.0.1 ${METRO_PORT}`]],
+    // A reverse mapping lives in adbd. When adbd restarts, every mapping and open
+    // adb shell is dropped. Record when adbd last started and why memory ran low.
+    ['android-adbd.log', 'android-adbd', ['shell', 'getprop init.svc.adbd; ps -A -o PID,STIME,ELAPSED,NAME | grep -E "adbd|PID"; '
+      + 'cat /proc/meminfo | head -6; logcat -b all -d -v threadtime | grep -iE "adbd|lmkd|lowmemorykiller|am_kill|am_low_memory" | tail -n 200']],
   ];
   for (const [name, phase, args] of diagnostics) {
-    const chunks = []; let bytes = 0; let truncated = false;
-    const log = { write: (chunk) => {
-      const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      const remaining = Math.max(0, 512 * 1024 - bytes);
-      if (remaining === 0) { truncated ||= data.length > 0; return; }
-      if (data.length > remaining) truncated = true;
-      const retained = data.subarray(0, remaining);
-      chunks.push(retained); bytes += retained.length;
-    } };
-    await command('adb', ['-s', device.serial, ...args], { env, log, phase, timeout: 20_000 })
-      .catch((error) => { warnings.push(error.message); });
-    if (truncated) chunks.push(Buffer.from('\n[diagnostic output truncated at 512 KiB]\n'));
-    await writeFile(join(destination, name), Buffer.concat(chunks));
+    await retainCommandOutput(destination, name, phase, 'adb', ['-s', device.serial, ...args], { env, files, warnings });
+  }
+  return { files, warnings };
+}
+
+// An app that exits during launch leaves agent-device only "app is not
+// running". The simulator's unified log names the exit reason (dyld, signal,
+// watchdog, assertion) and CoreSimulator writes any crash report to the
+// host's DiagnosticReports directory. Retain both, scoped to this app and run.
+export async function retainIosFailureDiagnostics(device, destination, {
+  env = runtimeEnvironment(process.env), since, reportsDir = join(homedir(), 'Library/Logs/DiagnosticReports'),
+} = {}) {
+  if (device?.kind !== 'iPad simulator' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(device.udid ?? '')) {
+    throw new Error('iOS failure diagnostics require the already-selected CI iPad simulator');
+  }
+  const started = Date.parse(since);
+  if (!Number.isFinite(started)) throw new Error('iOS failure diagnostics require the run start time');
+  await mkdir(destination, { recursive: true });
+  const files = []; const warnings = [];
+  const minutes = Math.max(1, Math.ceil((Date.now() - started) / 60_000) + 1);
+  await retainCommandOutput(destination, 'ios-app-log.log', 'ios-app-log', 'xcrun', [
+    'simctl', 'spawn', device.udid, 'log', 'show', '--style', 'compact', '--info', '--last', `${minutes}m`,
+    '--predicate', `process == "Moyo" OR eventMessage CONTAINS "${APP_ID}"`,
+  // `log show` reads the simulator's whole log store; 20s was not enough in run 45615528693.
+  ], { env, files, warnings, timeout: 90_000 });
+  // Memory and process evidence for a host too loaded to run simctl in time.
+  await retainCommandOutput(destination, 'ios-host-vm-stat.log', 'ios-host-vm-stat', 'vm_stat', [], { env, files, warnings });
+  await retainCommandOutput(destination, 'ios-host-processes.log', 'ios-host-processes', 'ps', ['-axm', '-o', 'rss=,%cpu=,comm='], { env, files, warnings, timeout: 60_000 });
+  let reports = [];
+  try { reports = await readdir(reportsDir, { withFileTypes: true }); } catch (error) {
+    if (error.code !== 'ENOENT') warnings.push(`crash report listing failed (${error.code ?? error.name})`);
+  }
+  const crashes = [];
+  for (const entry of reports) {
+    if (!entry.isFile() || !/^Moyo[-_.].*\.(?:ips|crash)$/.test(entry.name)) continue;
+    const info = await lstat(join(reportsDir, entry.name));
+    if (info.mtimeMs >= started) crashes.push({ name: entry.name, mtimeMs: info.mtimeMs, size: info.size });
+  }
+  crashes.sort((a, b) => a.mtimeMs - b.mtimeMs || a.name.localeCompare(b.name));
+  for (const crash of crashes.slice(0, 5)) {
+    const bytes = await readFile(join(reportsDir, crash.name));
+    const name = `ios-crash-${crash.name}`;
+    await writeFile(join(destination, name), bytes.length > DIAGNOSTIC_LIMIT
+      ? Buffer.concat([bytes.subarray(0, DIAGNOSTIC_LIMIT), Buffer.from('\n[diagnostic output truncated at 512 KiB]\n')])
+      : bytes);
     files.push(name);
   }
   return { files, warnings };
@@ -198,6 +267,20 @@ export function runtimeFailureDetails(error, metro) {
   };
 }
 
+// The graph options the debug app asks Metro for at launch (RCTBundleURLProvider on
+// iOS, DevServerHelper on Android): dev builds request lazy=true, which leaves
+// import() targets out of the main graph. Without it the preflight built a
+// second graph (9271 modules) that the app never used; the app's own request
+// (9206) was then built again while the app and the XCTest runner were starting,
+// for 30.7 s in iOS run 45645263048. The remaining parameters are serializer
+// options and do not create another graph.
+export function appBundleUrl(platform) {
+  const query = new URLSearchParams({
+    platform, dev: 'true', lazy: 'true', minify: 'false', app: APP_ID, modulesOnly: 'false', runModule: 'true',
+  });
+  return `http://127.0.0.1:${METRO_PORT}/.expo/.virtual-metro-entry.bundle?${query}`;
+}
+
 export async function hashMetroBundle(url, { log, timeout = METRO_BUNDLE_TIMEOUT_MS } = {}) {
   const target = new URL(url);
   if (target.protocol !== 'http:' || target.hostname !== '127.0.0.1') throw new Error('Metro bundle preflight requires local HTTP');
@@ -241,6 +324,46 @@ export async function hashMetroBundle(url, { log, timeout = METRO_BUNDLE_TIMEOUT
   } finally {
     request?.destroy();
   }
+}
+
+// A reverse mapping lives in adbd, so an adbd or adb-server restart during the
+// flow silently drops it. A cold relaunch then shows "Unable to load script"
+// while Metro is still up. Each tick lists the mappings, records any that went
+// missing (the evidence a later diagnostic can no longer see, since this puts
+// them back), and re-adds only those. One tick at a time; a slow adb skips ticks.
+export function keepAndroidReverse(serial, ports, {
+  run = (args) => command('adb', ['-s', serial, ...args], { timeout: 10_000, phase: 'android-reverse-refresh' }),
+  intervalMs = 5_000, log,
+} = {}) {
+  const stats = { checks: 0, missing: [], readded: 0, failures: 0, lastError: null };
+  let stopped = false; let running = null;
+  const note = (line) => log?.write(`[android-reverse] ${JSON.stringify({ at: new Date().toISOString(), ...line })}\n`);
+  const tick = async () => {
+    try {
+      const listing = await run(['reverse', '--list']);
+      stats.checks += 1;
+      for (const port of ports) {
+        if (stopped) return;
+        if (new RegExp(`tcp:${port}\\s+tcp:${port}(\\s|$)`).test(listing)) continue;
+        stats.missing.push({ port, at: new Date().toISOString() });
+        note({ event: 'missing', port });
+        await run(['reverse', `tcp:${port}`, `tcp:${port}`]);
+        stats.readded += 1;
+      }
+    } catch (error) {
+      stats.failures += 1; stats.lastError = error.message;
+      note({ event: 'failure', message: error.message });
+    }
+  };
+  const timer = setInterval(() => {
+    if (stopped || running) return;
+    running = tick().finally(() => { running = null; });
+  }, intervalMs);
+  timer.unref?.();
+  return {
+    stats,
+    async stop() { stopped = true; clearInterval(timer); await running; return stats; },
+  };
 }
 
 export function command(executable, args, {
@@ -363,7 +486,7 @@ async function main() {
       'Positive FPS proves the native render loop executes; retained screenshots still require visual inspection.',
     ],
   };
-  let agent; let agentState; let agentEnv; let metro; let server; let deviceFlags; let failure;
+  let agent; let agentState; let agentEnv; let metro; let server; let deviceFlags; let failure; let reverseKeeper;
   const saveReceipt = () => writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
   try {
     await saveReceipt();
@@ -409,11 +532,12 @@ async function main() {
     metro.stdout.pipe(metroLog, { end: false }); metro.stderr.pipe(metroLog, { end: false });
     metro.on('error', (error) => { log.write(`Metro process error: ${error.message}\n`); });
     await waitForMetro(metro);
-    const bundleUrl = `http://127.0.0.1:${METRO_PORT}/.expo/.virtual-metro-entry.bundle?platform=${values.platform}&dev=true&minify=false`;
+    const bundleUrl = appBundleUrl(values.platform);
     const bundle = await hashMetroBundle(bundleUrl, { log });
     receipt.metroBundleSha256 = bundle.sha256;
     receipt.metroBundleRequest = bundle;
     const junit = join(artifacts, 'junit.xml');
+    if (values.platform === 'android') reverseKeeper = keepAndroidReverse(receipt.device.serial, [METRO_PORT, API_PORT], { log });
     // A long Metro bundle can outlast the daemon's idle window. Its fresh
     // attachment precedes the unchanged per-attempt test deadline too.
     await command(process.execPath, [agent, 'test', FLOW, '--maestro', ...deviceFlags,
@@ -431,10 +555,16 @@ async function main() {
     receipt.status = 'failed'; receipt.failure = error.message; failure = error;
     receipt.failureDetails = runtimeFailureDetails(error, metro);
   } finally {
+    if (reverseKeeper) receipt.androidReverseRefresh = await reverseKeeper.stop();
     if (failure && receipt.device?.kind === 'Android emulator') {
       await retainAndroidFailureDiagnostics(receipt.device, artifacts)
         .then((diagnostics) => { receipt.androidFailureDiagnostics = diagnostics; })
         .catch((error) => { receipt.androidDiagnosticsWarning = error.message; });
+    }
+    if (failure && receipt.device?.kind === 'iPad simulator') {
+      await retainIosFailureDiagnostics(receipt.device, artifacts, { since: receipt.startedAt })
+        .then((diagnostics) => { receipt.iosFailureDiagnostics = diagnostics; })
+        .catch((error) => { receipt.iosDiagnosticsWarning = error.message; });
     }
     await stopMetro(metro);
     if (server) { server.closeAllConnections(); await new Promise((done) => server.close(done)); }

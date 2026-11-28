@@ -14,7 +14,10 @@ export const inquiryInput = z
     requestId: z.uuid(),
     name: shortText,
     email: z.email().trim().toLowerCase().max(254),
-    audience: z.enum(['school', 'tutoring-business', 'parent']),
+    // Sales inquiries are for schools and tutoring businesses only. Families sign up
+    // through the paywall, never through the sales CRM (v1 readiness decision).
+    // inquiryRow keeps 'parent' so rows written before this change still parse.
+    audience: z.enum(['school', 'tutoring-business']),
     organizationName: z.string().trim().max(200).default(''),
     // This is supplied organization context, never evidence of employment.
     organizationDomain: z
@@ -38,20 +41,11 @@ export const inquiryInput = z
   })
   .strict()
   .superRefine((value, ctx) => {
-    if (value.audience !== 'parent' && !value.organizationName)
+    if (!value.organizationName)
       ctx.addIssue({
         code: 'custom',
         path: ['organizationName'],
         message: 'Enter your school or business name.',
-      });
-    if (
-      value.audience === 'parent' &&
-      (value.organizationName || value.organizationDomain)
-    )
-      ctx.addIssue({
-        code: 'custom',
-        path: ['organizationName'],
-        message: 'Family inquiries do not need an organization.',
       });
   });
 export type InquiryInput = z.infer<typeof inquiryInput>;

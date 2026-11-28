@@ -42,6 +42,7 @@ import {
 } from './timeline-groups.ts';
 import { useGuardianWards } from './use-guardian-wards.ts';
 import { useHomeworkTimeline } from './use-homework-timeline.ts';
+import { GuardianPriorWorkReview } from './guardian-prior-work-review';
 
 export interface GuardianHomeworkTimelineProps {
   /** The ward's auth id. Undefined renders the "pick a child" state. */
@@ -166,8 +167,8 @@ function TimelineRow({ row }: { row: HomeworkSubmissionSummary }) {
       role="listitem"
       className="gap-element"
       aria-label={`${row.subject}. ${row.title}. ${questionCountText(row.questionCount)}. ${
-        outcomesSentence.length > 0 ? outcomesSentence : 'Not started'
-      }.`}
+        outcomesSentence.length > 0 ? outcomesSentence : (row.alreadyDoneCount ?? 0) > 0 ? 'No problems worked with Moyo yet' : 'Not started'
+      }. ${row.alreadyDoneCount ?? 0} already done before upload.`}
     >
       <View className="flex-row flex-wrap items-baseline justify-between gap-x-stack gap-y-0.5">
         <View className="min-w-0 flex-1 gap-0.5">
@@ -178,6 +179,8 @@ function TimelineRow({ row }: { row: HomeworkSubmissionSummary }) {
         </View>
         <Text variant="data" tone="muted">{questionCountText(row.questionCount)}</Text>
       </View>
+      {(row.alreadyDoneCount ?? 0) > 0 ? <Text variant="body" tone="muted">✓ {row.alreadyDoneCount} already done before upload</Text> : null}
+      <GuardianPriorWorkReview submissionId={row.submissionId} learnerAuthId={row.learnerAuthId} />
       {lines.length > 0 ? (
         <View className="flex-row flex-wrap gap-x-stack gap-y-0.5">
           {lines.map((line) => (
@@ -188,7 +191,7 @@ function TimelineRow({ row }: { row: HomeworkSubmissionSummary }) {
           ))}
         </View>
       ) : (
-        <TWText className="text-sm text-text-muted">Not started</TWText>
+        <TWText className="text-sm text-text-muted">{(row.alreadyDoneCount ?? 0) > 0 ? 'No problems worked with Moyo yet' : 'Not started'}</TWText>
       )}
       {row.subject.trim().toLowerCase() === 'math' ? (
         <Button

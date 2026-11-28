@@ -6,7 +6,6 @@ import { haptics } from './haptics';
 // (SwiftUI / Compose via @expo/ui Host) cannot consume Tailwind classes.
 import { semantic } from '@acme/theme';
 import { View } from './primitives';
-import { Text } from './Text';
 
 const checkboxRow = tv({
   slots: { root: 'flex-row items-center gap-2.5 self-start' },
@@ -31,11 +30,11 @@ export function Checkbox({ checked, onChange, label, disabled, className }: Chec
       <Host matchContents seedColor={semantic.primary.light}>
         <ExpoCheckbox
           value={checked}
+          label={label}
           onValueChange={(v: boolean) => { if (disabled) return; haptics.selection(); onChange(v); }}
           disabled={disabled}
         />
       </Host>
-      <Text className="text-base" aria-label={label}>{label}</Text>
     </View>
   );
 }

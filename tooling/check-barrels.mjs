@@ -65,6 +65,13 @@ const RELATIVE_SIDE_EFFECT = /(?:^|\n)\s*import\s+['"](\.[^'"]+)['"]/g;
  * lazy import exists to prevent.
  */
 const DYNAMIC_IMPORT = /\bimport\s*\(\s*['"](\.[^'"]+)['"]\s*\)/g;
+/**
+ * `require('./x')` is an edge for the same reason, and it is the one shape a
+ * dev-only module can be reached by: Metro drops a `require` inside a folded
+ * `if (__DEV__)` branch together with the module, which a static re-export
+ * from the barrel would defeat by pulling the module into every bundle.
+ */
+const REQUIRE_CALL = /\brequire\s*\(\s*['"](\.[^'"]+)['"]\s*\)/g;
 
 const entryPoints = (pkgDir) => {
   const manifest = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8'));
@@ -107,7 +114,7 @@ for (const pkg of PACKAGES) {
   while (queue.length) {
     const file = queue.pop();
     const source = readFileSync(file, 'utf8');
-    for (const pattern of [RELATIVE_FROM, RELATIVE_SIDE_EFFECT, DYNAMIC_IMPORT]) {
+    for (const pattern of [RELATIVE_FROM, RELATIVE_SIDE_EFFECT, DYNAMIC_IMPORT, REQUIRE_CALL]) {
       for (const [, specifier] of source.matchAll(pattern)) {
         for (const target of resolveSpecifier(file, specifier)) {
           if (!reached.has(target)) {

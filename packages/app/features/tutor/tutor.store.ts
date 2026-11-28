@@ -10,6 +10,7 @@ import {
 } from '@acme/ui';
 import { streamFetch } from './stream-fetch';
 import { fetchSession, postMessage } from './session.client.ts';
+import { resumedProblem } from './resume-problem.ts';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import {
   API_URL,
@@ -23,6 +24,8 @@ import type { CoachEvent } from './coach.service';
 import type { TurnImage } from '@acme/inference';
 
 interface TutorState {
+  sessionGeneration: number;
+  endForPriorWork: () => void;
   state: TutorStageState;
   problem: string;
   /**
@@ -56,7 +59,7 @@ interface TutorState {
    * ask the same question and get the same answer. Identity never travels —
    * the server reads it from `ctx`.
    */
-  hydrate: (problem: string) => Promise<void>;
+  hydrate: (problem: string, onWorksheetCursor?: boolean) => Promise<void>;
   /**
    * Appends a learner turn. Pass `id` to adopt the server's, which is what
    * lets a queued upload address its attachment later.
@@ -205,6 +208,12 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   tutorPresence: 'auto' as TutorPresencePreference,
   currentTone: null,
   sessionId: null,
+  sessionGeneration: 0,
+  endForPriorWork: () => {
+    audioQueue.stop();
+    set((s) => ({ sessionGeneration: s.sessionGeneration + 1,
+      state: { kind: 'ended', summary: { title: 'All problems were already done', masteryDelta: 0 } } }));
+  },
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   lastOutcome: null,
@@ -212,11 +221,13 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   hintDepth: 0,
   masteryBySkill: {},
   attemptsBySkill: {},
-  hydrate: async (problem) => {
+  hydrate: async (problem, onWorksheetCursor = false) => {
+    const generation = get().sessionGeneration;
     const snapshot = await fetchSession(problem);
+    if (get().sessionGeneration !== generation) return;
     if (snapshot === null) return;
 
-    const problemText = snapshot.problem.length > 0 ? snapshot.problem : problem;
+    const { opener: problemText, coaching } = resumedProblem(snapshot.problem, problem, onWorksheetCursor);
     const sessionComplete = snapshot.budget.kind === 'session-complete';
 
     /*
@@ -230,7 +241,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
 
     set((s) => ({
       sessionId: snapshot.sessionId,
-      problem: problemText.length > 0 ? problemText : s.problem,
+      problem: coaching.length > 0 ? coaching : s.problem,
       /*
         A RESUMED session is not a thinking one.
 
@@ -345,7 +356,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   },
   start: (problem, isReading = false) => {
     // A new problem starts with no verdict behind it.
-    set({ lastOutcome: null });
+    set((s) => ({ lastOutcome: null, sessionGeneration: s.sessionGeneration + 1 }));
     const p = problem ?? '';
     const skillTitle = inferSkillTitle(p);
     set((s) => {
@@ -456,7 +467,8 @@ export const useTutorStore = create<TutorState>((set, get) => ({
 
   coach: async (message, image) => {
     const { lastOutcome } = get();
-    const { problem, problemIsReading, state, sessionId } = useTutorStore.getState();
+    const { problem, problemIsReading, state, sessionId, sessionGeneration } = useTutorStore.getState();
+    const isCurrentTurn = () => get().sessionGeneration === sessionGeneration && get().state.kind !== 'ended' && get().problem === problem;
 
     /*
       The floor under the closed composer.
@@ -567,6 +579,10 @@ export const useTutorStore = create<TutorState>((set, get) => ({
         it is the difference between a child pressing a button that 401s again
         and one that takes them somewhere.
       */
+      if (!isCurrentTurn()) {
+        controller.abort();
+        return;
+      }
       if (response.status === 401) {
         audioQueue.stop();
         set({ state: { kind: 'signed-out' } });
@@ -576,6 +592,10 @@ export const useTutorStore = create<TutorState>((set, get) => ({
       armStall(COACH_STALL_TIMEOUT_MS);
 
       for await (const event of readCoachEvents(response)) {
+        if (!isCurrentTurn()) {
+          controller.abort();
+          return;
+        }
         armStall(COACH_STALL_TIMEOUT_MS);
         if (event.kind === 'chunk') {
           spoken += event.text;
@@ -640,6 +660,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
         return;
       }
     } catch {
+      if (!isCurrentTurn()) return;
       audioQueue.stop();
       // A transport failure is retryable, and an aborted stall arrives here as
       // one. Only a Safety Plane decision earns the terminal paused state.
@@ -655,6 +676,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
     // The stream ended without a terminal frame — a dropped connection. The
     // partial turn stays on screen because it already passed the plane, but a
     // turn with nothing in it is the paused state.
+    if (!isCurrentTurn()) return;
     if (!spoken) {
       set({ state: { kind: 'retry' } });
       return;

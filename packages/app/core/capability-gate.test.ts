@@ -24,6 +24,8 @@ const sub = (over: Partial<SubscriptionState>): SubscriptionState => ({
   status: 'active',
   referenceId: 'user_1',
   periodEnd: null,
+  trialEnd: null,
+  cancelAtPeriodEnd: false,
   seats: null,
   ...over,
 });
