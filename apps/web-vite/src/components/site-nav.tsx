@@ -91,7 +91,18 @@ const useNavStore = create<NavState>()((set) => ({
   close: () => set({ open: false }),
 }));
 
-const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult px-inset-roomy py-inset';
+/*
+ * Every control in the bar is one fixed 44px row (the adult target), never
+ * padded around its text: the bar is a fixed 56px (64px from lg), so a control
+ * that grows with its padding hangs over the bar's bottom rule. `mb-1.5` makes
+ * room for the 6px press shadow, so flex centering sets the button and its
+ * shadow together in the middle of the bar rather than the button alone.
+ */
+const CONTROL_BOX = 'moyo-pressable items-center justify-center h-11 min-h-target-adult mb-1.5';
+/** A control with a text label. */
+const CONTROL = `${CONTROL_BOX} px-inset-roomy`;
+/** A square icon control (the menu and close buttons). */
+const ICON_CONTROL = `${CONTROL_BOX} w-11 p-0`;
 /** The one filled object in the bar. */
 const CTA = `site-nav-cta ${CONTROL} rounded-moyo-card bg-moyo-primary text-moyo-on-primary text-site-body shadow-moyo-1 transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
 /** The secondary action in the bar — plain type, so the CTA is the only filled object. */
@@ -198,7 +209,7 @@ export function SiteNav() {
           accessible name already does.
         */}
         <Button
-          className={`site-nav-cta ${CONTROL} aspect-square items-center justify-center rounded-moyo-card bg-moyo-paper-raised p-0 shadow-moyo-1 lg:hidden`}
+          className={`site-nav-cta ${ICON_CONTROL} rounded-moyo-card bg-moyo-paper-raised shadow-moyo-1 lg:hidden`}
           onPress={toggle}
           aria-expanded={open}
           aria-label={open ? 'Close menu' : 'Open menu'}
@@ -225,7 +236,7 @@ export function SiteNav() {
               <MoyoLearnLogo height={72} accessibilityLabel="Moyo Learn" />
             </View>
             <Button
-              className={`site-nav-close site-nav-cta ${CONTROL} aspect-square rounded-moyo-card bg-moyo-paper-raised p-0 shadow-moyo-1`}
+              className={`site-nav-close site-nav-cta ${ICON_CONTROL} rounded-moyo-card bg-moyo-paper-raised shadow-moyo-1`}
               onPress={close}
               aria-label="Close menu"
             >
