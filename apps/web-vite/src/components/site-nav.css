@@ -16,11 +16,10 @@
  * anchors, the footer's links, the skip link, and `:target` — including ids
  * added later by files that never hear about this rule.
  *
- * THE VALUE IS DERIVED, NOT MEASURED. The bar is one row of controls inside
- * `py-inset`: its height is the tallest control (`min-h-target-adult`) plus its
- * own vertical inset and the row's, which is `--spacing-inset * 4`. No raw
- * pixel appears; if the inset tier or the adult target moves, this moves with
- * them. Measured against the built page it clears the bar at 390, 820 and 1440.
+ * THE VALUE IS THE BAR'S FIXED HEIGHT. `site-nav.tsx` sets the bar's row to
+ * `h-14` (56px) below lg and `lg:h-16` (64px) from lg, the standard header
+ * heights, so the offset is those same two values (3.5rem and 4rem). If the row height in
+ * `site-nav.tsx` changes, change it here too.
  *
  * SOT: ./site-nav.tsx · docs/site/tokens.md · packages/theme/tokens.ts
  * SOT-KEYWORDS: site nav sticky header anchor offset scroll padding target
@@ -28,7 +27,11 @@
  */
 
 html {
-  scroll-padding-block-start: calc(
-    var(--spacing-target-adult) + var(--spacing-inset) * 4
-  );
+  scroll-padding-block-start: 3.5rem;
+}
+
+@media (width >= 64rem) {
+  html {
+    scroll-padding-block-start: 4rem;
+  }
 }

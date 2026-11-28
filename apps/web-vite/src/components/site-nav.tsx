@@ -151,16 +151,18 @@ export function SiteNav() {
 
       <Container
         width="wide"
-        className="max-w-screen-2xl flex-row items-center justify-between gap-group py-inset"
+        className="h-14 max-w-screen-2xl flex-row items-center justify-between gap-group lg:h-16"
       >
         <Link
           href="/"
           aria-label="Moyo Learn — home"
           className="flex w-fit items-center rounded-moyo-card transition duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
         >
-          {/* 72px front-door mark, attribute-sized so the pre-CSS paint can
-              never flash at intrinsic (viewport) width. */}
-          <MoyoLearnLogo height={72} accessibilityLabel="Moyo Learn" />
+          {/* The 36px chrome-slot mark the app's header uses, so the bar sits at
+              a standard 56px (64px from lg) instead of growing around a 72px
+              mark. Attribute-sized so the pre-CSS paint can never flash at
+              intrinsic (viewport) width. */}
+          <MoyoLearnLogo height={36} accessibilityLabel="Moyo Learn" />
         </Link>
 
         <Nav aria-label="Primary" className="hidden lg:flex lg:flex-row lg:items-center lg:gap-group">

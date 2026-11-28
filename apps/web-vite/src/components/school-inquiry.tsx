@@ -172,8 +172,8 @@ export function SchoolInquiry() {
         Talk to Moyo
       </Heading>
       <Paragraph className="text-site-body text-moyo-ink">
-        Tell us how to reach you about your school, tutoring business, or family
-        plan. Please use your own adult contact details.
+        Tell us about your school or tutoring business, and we&rsquo;ll set up the right
+        plan for you. Please use your own adult contact details.
       </Paragraph>
       <View className="gap-stack" role="form" aria-label="Moyo inquiry">
         {textField('name', 'Your name')}
